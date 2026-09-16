@@ -5,9 +5,6 @@ on:
     branches: [main]
   workflow_dispatch: {}
 
-permissions:
-  contents: write
-
 jobs:
   build-android:
     name: Android APK
@@ -21,48 +18,7 @@ jobs:
 
       - run: flutter pub get
 
-      - name: Build APK
-        id: build
-        run: |
-          set -o pipefail
-          flutter build apk --release 2>&1 | tee /tmp/android-build.log
-        continue-on-error: true
-
-      - name: Save build log via GitHub API for diagnosis
-        if: always()
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          tail -c 100000 /tmp/android-build.log | base64 -w0 > /tmp/log-b64.txt
-          python3 - <<'PYEOF'
-          import json, os, urllib.request
-          with open('/tmp/log-b64.txt') as f:
-              content = f.read().strip()
-          body = json.dumps({
-              "message": "ci: capture android build log [skip ci]",
-              "content": content,
-              "branch": "main",
-          }).encode()
-          req = urllib.request.Request(
-              "https://api.github.com/repos/KerimKolberg/doc-scanner-app/contents/.ci-logs/android-build.log",
-              data=body,
-              method="PUT",
-              headers={
-                  "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
-                  "Accept": "application/vnd.github+json",
-                  "Content-Type": "application/json",
-              },
-          )
-          try:
-              urllib.request.urlopen(req)
-              print("log uploaded")
-          except Exception as e:
-              print("upload failed:", e)
-          PYEOF
-
-      - name: Fail job if build failed
-        if: steps.build.outcome == 'failure'
-        run: exit 1
+      - run: flutter build apk --release
 
       - uses: actions/upload-artifact@v4
         with:
@@ -84,13 +40,7 @@ jobs:
 
       - run: flutter pub get
 
-      - name: Build Windows EXE (with retries for flaky Gradle/package downloads)
-        uses: nick-fields/retry@v3
-        with:
-          timeout_minutes: 15
-          max_attempts: 3
-          retry_wait_seconds: 20
-          command: flutter build windows --release
+      - run: flutter build windows --release
 
       - name: Zip Windows build
         run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath doc-scanner-windows.zip
