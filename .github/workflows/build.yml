@@ -5,6 +5,9 @@ on:
     branches: [main]
   workflow_dispatch: {}
 
+permissions:
+  contents: write
+
 jobs:
   build-android:
     name: Android APK
@@ -18,7 +21,25 @@ jobs:
 
       - run: flutter pub get
 
-      - run: flutter build apk --release
+      - name: Build APK
+        id: build
+        run: flutter build apk --release --verbose 2>&1 | tee /tmp/android-build.log
+        continue-on-error: true
+
+      - name: Upload build log on failure
+        if: steps.build.outcome == 'failure'
+        run: |
+          mkdir -p .ci-logs
+          tail -c 60000 /tmp/android-build.log > .ci-logs/android-build.log
+          git config user.email "ci@doc-scanner-app.local"
+          git config user.name "CI Diagnostics"
+          git add .ci-logs/android-build.log
+          git commit -m "ci: capture failed android build log [skip ci]"
+          git push
+
+      - name: Fail job if build failed
+        if: steps.build.outcome == 'failure'
+        run: exit 1
 
       - uses: actions/upload-artifact@v4
         with:
