@@ -5,6 +5,9 @@ für Android (APK) und Windows (EXE).
 
 ## Funktionen
 
+- **Automatisch scannen (nur Android):** Google ML Kit erkennt das Dokument
+  direkt in der Kamera-Vorschau und schneidet es automatisch zu, ganz wie bei
+  CamScanner — läuft komplett offline auf dem Gerät.
 - Foto aufnehmen (Kamera) oder vorhandenes Bild importieren
 - Zuschnitt optional: Vier Ecken des Dokuments per Fingergeste/Maus anpassen →
   automatische Perspektivkorrektur, oder ganz überspringen (pro Scan

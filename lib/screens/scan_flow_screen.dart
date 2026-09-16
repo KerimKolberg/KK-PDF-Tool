@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'package:flutter/material.dart';
 
 import '../models/scan_document.dart';
@@ -26,7 +28,10 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
   final _settings = SettingsService();
   final _downloadsExport = DownloadsExportService();
   bool _saving = false;
+  bool _autoScanning = false;
   bool _cropEnabled = true;
+
+  bool get _hasAutoScan => Platform.isAndroid;
 
   @override
   void initState() {
@@ -34,7 +39,11 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
     _settings.getCropEnabledDefault().then((value) {
       if (mounted) setState(() => _cropEnabled = value);
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) => _addPage());
+    // On platforms without the automatic ML Kit scanner, go straight into
+    // manual capture since there's no choice to offer.
+    if (!_hasAutoScan) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _addPage());
+    }
   }
 
   Future<void> _addPage() async {
@@ -52,6 +61,37 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
     );
     if (processed == null || !mounted) return;
     setState(() => _pages.add(processed));
+  }
+
+  /// Uses Google ML Kit's on-device document scanner (Android only): the
+  /// user gets a native camera UI with automatic edge detection and
+  /// perspective correction, just like CamScanner's auto-capture. Works
+  /// fully offline once the ML Kit module is installed (it self-installs
+  /// via Play Services the first time it's used).
+  Future<void> _autoScan() async {
+    if (_autoScanning || _saving) return;
+    setState(() => _autoScanning = true);
+    try {
+      final paths = await CunningDocumentScanner.getPictures(noOfPages: 20);
+      if (paths == null || paths.isEmpty) {
+        if (mounted) setState(() => _autoScanning = false);
+        return;
+      }
+      final newPages = await Future.wait(
+        paths.map((path) => File(path).readAsBytes()),
+      );
+      if (!mounted) return;
+      setState(() {
+        _pages.addAll(newPages);
+        _autoScanning = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _autoScanning = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Automatischer Scan fehlgeschlagen: $e')),
+      );
+    }
   }
 
   void _removePage(int index) {
@@ -181,7 +221,47 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
           ],
         ),
         body: _pages.isEmpty
-            ? const Center(child: Text('Noch keine Seite erfasst.'))
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _hasAutoScan
+                            ? 'Automatisch scannen erkennt das Dokument\nund den Zuschnitt direkt beim Fotografieren.'
+                            : 'Noch keine Seite erfasst.',
+                        textAlign: TextAlign.center,
+                        style:
+                            TextStyle(color: Theme.of(context).colorScheme.outline),
+                      ),
+                      if (_hasAutoScan) ...[
+                        const SizedBox(height: 20),
+                        FilledButton.icon(
+                          onPressed: _autoScanning ? null : _autoScan,
+                          icon: _autoScanning
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2, color: Colors.white),
+                                )
+                              : const Icon(Icons.document_scanner),
+                          label: Text(
+                            _autoScanning ? 'Scanne…' : 'Automatisch scannen',
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        OutlinedButton.icon(
+                          onPressed: _addPage,
+                          icon: const Icon(Icons.add_a_photo),
+                          label: const Text('Manuell aufnehmen'),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              )
             : GridView.builder(
                 padding: const EdgeInsets.all(12),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -236,11 +316,21 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
+                if (_hasAutoScan && _pages.isNotEmpty) ...[
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _saving || _autoScanning ? null : _autoScan,
+                      icon: const Icon(Icons.document_scanner),
+                      label: const Text('Scan'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: _saving ? null : _addPage,
                     icon: const Icon(Icons.add_a_photo),
-                    label: const Text('Seite hinzufügen'),
+                    label: Text(_hasAutoScan ? 'Manuell' : 'Seite hinzufügen'),
                   ),
                 ),
                 const SizedBox(width: 12),
