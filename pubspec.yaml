@@ -45,8 +45,6 @@ dependencies:
   share_plus: ^13.3.0
   printing: ^5.15.0
   shared_preferences: ^2.5.5
-  permission_handler: ^13.0.2
-
 dev_dependencies:
   flutter_test:
     sdk: flutter

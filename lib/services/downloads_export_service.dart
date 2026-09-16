@@ -1,26 +1,30 @@
 import 'dart:io';
-import 'dart:typed_data';
 
+import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 /// Exports finished files (PDFs, images) into a public, user-visible
 /// "DocScanner" folder inside the platform's normal Downloads location, so
 /// files show up in the system Files app / Explorer, not just inside the
 /// app's own library.
 ///
-///  - Android: `/storage/emulated/0/Download/DocScanner/`, using the "All
-///    files access" permission (fine for a personal, side-loaded app; it is
-///    requested once and only for this purpose).
+///  - Android: `Download/DocScanner/`, via a small native MethodChannel
+///    (`android/.../MainActivity.kt`) that writes through MediaStore on
+///    API 29+, which needs no runtime permission at all.
 ///  - Windows: `<Downloads>/DocScanner/`.
 ///  - Other desktop platforms: falls back to the app documents directory.
 class DownloadsExportService {
   static const _folderName = 'DocScanner';
+  static const _channel = MethodChannel('docscanner/downloads');
 
   Future<String> export(Uint8List bytes, String fileName) async {
     if (Platform.isAndroid) {
-      return _exportAndroid(bytes, fileName);
+      final location = await _channel.invokeMethod<String>('saveToDownloads', {
+        'fileName': fileName,
+        'bytes': bytes,
+      });
+      return location ?? 'Downloads/$_folderName/$fileName';
     }
 
     final downloads = await getDownloadsDirectory();
@@ -32,25 +36,5 @@ class DownloadsExportService {
     final file = File(p.join(targetDir.path, fileName));
     await file.writeAsBytes(bytes, flush: true);
     return file.path;
-  }
-
-  Future<String> _exportAndroid(Uint8List bytes, String fileName) async {
-    var status = await Permission.manageExternalStorage.status;
-    if (!status.isGranted) {
-      status = await Permission.manageExternalStorage.request();
-    }
-    if (!status.isGranted) {
-      throw StateError(
-        'Kein Zugriff auf den Speicher erlaubt (Berechtigung "Alle Dateien verwalten" fehlt).',
-      );
-    }
-
-    final targetDir = Directory('/storage/emulated/0/Download/$_folderName');
-    if (!await targetDir.exists()) {
-      await targetDir.create(recursive: true);
-    }
-    final file = File(p.join(targetDir.path, fileName));
-    await file.writeAsBytes(bytes, flush: true);
-    return 'Downloads/$_folderName/$fileName';
   }
 }
