@@ -5,9 +5,6 @@ on:
     branches: [main]
   workflow_dispatch: {}
 
-permissions:
-  contents: write
-
 jobs:
   build-android:
     name: Android APK
@@ -21,27 +18,13 @@ jobs:
 
       - run: flutter pub get
 
-      - name: Build APK
-        id: build
-        run: |
-          set -o pipefail
-          flutter build apk --release 2>&1 | tee /tmp/android-build.log
-        continue-on-error: true
-
-      - name: Save build log to repo for diagnosis
-        if: always()
-        run: |
-          mkdir -p .ci-logs
-          tail -c 100000 /tmp/android-build.log > .ci-logs/android-build.log
-          git config user.email "ci@doc-scanner-app.local"
-          git config user.name "CI Diagnostics"
-          git add .ci-logs/android-build.log
-          git commit -m "ci: capture android build log [skip ci]" || echo "no changes to commit"
-          git push
-
-      - name: Fail job if build failed
-        if: steps.build.outcome == 'failure'
-        run: exit 1
+      - name: Build APK (with retries for flaky Gradle downloads)
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          retry_wait_seconds: 20
+          command: flutter build apk --release
 
       - uses: actions/upload-artifact@v4
         with:
