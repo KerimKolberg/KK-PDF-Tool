@@ -18,7 +18,13 @@ jobs:
 
       - run: flutter pub get
 
-      - run: flutter build apk --release
+      - name: Build APK (with retries for flaky Gradle downloads)
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          retry_wait_seconds: 20
+          command: flutter build apk --release
 
       - uses: actions/upload-artifact@v4
         with:
@@ -40,7 +46,13 @@ jobs:
 
       - run: flutter pub get
 
-      - run: flutter build windows --release
+      - name: Build Windows EXE (with retries for flaky Gradle/package downloads)
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          retry_wait_seconds: 20
+          command: flutter build windows --release
 
       - name: Zip Windows build
         run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath doc-scanner-windows.zip
