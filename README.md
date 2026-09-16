@@ -6,12 +6,25 @@ für Android (APK) und Windows (EXE).
 ## Funktionen
 
 - Foto aufnehmen (Kamera) oder vorhandenes Bild importieren
-- Vier Ecken des Dokuments per Fingergeste/Maus anpassen → automatische
-  Perspektivkorrektur (Papier wird "gerade gezogen")
+- Zuschnitt optional: Vier Ecken des Dokuments per Fingergeste/Maus anpassen →
+  automatische Perspektivkorrektur, oder ganz überspringen (pro Scan
+  umschaltbar, mit Standardwert in den Einstellungen)
 - Drehen, Filter (Original, Farbe+, Graustufen, Schwarz/Weiß)
 - Mehrere Seiten zu einem Dokument zusammenfassen
-- Export als durchsuchbares Mehrseiten-PDF
+- Export als Mehrseiten-PDF, zusätzlich automatisch abgelegt unter
+  `Downloads/DocScanner` (Android: über die MediaStore-API, Windows: im
+  echten Downloads-Ordner)
 - Bibliotheksansicht aller gespeicherten Scans, umbenennen, löschen, teilen
+- **Werkzeuge-Tab:**
+  - Bilder → PDF (mehrere Bilder zu einer PDF zusammenfassen)
+  - PDF → Bilder (jede Seite als Bild exportieren)
+  - PDFs zusammenführen (mehrere Dateien in gewählter Reihenfolge verbinden)
+  - PDF aufteilen (nach einem oder mehreren Seitenbereichen)
+
+Die PDF-Werkzeuge rendern Seiten neu (Rasterung), da es keine reine
+Dart/Flutter-Bibliothek gibt, die Vektor-Seiten zwischen bestehenden PDFs
+kopieren kann. Ergebnis sieht optisch identisch aus, ist aber nicht mehr
+text-durchsuchbar.
 
 ## Fertige APK/EXE bauen — ohne eigene Installation (empfohlen)
 

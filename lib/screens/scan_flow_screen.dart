@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 
 import '../models/scan_document.dart';
 import '../services/document_store.dart';
+import '../services/downloads_export_service.dart';
 import '../services/pdf_service.dart';
+import '../services/settings_service.dart';
 import 'capture_screen.dart';
 import 'crop_screen.dart';
 
@@ -21,11 +23,17 @@ class ScanFlowScreen extends StatefulWidget {
 
 class _ScanFlowScreenState extends State<ScanFlowScreen> {
   final List<Uint8List> _pages = [];
+  final _settings = SettingsService();
+  final _downloadsExport = DownloadsExportService();
   bool _saving = false;
+  bool _cropEnabled = true;
 
   @override
   void initState() {
     super.initState();
+    _settings.getCropEnabledDefault().then((value) {
+      if (mounted) setState(() => _cropEnabled = value);
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) => _addPage());
   }
 
@@ -35,7 +43,12 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
     );
     if (raw == null || !mounted) return;
     final processed = await Navigator.of(context).push<Uint8List>(
-      MaterialPageRoute(builder: (_) => CropScreen(initialBytes: raw)),
+      MaterialPageRoute(
+        builder: (_) => CropScreen(
+          initialBytes: raw,
+          initialCropEnabled: _cropEnabled,
+        ),
+      ),
     );
     if (processed == null || !mounted) return;
     setState(() => _pages.add(processed));
@@ -82,7 +95,20 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
         pageJpegBytes: _pages,
         pdfBytes: pdfBytes,
       );
+      String? location;
+      try {
+        location = await _downloadsExport.export(pdfBytes, '$title.pdf');
+      } catch (_) {
+        // Document is already safely stored in the app library; the
+        // Downloads export is a convenience copy, so a failure here
+        // shouldn't block the save.
+      }
       if (!mounted) return;
+      if (location != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gespeichert unter $location')),
+        );
+      }
       Navigator.of(context).pop<ScanDocument>(doc);
     } catch (e) {
       if (!mounted) return;
@@ -139,6 +165,20 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: Text('Neuer Scan (${_pages.length} Seite(n))'),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Row(
+                children: [
+                  const Text('Zuschnitt', style: TextStyle(fontSize: 13)),
+                  Switch(
+                    value: _cropEnabled,
+                    onChanged: (v) => setState(() => _cropEnabled = v),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         body: _pages.isEmpty
             ? const Center(child: Text('Noch keine Seite erfasst.'))

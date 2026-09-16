@@ -11,8 +11,13 @@ import '../widgets/corner_crop_overlay.dart';
 /// single processed page.
 class CropScreen extends StatefulWidget {
   final Uint8List initialBytes;
+  final bool initialCropEnabled;
 
-  const CropScreen({super.key, required this.initialBytes});
+  const CropScreen({
+    super.key,
+    required this.initialBytes,
+    this.initialCropEnabled = true,
+  });
 
   @override
   State<CropScreen> createState() => _CropScreenState();
@@ -28,6 +33,7 @@ class _CropScreenState extends State<CropScreen> {
   bool _busy = false;
   String? _error;
   ScanFilter _filter = ScanFilter.original;
+  late bool _cropEnabled = widget.initialCropEnabled;
 
   static const _grayscaleMatrix = <double>[
     0.2126, 0.7152, 0.0722, 0, 0,
@@ -109,11 +115,19 @@ class _CropScreenState extends State<CropScreen> {
 
   Future<void> _confirm() async {
     final bytes = _workingBytes;
-    final overlayState = _overlayKey.currentState;
-    if (bytes == null || overlayState == null || _busy) return;
+    if (bytes == null || _busy) return;
+
+    final corners = _cropEnabled
+        ? _overlayKey.currentState?.corners
+        : [
+            const Offset(0, 0),
+            Offset(_imgW, 0),
+            Offset(_imgW, _imgH),
+            Offset(0, _imgH),
+          ];
+    if (corners == null) return;
 
     setState(() => _busy = true);
-    final corners = overlayState.corners;
     final cornersFlat = <double>[
       for (final c in corners) ...[c.dx, c.dy],
     ];
@@ -152,6 +166,13 @@ class _CropScreenState extends State<CropScreen> {
       appBar: AppBar(
         title: const Text('Zuschneiden'),
         actions: [
+          IconButton(
+            onPressed: _busy
+                ? null
+                : () => setState(() => _cropEnabled = !_cropEnabled),
+            icon: Icon(_cropEnabled ? Icons.crop : Icons.crop_free),
+            tooltip: _cropEnabled ? 'Zuschnitt aus' : 'Zuschnitt an',
+          ),
           IconButton(
             onPressed: _busy ? null : _rotate,
             icon: const Icon(Icons.rotate_right),
@@ -224,27 +245,24 @@ class _CropScreenState extends State<CropScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final content = Padding(
-      padding: const EdgeInsets.all(16),
-      child: _previewColorFilter == null
-          ? CornerCropOverlay(
-              key: _overlayKey,
-              imageBytes: _workingBytes!,
-              imageWidth: _imgW,
-              imageHeight: _imgH,
-              initialCorners: _defaultCorners,
-            )
-          : ColorFiltered(
-              colorFilter: _previewColorFilter!,
-              child: CornerCropOverlay(
-                key: _overlayKey,
-                imageBytes: _workingBytes!,
-                imageWidth: _imgW,
-                imageHeight: _imgH,
-                initialCorners: _defaultCorners,
-              ),
+    Widget inner = _cropEnabled
+        ? CornerCropOverlay(
+            key: _overlayKey,
+            imageBytes: _workingBytes!,
+            imageWidth: _imgW,
+            imageHeight: _imgH,
+            initialCorners: _defaultCorners,
+          )
+        : Center(
+            child: AspectRatio(
+              aspectRatio: _imgW / _imgH,
+              child: Image.memory(_workingBytes!, fit: BoxFit.contain),
             ),
-    );
+          );
+    if (_previewColorFilter != null) {
+      inner = ColorFiltered(colorFilter: _previewColorFilter!, child: inner);
+    }
+    final content = Padding(padding: const EdgeInsets.all(16), child: inner);
 
     return _busy ? IgnorePointer(child: content) : content;
   }

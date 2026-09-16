@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../models/scan_document.dart';
 import '../services/document_store.dart';
 import 'document_viewer_screen.dart';
+import 'home_shell.dart';
 import 'scan_flow_screen.dart';
 
 class LibraryScreen extends StatefulWidget {
@@ -59,7 +60,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Meine Scans')),
+      appBar: AppBar(
+        title: const Text('Meine Scans'),
+        actions: const [SettingsButton()],
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _docs.isEmpty
