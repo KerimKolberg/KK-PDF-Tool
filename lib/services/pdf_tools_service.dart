@@ -1,8 +1,8 @@
-import 'dart:typed_data';
-
+import 'package:flutter/foundation.dart';
 import 'package:printing/printing.dart';
 
 import 'pdf_service.dart';
+import 'pptx_writer_service.dart';
 
 /// PDF manipulation built on rasterizing pages, since there is no
 /// pure-Dart/Flutter library that can copy vector pages between existing
@@ -56,4 +56,16 @@ class PdfToolsService {
     final images = await rasterPages(pdfBytes, pages: indices);
     return PdfService.buildPdf(images);
   }
+
+  /// Renders every page of [pdfBytes] and packs each one as a full-slide
+  /// picture into a .pptx file (see [PptxWriterService] for why this is a
+  /// mechanical image-per-slide export, not an editable reconstruction).
+  static Future<Uint8List> toPptx(Uint8List pdfBytes) async {
+    final images = await rasterPages(pdfBytes, dpi: 150);
+    return compute(_buildPptxIsolate, images);
+  }
+}
+
+Uint8List _buildPptxIsolate(List<Uint8List> images) {
+  return PptxWriterService.buildPptx(images);
 }

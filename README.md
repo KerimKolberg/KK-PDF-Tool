@@ -23,11 +23,76 @@ für Android (APK) und Windows (EXE).
   - PDF → Bilder (jede Seite als Bild exportieren)
   - PDFs zusammenführen (mehrere Dateien in gewählter Reihenfolge verbinden)
   - PDF aufteilen (nach einem oder mehreren Seitenbereichen)
+  - PDF → PowerPoint (offline: jede Seite als Bild-Folie, nicht text-editierbar)
+  - PowerPoint → PDF (☁️ über das eigene Google-Konto, siehe unten)
+  - PDF → Word (☁️ über das eigene Google-Konto, mit Texterkennung/OCR)
 
-Die PDF-Werkzeuge rendern Seiten neu (Rasterung), da es keine reine
+Die offline PDF-Werkzeuge rendern Seiten neu (Rasterung), da es keine reine
 Dart/Flutter-Bibliothek gibt, die Vektor-Seiten zwischen bestehenden PDFs
 kopieren kann. Ergebnis sieht optisch identisch aus, ist aber nicht mehr
 text-durchsuchbar.
+
+## Google-Verbindung einrichten (für PowerPoint→PDF und PDF→Word)
+
+Diese beiden Werkzeuge laden die Datei kurz in *dein eigenes* Google Drive
+hoch, lassen Google sie umwandeln, und laden das Ergebnis wieder herunter
+(danach wird die Datei bei Google sofort wieder gelöscht). Das ist kostenlos,
+braucht aber einmalige Einrichtung und Internetzugang beim Umwandeln.
+
+### 1. Google-Cloud-Projekt anlegen
+
+1. Öffne [console.cloud.google.com](https://console.cloud.google.com/), leg
+   (falls noch nicht vorhanden) ein neues Projekt an.
+2. **APIs & Services → Enabled APIs** → **"Google Drive API"** aktivieren.
+3. **APIs & Services → OAuth consent screen**: Nutzertyp "External", App-Namen
+   vergeben, deine eigene E-Mail als **Testnutzer** hinzufügen (reicht für
+   persönliche Nutzung, muss nicht veröffentlicht/verifiziert werden).
+
+### 2. Zwei OAuth-Client-IDs anlegen
+
+Unter **APIs & Services → Credentials → Create Credentials → OAuth client ID**:
+
+**a) Android-Client** (damit sich die App überhaupt anmelden darf):
+- Application type: **Android**
+- Package name: `com.kerimkolberg.doc_scanner`
+- SHA-1: `89:77:6C:71:A4:DA:47:B3:3F:05:9C:3A:6B:B4:3E:5D:EF:98:2D:97`
+  (fester Signierschlüssel dieser App, siehe Abschnitt "Signierschlüssel" unten)
+
+**b) Web-Client** (dessen Client-ID trägst du in der App ein):
+- Application type: **Web application**
+- Name beliebig, sonst nichts weiter ausfüllen
+- Nach dem Erstellen die **Client-ID** kopieren (endet auf `.apps.googleusercontent.com`)
+
+### 3. Client-ID in der App eintragen
+
+In der App: **Bibliothek → Zahnrad-Symbol (Einstellungen)** → Feld
+"Google Web-Client-ID" → die kopierte Web-Client-ID einfügen → Speichern.
+
+Das war's — keine neue APK nötig, die Einstellung wird direkt in der App
+gespeichert.
+
+## Signierschlüssel (wichtig für Google Sign-In)
+
+Damit sich die App bei Google immer mit demselben SHA-1-Fingerabdruck
+ausweist (sonst müsstest du bei jedem Build den Android-OAuth-Client neu
+konfigurieren), signiert die GitHub-Actions-Pipeline die APK mit einem
+festen, eigens für dieses Projekt erzeugten Schlüssel statt mit dem
+zufälligen Standard-Debug-Key. Dafür müssen einmalig drei
+**Repository-Secrets** hinterlegt werden (**Settings → Secrets and
+variables → Actions → New repository secret**):
+
+| Secret-Name | Wert |
+|---|---|
+| `DOCSCANNER_KEYSTORE_BASE64` | Inhalt der `docscanner-release.jks`-Datei, Base64-kodiert |
+| `DOCSCANNER_KEYSTORE_PASSWORD` | Keystore-Passwort |
+| `DOCSCANNER_KEY_ALIAS` | `docscanner` |
+| `DOCSCANNER_KEY_PASSWORD` | (gleiches Passwort wie Keystore, PKCS12-Format) |
+
+Die `.jks`-Datei und die Passwörter wurden dir separat zugeschickt — falls
+du sie nicht mehr hast, frag noch mal danach, statt sie im Repo abzulegen
+(es ist öffentlich!). Ohne diese Secrets baut die App trotzdem ganz normal
+(nur eben mit wechselndem Debug-Schlüssel, wodurch Google Sign-In dann bei
+jedem Neu-Build neu eingerichtet werden müsste).
 
 ## Fertige APK/EXE bauen — ohne eigene Installation (empfohlen)
 
@@ -91,10 +156,12 @@ lib/
   widgets/corner_crop_overlay.dart  Ziehbare Eck-Overlay-UI
 ```
 
-## Bekannte Einschränkungen (v1)
+## Bekannte Einschränkungen
 
-- Die Eckenerkennung ist manuell (ziehen), es gibt keine automatische
-  KI-Kantenerkennung wie bei CamScanner — das würde plattformspezifische
-  Bibliotheken erfordern, die es für Windows nicht gibt, und hätte die
-  "eine Codebasis für beides"-Anforderung gebrochen.
-- Kein Login/Cloud-Sync, alles bleibt lokal auf dem Gerät.
+- Automatische Kantenerkennung (ML Kit) gibt es nur auf Android, nicht unter
+  Windows (dafür existiert keine vergleichbare Offline-Bibliothek).
+- PDF → PowerPoint erzeugt Bild-Folien, keine text-editierbare Rekonstruktion
+  (dafür gibt es keinen kostenlosen Dienst).
+- PowerPoint → PDF und PDF → Word brauchen Internet und ein Google-Konto.
+- Kein automatischer Cloud-Sync der Bibliothek, alles bleibt sonst lokal auf
+  dem Gerät.

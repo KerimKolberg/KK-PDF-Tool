@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Small persisted app preferences, backed by [SharedPreferences].
 class SettingsService {
   static const _cropEnabledKey = 'crop_enabled_default';
+  static const _googleWebClientIdKey = 'google_web_client_id';
 
   Future<bool> getCropEnabledDefault() async {
     final prefs = await SharedPreferences.getInstance();
@@ -12,5 +13,19 @@ class SettingsService {
   Future<void> setCropEnabledDefault(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_cropEnabledKey, value);
+  }
+
+  /// The "Web application" OAuth Client ID from the user's own Google Cloud
+  /// project, required by google_sign_in on Android as `serverClientId`.
+  /// Not a secret - Google's own docs note these client IDs are safe to
+  /// embed in a distributed app - so it's fine to store as a plain setting.
+  Future<String?> getGoogleWebClientId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_googleWebClientIdKey);
+  }
+
+  Future<void> setGoogleWebClientId(String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_googleWebClientIdKey, value.trim());
   }
 }

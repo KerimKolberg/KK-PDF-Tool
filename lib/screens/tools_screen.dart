@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'tools/images_to_pdf_screen.dart';
 import 'tools/merge_pdf_screen.dart';
 import 'tools/pdf_to_images_screen.dart';
+import 'tools/pdf_to_pptx_screen.dart';
+import 'tools/pdf_to_word_screen.dart';
+import 'tools/pptx_to_pdf_screen.dart';
 import 'tools/split_pdf_screen.dart';
 
 class _ToolEntry {
@@ -10,7 +13,14 @@ class _ToolEntry {
   final String subtitle;
   final IconData icon;
   final WidgetBuilder builder;
-  const _ToolEntry(this.title, this.subtitle, this.icon, this.builder);
+  final bool needsInternet;
+  const _ToolEntry(
+    this.title,
+    this.subtitle,
+    this.icon,
+    this.builder, {
+    this.needsInternet = false,
+  });
 }
 
 class ToolsScreen extends StatelessWidget {
@@ -41,6 +51,26 @@ class ToolsScreen extends StatelessWidget {
       Icons.content_cut,
       (_) => const SplitPdfScreen(),
     ),
+    _ToolEntry(
+      'PDF → PowerPoint',
+      'Jede Seite als Bild-Folie (offline, nicht text-editierbar)',
+      Icons.slideshow_outlined,
+      (_) => const PdfToPptxScreen(),
+    ),
+    _ToolEntry(
+      'PowerPoint → PDF',
+      'Echte Konvertierung über dein Google-Konto',
+      Icons.picture_as_pdf_outlined,
+      (_) => const PptxToPdfScreen(),
+      needsInternet: true,
+    ),
+    _ToolEntry(
+      'PDF → Word',
+      'Editierbar, mit Texterkennung über dein Google-Konto',
+      Icons.description_outlined,
+      (_) => const PdfToWordScreen(),
+      needsInternet: true,
+    ),
   ];
 
   @override
@@ -65,8 +95,20 @@ class ToolsScreen extends StatelessWidget {
                     Theme.of(context).colorScheme.onPrimaryContainer,
                 child: Icon(tool.icon),
               ),
-              title: Text(tool.title,
-                  style: const TextStyle(fontWeight: FontWeight.w600)),
+              title: Row(
+                children: [
+                  Flexible(
+                    child: Text(tool.title,
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
+                  ),
+                  if (tool.needsInternet) ...[
+                    const SizedBox(width: 6),
+                    Icon(Icons.cloud_outlined,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.outline),
+                  ],
+                ],
+              ),
               subtitle: Text(tool.subtitle),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => Navigator.of(context).push(

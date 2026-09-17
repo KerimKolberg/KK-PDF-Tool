@@ -18,7 +18,19 @@ jobs:
 
       - run: flutter pub get
 
-      - run: flutter build apk --release
+      - name: Decode release keystore
+        if: ${{ secrets.DOCSCANNER_KEYSTORE_BASE64 != '' }}
+        env:
+          DOCSCANNER_KEYSTORE_BASE64: ${{ secrets.DOCSCANNER_KEYSTORE_BASE64 }}
+        run: echo "$DOCSCANNER_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/docscanner-release.jks"
+
+      - name: Build APK
+        env:
+          DOCSCANNER_KEYSTORE_PATH: ${{ secrets.DOCSCANNER_KEYSTORE_BASE64 != '' && format('{0}/docscanner-release.jks', runner.temp) || '' }}
+          DOCSCANNER_KEYSTORE_PASSWORD: ${{ secrets.DOCSCANNER_KEYSTORE_PASSWORD }}
+          DOCSCANNER_KEY_ALIAS: ${{ secrets.DOCSCANNER_KEY_ALIAS }}
+          DOCSCANNER_KEY_PASSWORD: ${{ secrets.DOCSCANNER_KEY_PASSWORD }}
+        run: flutter build apk --release
 
       - uses: actions/upload-artifact@v4
         with:

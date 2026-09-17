@@ -46,6 +46,9 @@ dependencies:
   printing: ^5.15.0
   shared_preferences: ^2.5.5
   cunning_document_scanner: ^3.0.3
+  archive: ^4.0.9
+  google_sign_in: ^7.2.0
+  http: ^1.6.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
