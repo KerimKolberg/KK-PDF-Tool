@@ -58,18 +58,20 @@ Unter **APIs & Services → Credentials → Create Credentials → OAuth client 
 - SHA-1: `89:77:6C:71:A4:DA:47:B3:3F:05:9C:3A:6B:B4:3E:5D:EF:98:2D:97`
   (fester Signierschlüssel dieser App, siehe Abschnitt "Signierschlüssel" unten)
 
-**b) Web-Client** (dessen Client-ID trägst du in der App ein):
+**b) Web-Client**:
 - Application type: **Web application**
 - Name beliebig, sonst nichts weiter ausfüllen
 - Nach dem Erstellen die **Client-ID** kopieren (endet auf `.apps.googleusercontent.com`)
 
-### 3. Client-ID in der App eintragen
+### 3. Client-ID im Code hinterlegen (einmalig, für alle Geräte)
 
-In der App: **Bibliothek → Zahnrad-Symbol (Einstellungen)** → Feld
-"Google Web-Client-ID" → die kopierte Web-Client-ID einfügen → Speichern.
-
-Das war's — keine neue APK nötig, die Einstellung wird direkt in der App
-gespeichert.
+Die Web-Client-ID ist als Standardwert fest in `lib/services/settings_service.dart`
+(Konstante `_defaultGoogleWebClientId`) hinterlegt, damit sie nach jeder
+Neuinstallation automatisch vorhanden ist — kein manuelles Eintragen pro
+Gerät nötig. Bei eigenem Google-Cloud-Projekt dort die ID ersetzen (neuer
+Build nötig), oder alternativ direkt in der App unter **Einstellungen** im
+Feld "Google Web-Client-ID" überschreiben (überschreibt nur lokal auf dem
+jeweiligen Gerät, ohne neuen Build).
 
 ## Signierschlüssel (wichtig für Google Sign-In)
 

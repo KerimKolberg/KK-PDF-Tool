@@ -82,9 +82,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const SizedBox(height: 4),
                       Text(
                         'Diese beiden Werkzeuge laufen über dein eigenes Google-Konto '
-                        '(kostenlos, braucht Internet). Trage hier die "Web application"-'
-                        'Client-ID aus deinem Google-Cloud-Projekt ein — siehe README im '
-                        'Projekt für die genaue Anleitung.',
+                        '(kostenlos, braucht Internet). Die Client-ID ist bereits fest '
+                        'in der App hinterlegt — nur ändern, falls du ein eigenes '
+                        'Google-Cloud-Projekt verwenden möchtest (siehe README).',
                         style: TextStyle(
                           fontSize: 13,
                           color: Theme.of(context).colorScheme.outline,
