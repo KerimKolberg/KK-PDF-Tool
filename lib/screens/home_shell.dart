@@ -1,11 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
+import '../services/document_store.dart';
+import '../services/incoming_file_service.dart';
+import 'import_shared_file_screen.dart';
 import 'library_screen.dart';
 import 'settings_screen.dart';
 import 'tools_screen.dart';
 
 /// Top-level navigation shell: Library and Tools tabs, with Settings
-/// reachable from either.
+/// reachable from either. Also watches for files the OS hands to the app
+/// via "Open with" / the share sheet and offers to import them.
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
 
@@ -15,11 +21,36 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   int _index = 0;
+  final _store = DocumentStore();
+  final _incomingFiles = IncomingFileService();
+  StreamSubscription<IncomingFile>? _incomingSub;
 
   static const _tabs = [
     LibraryScreen(),
     ToolsScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _incomingFiles.takeInitialFile().then(_offerImport);
+    _incomingSub = _incomingFiles.onFileReceived.listen(_offerImport);
+  }
+
+  @override
+  void dispose() {
+    _incomingSub?.cancel();
+    super.dispose();
+  }
+
+  void _offerImport(IncomingFile? file) {
+    if (file == null || !mounted) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ImportSharedFileScreen(file: file, store: _store),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

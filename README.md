@@ -18,6 +18,9 @@ für Android (APK) und Windows (EXE).
   `Downloads/DocScanner` (Android: über die MediaStore-API, Windows: im
   echten Downloads-Ordner)
 - Bibliotheksansicht aller gespeicherten Scans, umbenennen, löschen, teilen
+- **"Öffnen mit" / Teilen (nur Android):** DocScanner erscheint in der
+  "Öffnen mit"-Liste und im Teilen-Menü für PDFs und Bilder aus anderen
+  Apps (z. B. Dateien-App) und importiert sie in die Bibliothek.
 - **Werkzeuge-Tab:**
   - *Umwandeln:* Bilder → PDF, PDF → Bilder, PDF → PowerPoint (offline,
     Bild-Folien), PowerPoint → PDF ☁️, Word → PDF ☁️, PDF → Word ☁️ (OCR),
