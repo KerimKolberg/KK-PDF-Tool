@@ -19,18 +19,33 @@ für Android (APK) und Windows (EXE).
   echten Downloads-Ordner)
 - Bibliotheksansicht aller gespeicherten Scans, umbenennen, löschen, teilen
 - **Werkzeuge-Tab:**
-  - Bilder → PDF (mehrere Bilder zu einer PDF zusammenfassen)
-  - PDF → Bilder (jede Seite als Bild exportieren)
-  - PDFs zusammenführen (mehrere Dateien in gewählter Reihenfolge verbinden)
-  - PDF aufteilen (nach einem oder mehreren Seitenbereichen)
-  - PDF → PowerPoint (offline: jede Seite als Bild-Folie, nicht text-editierbar)
-  - PowerPoint → PDF (☁️ über das eigene Google-Konto, siehe unten)
-  - PDF → Word (☁️ über das eigene Google-Konto, mit Texterkennung/OCR)
+  - *Umwandeln:* Bilder → PDF, PDF → Bilder, PDF → PowerPoint (offline,
+    Bild-Folien), PowerPoint → PDF ☁️, Word → PDF ☁️, PDF → Word ☁️ (OCR),
+    HTML → PDF ☁️
+  - *Bearbeiten:* PDFs zusammenführen, PDF aufteilen (nach Seitenbereich),
+    PDF drehen (ganze Datei(en) oder einzelne Seiten/Bereiche), PDF
+    zuschneiden (Ränder entfernen, auf allen oder gewählten Seiten),
+    Wasserzeichen (Text diagonal über jede Seite), PDF komprimieren
+    (Dateigröße verkleinern)
 
 Die offline PDF-Werkzeuge rendern Seiten neu (Rasterung), da es keine reine
 Dart/Flutter-Bibliothek gibt, die Vektor-Seiten zwischen bestehenden PDFs
 kopieren kann. Ergebnis sieht optisch identisch aus, ist aber nicht mehr
-text-durchsuchbar.
+text-durchsuchbar. Komprimieren nutzt genau das als Vorteil: durch
+Neu-Rendern in niedrigerer Auflösung/JPEG-Qualität wird die Datei kleiner.
+
+### Kein Passwortschutz (hinzufügen/entfernen)
+
+Bewusst nicht eingebaut: Ein PDF mit einem echten, von Adobe & Co.
+akzeptierten Passwort zu verschlüsseln, erfordert eine korrekte
+Implementierung der PDF-Verschlüsselungsspezifikation (RC4/AES nach PDF-Norm)
+— dafür gibt es keine fertige, geprüfte Dart/Flutter-Bibliothek, und
+selbst geschriebene Kryptografie für ein Sicherheitsfeature ist ein zu
+großes Risiko für falsche Sicherheit. Passwort-Entfernen scheitert
+zusätzlich daran, dass die zum Rendern genutzte `printing`-Bibliothek keine
+passwortgeschützten PDFs öffnen kann. Der von dir vorgeschlagene Weg (PDF
+mit Passwort in einem Viewer öffnen, dann "Drucken" → "Als PDF speichern"
+ohne Passwort) ist tatsächlich der richtige, verlässliche Workaround dafür.
 
 ## Google-Verbindung einrichten (für PowerPoint→PDF und PDF→Word)
 

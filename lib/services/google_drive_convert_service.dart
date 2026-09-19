@@ -141,6 +141,32 @@ class GoogleDriveConvertService {
     );
   }
 
+  /// Converts a .docx file to PDF via Google Docs.
+  Future<Uint8List> docxToPdf(Uint8List docxBytes, String fileName) async {
+    await _signInAndAuthorize();
+    final fileId = await _uploadAndConvert(
+      bytes: docxBytes,
+      fileName: fileName,
+      sourceMimeType:
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      targetGoogleMimeType: 'application/vnd.google-apps.document',
+    );
+    return _exportAndDelete(fileId, 'application/pdf');
+  }
+
+  /// Converts an HTML file to PDF via Google Docs (which imports basic HTML
+  /// formatting into a document).
+  Future<Uint8List> htmlToPdf(Uint8List htmlBytes, String fileName) async {
+    await _signInAndAuthorize();
+    final fileId = await _uploadAndConvert(
+      bytes: htmlBytes,
+      fileName: fileName,
+      sourceMimeType: 'text/html',
+      targetGoogleMimeType: 'application/vnd.google-apps.document',
+    );
+    return _exportAndDelete(fileId, 'application/pdf');
+  }
+
   Future<void> signOut() async {
     await _signIn?.signOut();
   }
