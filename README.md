@@ -1,4 +1,4 @@
-# DocScanner
+# KK-PDF-Tool
 
 Eine einfache Dokumentenscanner-App (wie CamScanner) mit **einer** Flutter-Codebasis
 für Android (APK) und Windows (EXE).
@@ -18,7 +18,7 @@ für Android (APK) und Windows (EXE).
   `Downloads/DocScanner` (Android: über die MediaStore-API, Windows: im
   echten Downloads-Ordner)
 - Bibliotheksansicht aller gespeicherten Scans, umbenennen, löschen, teilen
-- **"Öffnen mit" / Teilen (nur Android):** DocScanner erscheint in der
+- **"Öffnen mit" / Teilen (nur Android):** KK-PDF-Tool erscheint in der
   "Öffnen mit"-Liste und im Teilen-Menü für PDFs und Bilder aus anderen
   Apps (z. B. Dateien-App) und importiert sie in die Bibliothek.
 - **Werkzeuge-Tab:**
