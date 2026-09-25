@@ -4,6 +4,7 @@ import 'tools/compress_pdf_screen.dart';
 import 'tools/crop_pdf_screen.dart';
 import 'tools/html_to_pdf_screen.dart';
 import 'tools/images_to_pdf_screen.dart';
+import 'tools/markdown_to_pdf_screen.dart';
 import 'tools/merge_pdf_screen.dart';
 import 'tools/pdf_to_images_screen.dart';
 import 'tools/pdf_to_pptx_screen.dart';
@@ -85,6 +86,12 @@ class ToolsScreen extends StatelessWidget {
         Icons.code,
         (_) => const HtmlToPdfScreen(),
         needsInternet: true,
+      ),
+      _ToolEntry(
+        'Markdown → PDF',
+        'Formatierter Text aus .md-Dateien (offline)',
+        Icons.article_outlined,
+        (_) => const MarkdownToPdfScreen(),
       ),
     ]),
     _ToolSection('Bearbeiten', [

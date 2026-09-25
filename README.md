@@ -24,7 +24,7 @@ für Android (APK) und Windows (EXE).
 - **Werkzeuge-Tab:**
   - *Umwandeln:* Bilder → PDF, PDF → Bilder, PDF → PowerPoint (offline,
     Bild-Folien), PowerPoint → PDF ☁️, Word → PDF ☁️, PDF → Word ☁️ (OCR),
-    HTML → PDF ☁️
+    HTML → PDF ☁️, Markdown → PDF (offline)
   - *Bearbeiten:* PDFs zusammenführen, PDF aufteilen (nach Seitenbereich),
     PDF drehen (ganze Datei(en) oder einzelne Seiten/Bereiche), PDF
     zuschneiden (Ränder entfernen, auf allen oder gewählten Seiten),
@@ -185,3 +185,12 @@ lib/
 - PowerPoint → PDF und PDF → Word brauchen Internet und ein Google-Konto.
 - Kein automatischer Cloud-Sync der Bibliothek, alles bleibt sonst lokal auf
   dem Gerät.
+- **Kein direkter Import aus GoodNotes/Notability & Co.:** Deren `.goodnotes`/
+  `.note`-Dateiformate sind proprietär und nicht öffentlich dokumentiert -
+  ein zuverlässiger Parser dafür existiert nicht (gleiches Risiko wie beim
+  Passwortschutz oben: selbst reverse-engineert wäre das fragil und könnte
+  bei jedem App-Update kaputtgehen). Beide Apps haben aber selbst einen
+  "Als PDF exportieren"-Menüpunkt (Freihandschrift bleibt dabei sogar als
+  Vektor erhalten, nicht nur als Bild) - die dabei entstandene PDF kann
+  KK-PDF-Tool danach ganz normal weiterverarbeiten (zusammenführen, drehen,
+  Wasserzeichen, komprimieren, …).
