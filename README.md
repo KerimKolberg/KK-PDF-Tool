@@ -30,6 +30,12 @@ für Android (APK) und Windows (EXE).
     zuschneiden (Ränder entfernen, auf allen oder gewählten Seiten),
     Wasserzeichen (Text diagonal über jede Seite), PDF komprimieren
     (Dateigröße verkleinern)
+  - Jedes dieser Werkzeuge bietet nach dem Umwandeln optional an, die
+    gewählte(n) Quelldatei(en) gleich mit zu löschen (Checkbox, standardmäßig
+    aus). Wird ein Bild/eine Datei aus einer Cloud-Quelle wie Google Fotos
+    gewählt, kann Android nur eine Kopie liefern - in dem Fall wird nichts
+    stillschweigend "gelöscht", sondern gemeldet, dass das Original nicht
+    entfernt werden konnte.
 
 Die offline PDF-Werkzeuge rendern Seiten neu (Rasterung), da es keine reine
 Dart/Flutter-Bibliothek gibt, die Vektor-Seiten zwischen bestehenden PDFs

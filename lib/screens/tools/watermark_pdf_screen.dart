@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
 import '../../services/downloads_export_service.dart';
+import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
+import '../../widgets/delete_originals_switch.dart';
 
 /// Stamps a diagonal text watermark across every page of a PDF.
 class WatermarkPdfScreen extends StatefulWidget {
@@ -19,8 +21,10 @@ class _WatermarkPdfScreenState extends State<WatermarkPdfScreen> {
   final _downloadsExport = DownloadsExportService();
   final _textController = TextEditingController(text: 'ENTWURF');
   String? _fileName;
+  String? _sourcePath;
   Uint8List? _pdfBytes;
   double _opacity = 0.35;
+  bool _deleteOriginal = false;
   bool _busy = false;
 
   Future<void> _pickPdf() async {
@@ -30,6 +34,7 @@ class _WatermarkPdfScreenState extends State<WatermarkPdfScreen> {
     final bytes = await file.readAsBytes();
     setState(() {
       _fileName = p.basenameWithoutExtension(file.name);
+      _sourcePath = file.path;
       _pdfBytes = bytes;
     });
   }
@@ -48,10 +53,15 @@ class _WatermarkPdfScreenState extends State<WatermarkPdfScreen> {
       );
       final location =
           await _downloadsExport.export(result, '${name}_wasserzeichen.pdf');
+      var message = 'Gespeichert unter $location';
+      if (_deleteOriginal) {
+        final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
+        if (notDeleted.isNotEmpty) {
+          message += ' · Original konnte nicht gelöscht werden';
+        }
+      }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gespeichert unter $location')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
       Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
@@ -108,6 +118,11 @@ class _WatermarkPdfScreenState extends State<WatermarkPdfScreen> {
                 min: 0.1,
                 max: 0.7,
                 onChanged: _busy ? null : (v) => setState(() => _opacity = v),
+              ),
+              DeleteOriginalsSwitch(
+                label: 'Originaldatei danach löschen',
+                value: _deleteOriginal,
+                onChanged: (v) => setState(() => _deleteOriginal = v),
               ),
               const SizedBox(height: 12),
               FilledButton.icon(

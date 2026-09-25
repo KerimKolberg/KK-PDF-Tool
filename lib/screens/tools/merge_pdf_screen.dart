@@ -5,12 +5,15 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
 import '../../services/downloads_export_service.dart';
+import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
+import '../../widgets/delete_originals_switch.dart';
 
 class _PickedPdf {
   final String name;
+  final String? path;
   final Uint8List bytes;
-  _PickedPdf(this.name, this.bytes);
+  _PickedPdf(this.name, this.path, this.bytes);
 }
 
 /// Merges several picked PDFs, in a user-chosen order, into one PDF.
@@ -24,6 +27,7 @@ class MergePdfScreen extends StatefulWidget {
 class _MergePdfScreenState extends State<MergePdfScreen> {
   final _downloadsExport = DownloadsExportService();
   final List<_PickedPdf> _pdfs = [];
+  bool _deleteOriginals = false;
   bool _busy = false;
 
   Future<void> _addPdfs() async {
@@ -32,7 +36,7 @@ class _MergePdfScreenState extends State<MergePdfScreen> {
     if (files.isEmpty) return;
     final picked = await Future.wait(files.map((f) async {
       final bytes = await f.readAsBytes();
-      return _PickedPdf(p.basenameWithoutExtension(f.name), bytes);
+      return _PickedPdf(p.basenameWithoutExtension(f.name), f.path, bytes);
     }));
     setState(() => _pdfs.addAll(picked));
   }
@@ -50,10 +54,17 @@ class _MergePdfScreenState extends State<MergePdfScreen> {
         [for (final pdf in _pdfs) pdf.bytes],
       );
       final location = await _downloadsExport.export(merged, '$title.pdf');
+      var message = 'Zusammengeführt und gespeichert unter $location';
+      if (_deleteOriginals) {
+        final notDeleted = await OriginalFilesCleanupService.deleteAll(
+          [for (final pdf in _pdfs) pdf.path],
+        );
+        if (notDeleted.isNotEmpty) {
+          message += ' · ${notDeleted.length} Original(e) konnten nicht gelöscht werden';
+        }
+      }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Zusammengeführt und gespeichert unter $location')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
       Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
@@ -128,29 +139,39 @@ class _MergePdfScreenState extends State<MergePdfScreen> {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(12),
-          child: Row(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _busy ? null : _addPdfs,
-                  icon: const Icon(Icons.picture_as_pdf_outlined),
-                  label: const Text('PDFs hinzufügen'),
+              if (_pdfs.isNotEmpty)
+                DeleteOriginalsSwitch(
+                  value: _deleteOriginals,
+                  onChanged: (v) => setState(() => _deleteOriginals = v),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: _pdfs.length < 2 || _busy ? null : _merge,
-                  icon: _busy
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Icon(Icons.merge_type),
-                  label: Text(_busy ? 'Führe zusammen…' : 'Zusammenführen'),
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _busy ? null : _addPdfs,
+                      icon: const Icon(Icons.picture_as_pdf_outlined),
+                      label: const Text('PDFs hinzufügen'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: _pdfs.length < 2 || _busy ? null : _merge,
+                      icon: _busy
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Icon(Icons.merge_type),
+                      label: Text(_busy ? 'Führe zusammen…' : 'Zusammenführen'),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

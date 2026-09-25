@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
 import '../../services/downloads_export_service.dart';
+import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
+import '../../widgets/delete_originals_switch.dart';
 
 class _PageRange {
   final TextEditingController from;
@@ -27,9 +29,11 @@ class SplitPdfScreen extends StatefulWidget {
 class _SplitPdfScreenState extends State<SplitPdfScreen> {
   final _downloadsExport = DownloadsExportService();
   String? _fileName;
+  String? _sourcePath;
   Uint8List? _pdfBytes;
   int? _pageCount;
   final List<_PageRange> _ranges = [];
+  bool _deleteOriginal = false;
   bool _busy = false;
   bool _counting = false;
 
@@ -40,6 +44,7 @@ class _SplitPdfScreenState extends State<SplitPdfScreen> {
     final bytes = await file.readAsBytes();
     setState(() {
       _fileName = p.basenameWithoutExtension(file.name);
+      _sourcePath = file.path;
       _pdfBytes = bytes;
       _pageCount = null;
       _ranges
@@ -112,14 +117,16 @@ class _SplitPdfScreenState extends State<SplitPdfScreen> {
           '$name${suffix}_s$start-$end.pdf',
         );
       }
+      var message =
+          '${parsedRanges.length} Datei(en) gespeichert${lastLocation != null ? ' in ${_folderOf(lastLocation)}' : ''}';
+      if (_deleteOriginal) {
+        final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
+        if (notDeleted.isNotEmpty) {
+          message += ' · Original konnte nicht gelöscht werden';
+        }
+      }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '${parsedRanges.length} Datei(en) gespeichert${lastLocation != null ? ' in ${_folderOf(lastLocation)}' : ''}',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
       Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
@@ -220,17 +227,27 @@ class _SplitPdfScreenState extends State<SplitPdfScreen> {
           : SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(12),
-                child: FilledButton.icon(
-                  onPressed: _busy ? null : _split,
-                  icon: _busy
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Icon(Icons.content_cut),
-                  label: Text(_busy ? 'Teile auf…' : 'Aufteilen & speichern'),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DeleteOriginalsSwitch(
+                      label: 'Originaldatei danach löschen',
+                      value: _deleteOriginal,
+                      onChanged: (v) => setState(() => _deleteOriginal = v),
+                    ),
+                    FilledButton.icon(
+                      onPressed: _busy ? null : _split,
+                      icon: _busy
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Icon(Icons.content_cut),
+                      label: Text(_busy ? 'Teile auf…' : 'Aufteilen & speichern'),
+                    ),
+                  ],
                 ),
               ),
             ),

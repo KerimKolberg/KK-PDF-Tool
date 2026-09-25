@@ -6,6 +6,8 @@ import 'package:path/path.dart' as p;
 
 import '../../services/downloads_export_service.dart';
 import '../../services/google_drive_convert_service.dart';
+import '../../services/original_files_cleanup_service.dart';
+import '../../widgets/delete_originals_switch.dart';
 
 /// Generic "pick a file -> convert via Google Drive -> save" screen, shared
 /// by every cloud-based conversion tool so the flow and error handling stay
@@ -46,7 +48,9 @@ class _CloudConvertScreenState extends State<CloudConvertScreen> {
   final _drive = GoogleDriveConvertService();
   final _downloadsExport = DownloadsExportService();
   String? _fileName;
+  String? _sourcePath;
   Uint8List? _sourceBytes;
+  bool _deleteOriginal = false;
   bool _busy = false;
 
   Future<void> _pickFile() async {
@@ -55,6 +59,7 @@ class _CloudConvertScreenState extends State<CloudConvertScreen> {
     final bytes = await file.readAsBytes();
     setState(() {
       _fileName = p.basenameWithoutExtension(file.name);
+      _sourcePath = file.path;
       _sourceBytes = bytes;
     });
   }
@@ -74,10 +79,15 @@ class _CloudConvertScreenState extends State<CloudConvertScreen> {
         result,
         '$name.${widget.outputExtension}',
       );
+      var message = 'Gespeichert unter $location';
+      if (_deleteOriginal) {
+        final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
+        if (notDeleted.isNotEmpty) {
+          message += ' · Original konnte nicht gelöscht werden';
+        }
+      }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gespeichert unter $location')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
       Navigator.of(context).pop();
     } on GoogleDriveNotConfiguredException catch (e) {
       if (!mounted) return;
@@ -135,6 +145,11 @@ class _CloudConvertScreenState extends State<CloudConvertScreen> {
                   onPressed: _busy ? null : _pickFile,
                   child: const Text('Ändern'),
                 ),
+              ),
+              DeleteOriginalsSwitch(
+                label: 'Originaldatei danach löschen',
+                value: _deleteOriginal,
+                onChanged: (v) => setState(() => _deleteOriginal = v),
               ),
               const SizedBox(height: 12),
               FilledButton.icon(

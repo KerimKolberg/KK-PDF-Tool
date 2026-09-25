@@ -6,7 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
 import '../../services/downloads_export_service.dart';
+import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
+import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/rect_crop_overlay.dart';
 
 /// Lets the user draw a crop rectangle on the first page's preview, then
@@ -25,11 +27,13 @@ class _CropPdfScreenState extends State<CropPdfScreen> {
   final _pageSpecController = TextEditingController();
 
   String? _fileName;
+  String? _sourcePath;
   Uint8List? _pdfBytes;
   Uint8List? _previewImage;
   double _previewW = 0;
   double _previewH = 0;
   bool _loadingPreview = false;
+  bool _deleteOriginal = false;
   bool _busy = false;
 
   Future<void> _pickPdf() async {
@@ -39,6 +43,7 @@ class _CropPdfScreenState extends State<CropPdfScreen> {
     final bytes = await file.readAsBytes();
     setState(() {
       _fileName = p.basenameWithoutExtension(file.name);
+      _sourcePath = file.path;
       _pdfBytes = bytes;
       _previewImage = null;
       _loadingPreview = true;
@@ -112,10 +117,15 @@ class _CropPdfScreenState extends State<CropPdfScreen> {
       );
       final location =
           await _downloadsExport.export(result, '${name}_zugeschnitten.pdf');
+      var message = 'Gespeichert unter $location';
+      if (_deleteOriginal) {
+        final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
+        if (notDeleted.isNotEmpty) {
+          message += ' · Original konnte nicht gelöscht werden';
+        }
+      }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gespeichert unter $location')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
       Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
@@ -185,6 +195,11 @@ class _CropPdfScreenState extends State<CropPdfScreen> {
                         border: OutlineInputBorder(),
                         isDense: true,
                       ),
+                    ),
+                    DeleteOriginalsSwitch(
+                      label: 'Originaldatei danach löschen',
+                      value: _deleteOriginal,
+                      onChanged: (v) => setState(() => _deleteOriginal = v),
                     ),
                     const SizedBox(height: 10),
                     FilledButton.icon(

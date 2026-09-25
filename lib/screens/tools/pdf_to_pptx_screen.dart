@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
 import '../../services/downloads_export_service.dart';
+import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
+import '../../widgets/delete_originals_switch.dart';
 
 /// Packs every page of a picked PDF as a full-slide picture into a new
 /// .pptx file. This is a mechanical "one page per slide" export, not a real
@@ -22,7 +24,9 @@ class PdfToPptxScreen extends StatefulWidget {
 class _PdfToPptxScreenState extends State<PdfToPptxScreen> {
   final _downloadsExport = DownloadsExportService();
   String? _fileName;
+  String? _sourcePath;
   Uint8List? _pdfBytes;
+  bool _deleteOriginal = false;
   bool _busy = false;
 
   Future<void> _pickPdf() async {
@@ -32,6 +36,7 @@ class _PdfToPptxScreenState extends State<PdfToPptxScreen> {
     final bytes = await file.readAsBytes();
     setState(() {
       _fileName = p.basenameWithoutExtension(file.name);
+      _sourcePath = file.path;
       _pdfBytes = bytes;
     });
   }
@@ -44,10 +49,15 @@ class _PdfToPptxScreenState extends State<PdfToPptxScreen> {
     try {
       final pptx = await PdfToolsService.toPptx(bytes);
       final location = await _downloadsExport.export(pptx, '$name.pptx');
+      var message = 'Gespeichert unter $location';
+      if (_deleteOriginal) {
+        final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
+        if (notDeleted.isNotEmpty) {
+          message += ' · Original konnte nicht gelöscht werden';
+        }
+      }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gespeichert unter $location')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
       Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
@@ -103,6 +113,11 @@ class _PdfToPptxScreenState extends State<PdfToPptxScreen> {
                   onPressed: _busy ? null : _pickPdf,
                   child: const Text('Ändern'),
                 ),
+              ),
+              DeleteOriginalsSwitch(
+                label: 'Originaldatei danach löschen',
+                value: _deleteOriginal,
+                onChanged: (v) => setState(() => _deleteOriginal = v),
               ),
               const SizedBox(height: 12),
               FilledButton.icon(

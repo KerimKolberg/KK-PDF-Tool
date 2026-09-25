@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
 import '../../services/downloads_export_service.dart';
+import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
+import '../../widgets/delete_originals_switch.dart';
 
 enum _CompressLevel { low, medium, high }
 
@@ -40,8 +42,10 @@ class CompressPdfScreen extends StatefulWidget {
 class _CompressPdfScreenState extends State<CompressPdfScreen> {
   final _downloadsExport = DownloadsExportService();
   String? _fileName;
+  String? _sourcePath;
   Uint8List? _pdfBytes;
   _CompressLevel _level = _CompressLevel.medium;
+  bool _deleteOriginal = false;
   bool _busy = false;
 
   Future<void> _pickPdf() async {
@@ -51,6 +55,7 @@ class _CompressPdfScreenState extends State<CompressPdfScreen> {
     final bytes = await file.readAsBytes();
     setState(() {
       _fileName = p.basenameWithoutExtension(file.name);
+      _sourcePath = file.path;
       _pdfBytes = bytes;
     });
   }
@@ -73,12 +78,17 @@ class _CompressPdfScreenState extends State<CompressPdfScreen> {
       );
       final location =
           await _downloadsExport.export(compressed, '${name}_komprimiert.pdf');
-      if (!mounted) return;
       final before = _formatSize(bytes.length);
       final after = _formatSize(compressed.length);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$before → $after · gespeichert unter $location')),
-      );
+      var message = '$before → $after · gespeichert unter $location';
+      if (_deleteOriginal) {
+        final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
+        if (notDeleted.isNotEmpty) {
+          message += ' · Original konnte nicht gelöscht werden';
+        }
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
       Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
@@ -131,6 +141,11 @@ class _CompressPdfScreenState extends State<CompressPdfScreen> {
                       ),
                   ],
                 ),
+              ),
+              DeleteOriginalsSwitch(
+                label: 'Originaldatei danach löschen',
+                value: _deleteOriginal,
+                onChanged: (v) => setState(() => _deleteOriginal = v),
               ),
               const SizedBox(height: 12),
               FilledButton.icon(

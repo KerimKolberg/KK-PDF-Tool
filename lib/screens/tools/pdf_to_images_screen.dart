@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
 import '../../services/downloads_export_service.dart';
+import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
+import '../../widgets/delete_originals_switch.dart';
 
 /// Rasterizes every page of a picked PDF into a JPEG image and exports
 /// them all into a per-document subfolder under Downloads/DocScanner.
@@ -19,8 +21,10 @@ class PdfToImagesScreen extends StatefulWidget {
 class _PdfToImagesScreenState extends State<PdfToImagesScreen> {
   final _downloadsExport = DownloadsExportService();
   String? _fileName;
+  String? _sourcePath;
   Uint8List? _pdfBytes;
   List<Uint8List>? _previewImages;
+  bool _deleteOriginal = false;
   bool _busy = false;
 
   Future<void> _pickPdf() async {
@@ -30,6 +34,7 @@ class _PdfToImagesScreenState extends State<PdfToImagesScreen> {
     final bytes = await file.readAsBytes();
     setState(() {
       _fileName = p.basenameWithoutExtension(file.name);
+      _sourcePath = file.path;
       _pdfBytes = bytes;
       _previewImages = null;
     });
@@ -69,14 +74,16 @@ class _PdfToImagesScreenState extends State<PdfToImagesScreen> {
           '${name}_seite_${(i + 1).toString().padLeft(2, '0')}.png',
         );
       }
+      var message =
+          '${images.length} Bild(er) gespeichert${lastLocation != null ? ' in ${_folderOf(lastLocation)}' : ''}';
+      if (_deleteOriginal) {
+        final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
+        if (notDeleted.isNotEmpty) {
+          message += ' · Original konnte nicht gelöscht werden';
+        }
+      }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '${images.length} Bild(er) gespeichert${lastLocation != null ? ' in ${_folderOf(lastLocation)}' : ''}',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
       Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
@@ -140,21 +147,31 @@ class _PdfToImagesScreenState extends State<PdfToImagesScreen> {
           : SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(12),
-                child: FilledButton.icon(
-                  onPressed: _busy ? null : _exportAll,
-                  icon: _busy
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Icon(Icons.download_outlined),
-                  label: Text(
-                    _busy
-                        ? 'Exportiere…'
-                        : '${_previewImages!.length} Bild(er) speichern',
-                  ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DeleteOriginalsSwitch(
+                      label: 'Originaldatei danach löschen',
+                      value: _deleteOriginal,
+                      onChanged: (v) => setState(() => _deleteOriginal = v),
+                    ),
+                    FilledButton.icon(
+                      onPressed: _busy ? null : _exportAll,
+                      icon: _busy
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Icon(Icons.download_outlined),
+                      label: Text(
+                        _busy
+                            ? 'Exportiere…'
+                            : '${_previewImages!.length} Bild(er) speichern',
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
