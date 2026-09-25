@@ -12,6 +12,7 @@ import 'tools/pdf_to_word_screen.dart';
 import 'tools/pptx_to_pdf_screen.dart';
 import 'tools/rotate_pdf_screen.dart';
 import 'tools/split_pdf_screen.dart';
+import 'tools/text_from_image_screen.dart';
 import 'tools/watermark_pdf_screen.dart';
 import 'tools/word_to_pdf_screen.dart';
 
@@ -92,6 +93,13 @@ class ToolsScreen extends StatelessWidget {
         'Formatierter Text aus .md-Dateien (offline)',
         Icons.article_outlined,
         (_) => const MarkdownToPdfScreen(),
+      ),
+      _ToolEntry(
+        'Text aus Bild (OCR)',
+        'Text aus einem Foto erkennen, kopieren oder als .txt speichern',
+        Icons.text_snippet_outlined,
+        (_) => const TextFromImageScreen(),
+        needsInternet: true,
       ),
     ]),
     _ToolSection('Bearbeiten', [

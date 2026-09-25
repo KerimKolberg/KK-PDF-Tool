@@ -14,6 +14,10 @@ für Android (APK) und Windows (EXE).
   umschaltbar, mit Standardwert in den Einstellungen)
 - Drehen, Filter (Original, Farbe+, Graustufen, Schwarz/Weiß)
 - Mehrere Seiten zu einem Dokument zusammenfassen
+- **Ausweis scannen:** Vorder- und Rückseite nacheinander aufnehmen (mit
+  gleichem Zuschnitt/Filter-Flow wie ein normaler Scan) - beide landen
+  zusammen, beschriftet, auf einer einzigen PDF-Seite statt auf zwei
+  getrennten Seiten.
 - Export als Mehrseiten-PDF, zusätzlich automatisch abgelegt unter
   `Downloads/DocScanner` (Android: über die MediaStore-API, Windows: im
   echten Downloads-Ordner)
@@ -24,7 +28,7 @@ für Android (APK) und Windows (EXE).
 - **Werkzeuge-Tab:**
   - *Umwandeln:* Bilder → PDF, PDF → Bilder, PDF → PowerPoint (offline,
     Bild-Folien), PowerPoint → PDF ☁️, Word → PDF ☁️, PDF → Word ☁️ (OCR),
-    HTML → PDF ☁️, Markdown → PDF (offline)
+    HTML → PDF ☁️, Markdown → PDF (offline), Text aus Bild (OCR) ☁️
   - *Bearbeiten:* PDFs zusammenführen, PDF aufteilen (nach Seitenbereich),
     PDF drehen (ganze Datei(en) oder einzelne Seiten/Bereiche), PDF
     zuschneiden (Ränder entfernen, auf allen oder gewählten Seiten),
@@ -56,7 +60,7 @@ passwortgeschützten PDFs öffnen kann. Der von dir vorgeschlagene Weg (PDF
 mit Passwort in einem Viewer öffnen, dann "Drucken" → "Als PDF speichern"
 ohne Passwort) ist tatsächlich der richtige, verlässliche Workaround dafür.
 
-## Google-Verbindung einrichten (für PowerPoint→PDF und PDF→Word)
+## Google-Verbindung einrichten (für PowerPoint→PDF, PDF→Word, Text aus Bild)
 
 Diese beiden Werkzeuge laden die Datei kurz in *dein eigenes* Google Drive
 hoch, lassen Google sie umwandeln, und laden das Ergebnis wieder herunter

@@ -6,6 +6,7 @@ import '../models/scan_document.dart';
 import '../services/document_store.dart';
 import 'document_viewer_screen.dart';
 import 'home_shell.dart';
+import 'id_scan_screen.dart';
 import 'scan_flow_screen.dart';
 
 class LibraryScreen extends StatefulWidget {
@@ -41,6 +42,39 @@ class _LibraryScreenState extends State<LibraryScreen> {
       MaterialPageRoute(builder: (_) => ScanFlowScreen(store: _store)),
     );
     _reload();
+  }
+
+  Future<void> _newIdScan() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => IdScanScreen(store: _store)),
+    );
+    _reload();
+  }
+
+  Future<void> _showScanOptions() async {
+    final choice = await showModalBottomSheet<VoidCallback>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.add_a_photo_outlined),
+              title: const Text('Neuer Scan'),
+              subtitle: const Text('Ein oder mehrere Seiten'),
+              onTap: () => Navigator.pop(context, _newScan),
+            ),
+            ListTile(
+              leading: const Icon(Icons.badge_outlined),
+              title: const Text('Ausweis scannen'),
+              subtitle: const Text('Vorder- und Rückseite auf einer Seite'),
+              onTap: () => Navigator.pop(context, _newIdScan),
+            ),
+          ],
+        ),
+      ),
+    );
+    choice?.call();
   }
 
   Future<void> _openDocument(ScanDocument doc) async {
@@ -124,7 +158,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   ),
                 ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _newScan,
+        onPressed: _showScanOptions,
         icon: const Icon(Icons.add_a_photo),
         label: const Text('Neuer Scan'),
       ),

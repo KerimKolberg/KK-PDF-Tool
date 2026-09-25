@@ -167,6 +167,26 @@ class GoogleDriveConvertService {
     return _exportAndDelete(fileId, 'application/pdf');
   }
 
+  /// Extracts text from a photo (jpg/png/webp) using Google Drive's
+  /// built-in OCR: uploads it while asking Drive to convert it straight
+  /// into a Google Doc (which OCRs any recognised text), then exports that
+  /// doc as plain text.
+  Future<String> imageToText(
+    Uint8List imageBytes,
+    String fileName, {
+    String mimeType = 'image/jpeg',
+  }) async {
+    await _signInAndAuthorize();
+    final fileId = await _uploadAndConvert(
+      bytes: imageBytes,
+      fileName: fileName,
+      sourceMimeType: mimeType,
+      targetGoogleMimeType: 'application/vnd.google-apps.document',
+    );
+    final bytes = await _exportAndDelete(fileId, 'text/plain');
+    return utf8.decode(bytes);
+  }
+
   Future<void> signOut() async {
     await _signIn?.signOut();
   }
