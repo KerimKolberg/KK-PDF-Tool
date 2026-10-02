@@ -5,9 +5,9 @@ import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'package:flutter/material.dart';
 
 import '../models/scan_document.dart';
+import '../services/document_builder.dart';
 import '../services/document_store.dart';
 import '../services/downloads_export_service.dart';
-import '../services/pdf_service.dart';
 import '../services/settings_service.dart';
 import 'capture_screen.dart';
 import 'crop_screen.dart';
@@ -17,7 +17,10 @@ import 'crop_screen.dart';
 class ScanFlowScreen extends StatefulWidget {
   final DocumentStore store;
 
-  const ScanFlowScreen({super.key, required this.store});
+  /// Library folder the new document is saved into (null = none).
+  final String? folder;
+
+  const ScanFlowScreen({super.key, required this.store, this.folder});
 
   @override
   State<ScanFlowScreen> createState() => _ScanFlowScreenState();
@@ -28,6 +31,7 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
   final _settings = SettingsService();
   final _downloadsExport = DownloadsExportService();
   bool _saving = false;
+  String? _savingLabel;
   bool _autoScanning = false;
   bool _cropEnabled = true;
 
@@ -129,11 +133,21 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
 
     setState(() => _saving = true);
     try {
-      final pdfBytes = await PdfService.buildPdf(_pages);
+      final built = await DocumentBuilder.build(
+        _pages,
+        onProgress: (done, total) {
+          if (mounted) {
+            setState(() => _savingLabel = 'Text ${done < total ? done + 1 : total}/$total…');
+          }
+        },
+      );
+      final pdfBytes = built.pdfBytes;
       final doc = await widget.store.createDocument(
         title: title,
-        pageJpegBytes: _pages,
+        pageJpegBytes: built.pages,
         pdfBytes: pdfBytes,
+        text: built.text,
+        folder: widget.folder,
       );
       String? location;
       try {
@@ -345,7 +359,7 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
                                 strokeWidth: 2, color: Colors.white),
                           )
                         : const Icon(Icons.save),
-                    label: Text(_saving ? 'Speichere…' : 'Speichern'),
+                    label: Text(_saving ? (_savingLabel ?? 'Speichere…') : 'Speichern'),
                   ),
                 ),
               ],

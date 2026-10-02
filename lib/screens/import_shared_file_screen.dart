@@ -3,9 +3,9 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import '../services/document_builder.dart';
 import '../services/document_store.dart';
 import '../services/incoming_file_service.dart';
-import '../services/pdf_service.dart';
 import '../services/pdf_tools_service.dart';
 import 'document_viewer_screen.dart';
 
@@ -56,20 +56,24 @@ class _ImportSharedFileScreenState extends State<ImportSharedFileScreen> {
       final sourceBytes = await File(widget.file.path).readAsBytes();
       final Uint8List pdfBytes;
       final List<Uint8List> pageJpegs;
+      String? text;
 
       if (widget.file.isPdf) {
         pdfBytes = sourceBytes;
         final pages = await PdfToolsService.rasterPages(sourceBytes, dpi: 120);
         pageJpegs = pages;
       } else {
-        pageJpegs = [sourceBytes];
-        pdfBytes = await PdfService.buildPdf([sourceBytes]);
+        final built = await DocumentBuilder.build([sourceBytes]);
+        pageJpegs = built.pages;
+        pdfBytes = built.pdfBytes;
+        text = built.text;
       }
 
       final doc = await widget.store.createDocument(
         title: title,
         pageJpegBytes: pageJpegs,
         pdfBytes: pdfBytes,
+        text: text,
       );
 
       if (!mounted) return;

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import 'tools/compress_pdf_screen.dart';
@@ -6,11 +8,14 @@ import 'tools/html_to_pdf_screen.dart';
 import 'tools/images_to_pdf_screen.dart';
 import 'tools/markdown_to_pdf_screen.dart';
 import 'tools/merge_pdf_screen.dart';
+import 'tools/page_numbers_screen.dart';
 import 'tools/pdf_to_images_screen.dart';
 import 'tools/pdf_to_pptx_screen.dart';
 import 'tools/pdf_to_word_screen.dart';
 import 'tools/pptx_to_pdf_screen.dart';
 import 'tools/rotate_pdf_screen.dart';
+import 'tools/searchable_pdf_screen.dart';
+import 'tools/sign_pdf_screen.dart';
 import 'tools/split_pdf_screen.dart';
 import 'tools/text_from_image_screen.dart';
 import 'tools/watermark_pdf_screen.dart';
@@ -22,12 +27,14 @@ class _ToolEntry {
   final IconData icon;
   final WidgetBuilder builder;
   final bool needsInternet;
+  final bool androidOnly;
   const _ToolEntry(
     this.title,
     this.subtitle,
     this.icon,
     this.builder, {
     this.needsInternet = false,
+    this.androidOnly = false,
   });
 }
 
@@ -99,10 +106,29 @@ class ToolsScreen extends StatelessWidget {
         'Text aus einem Foto erkennen, kopieren oder als .txt speichern',
         Icons.text_snippet_outlined,
         (_) => const TextFromImageScreen(),
-        needsInternet: true,
+        needsInternet: !Platform.isAndroid,
+      ),
+      _ToolEntry(
+        'PDF durchsuchbar machen',
+        'Gescannte PDF mit unsichtbarer Textebene (offline)',
+        Icons.manage_search,
+        (_) => const SearchablePdfScreen(),
+        androidOnly: true,
       ),
     ]),
     _ToolSection('Bearbeiten', [
+      _ToolEntry(
+        'PDF unterschreiben',
+        'Unterschrift zeichnen und auf Seiten platzieren',
+        Icons.draw_outlined,
+        (_) => const SignPdfScreen(),
+      ),
+      _ToolEntry(
+        'Seitenzahlen & Kopfzeile',
+        'Seitenzahlen, Kopf- und Fußzeile hinzufügen',
+        Icons.format_list_numbered,
+        (_) => const PageNumbersScreen(),
+      ),
       _ToolEntry(
         'PDFs zusammenführen',
         'Mehrere PDFs in einer Reihenfolge verbinden',
@@ -161,6 +187,7 @@ class ToolsScreen extends StatelessWidget {
               ),
             ),
             for (final tool in section.tools)
+              if (!tool.androidOnly || Platform.isAndroid)
               Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: Card(

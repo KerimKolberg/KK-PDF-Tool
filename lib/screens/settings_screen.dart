@@ -15,6 +15,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _settings = SettingsService();
   final _clientIdController = TextEditingController();
   bool _cropEnabled = true;
+  bool _searchablePdf = true;
   bool _loading = true;
 
   @override
@@ -25,10 +26,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _load() async {
     final cropEnabled = await _settings.getCropEnabledDefault();
+    final searchablePdf = await _settings.getSearchablePdfEnabled();
     final clientId = await _settings.getGoogleWebClientId();
     if (!mounted) return;
     setState(() {
       _cropEnabled = cropEnabled;
+      _searchablePdf = searchablePdf;
       _clientIdController.text = clientId ?? '';
       _loading = false;
     });
@@ -48,6 +51,56 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Darstellung', style: Theme.of(context).textTheme.titleSmall),
+                      const SizedBox(height: 8),
+                      ValueListenableBuilder<ThemeMode>(
+                        valueListenable: SettingsService.themeMode,
+                        builder: (context, mode, _) => SegmentedButton<ThemeMode>(
+                          segments: const [
+                            ButtonSegment(
+                              value: ThemeMode.system,
+                              icon: Icon(Icons.brightness_auto_outlined),
+                              label: Text('System'),
+                            ),
+                            ButtonSegment(
+                              value: ThemeMode.light,
+                              icon: Icon(Icons.light_mode_outlined),
+                              label: Text('Hell'),
+                            ),
+                            ButtonSegment(
+                              value: ThemeMode.dark,
+                              icon: Icon(Icons.dark_mode_outlined),
+                              label: Text('Dunkel'),
+                            ),
+                          ],
+                          selected: {mode},
+                          onSelectionChanged: (v) => _settings.setThemeMode(v.first),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                if (Platform.isAndroid) ...[
+                  SwitchListTile(
+                    title: const Text('Durchsuchbare PDFs'),
+                    subtitle: const Text(
+                      'Text wird beim Speichern offline erkannt und unsichtbar in die '
+                      'PDF gelegt - so kannst du darin suchen und Text kopieren.',
+                    ),
+                    value: _searchablePdf,
+                    onChanged: (value) async {
+                      setState(() => _searchablePdf = value);
+                      await _settings.setSearchablePdfEnabled(value);
+                    },
+                  ),
+                  const Divider(height: 1),
+                ],
                 SwitchListTile(
                   title: const Text('Zuschnitt standardmäßig aktiv'),
                   subtitle: const Text(
@@ -76,12 +129,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Google-Verbindung (für PowerPoint → PDF und PDF → Word)',
+                        'Google-Verbindung (für Online-Umwandlungen und Texterkennung unter Windows)',
                         style: Theme.of(context).textTheme.titleSmall,
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Diese beiden Werkzeuge laufen über dein eigenes Google-Konto '
+                        'Die Werkzeuge mit Wolken-Symbol laufen über dein eigenes Google-Konto '
                         '(kostenlos, braucht Internet). Die Client-ID ist bereits fest '
                         'in der App hinterlegt — nur ändern, falls du ein eigenes '
                         'Google-Cloud-Projekt verwenden möchtest (siehe README).',

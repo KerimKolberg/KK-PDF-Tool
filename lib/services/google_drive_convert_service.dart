@@ -187,6 +187,19 @@ class GoogleDriveConvertService {
     return utf8.decode(bytes);
   }
 
+  /// Extracts all text from a (scanned) PDF via Google Docs' OCR.
+  Future<String> pdfToText(Uint8List pdfBytes, String fileName) async {
+    await _signInAndAuthorize();
+    final fileId = await _uploadAndConvert(
+      bytes: pdfBytes,
+      fileName: fileName,
+      sourceMimeType: 'application/pdf',
+      targetGoogleMimeType: 'application/vnd.google-apps.document',
+    );
+    final bytes = await _exportAndDelete(fileId, 'text/plain');
+    return utf8.decode(bytes);
+  }
+
   Future<void> signOut() async {
     await _signIn?.signOut();
   }

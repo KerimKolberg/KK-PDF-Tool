@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 
 import '../../services/downloads_export_service.dart';
 import '../../services/google_drive_convert_service.dart';
+import '../../services/ocr_service.dart';
 import '../../services/original_files_cleanup_service.dart';
 import '../../widgets/delete_originals_switch.dart';
 
@@ -17,9 +18,9 @@ const _mimeByExtension = {
   'webp': 'image/webp',
 };
 
-/// Extracts text from a photo via Google Drive's OCR (the same engine
-/// already used for PDF -> Word), so the result is a plain string the user
-/// can copy or save as .txt - not a searchable-PDF rebuild.
+/// Extracts text from a photo - offline via ML Kit on Android, or via Google
+/// Drive's OCR (the same engine used for PDF -> Word) - as a plain string
+/// the user can copy or save as .txt.
 class TextFromImageScreen extends StatefulWidget {
   const TextFromImageScreen({super.key});
 
@@ -35,6 +36,10 @@ class _TextFromImageScreenState extends State<TextFromImageScreen> {
   Uint8List? _sourceBytes;
   String? _extractedText;
   bool _deleteOriginal = false;
+
+  /// Android can recognise text offline on the device; Windows always uses
+  /// the Google (online) engine.
+  bool _offline = OcrService.isOfflineAvailable;
   bool _busy = false;
 
   Future<void> _pickFile() async {
@@ -57,11 +62,17 @@ class _TextFromImageScreenState extends State<TextFromImageScreen> {
     final ext = p.extension(_sourcePath ?? '').replaceFirst('.', '').toLowerCase();
     setState(() => _busy = true);
     try {
-      final text = await _drive.imageToText(
-        bytes,
-        '$name.${ext.isEmpty ? 'jpg' : ext}',
-        mimeType: _mimeByExtension[ext] ?? 'image/jpeg',
-      );
+      final String text;
+      if (_offline) {
+        final upright = await OcrService.normalizeOrientation(bytes);
+        text = (await OcrService.recognize(upright)).text;
+      } else {
+        text = await _drive.imageToText(
+          bytes,
+          '$name.${ext.isEmpty ? 'jpg' : ext}',
+          mimeType: _mimeByExtension[ext] ?? 'image/jpeg',
+        );
+      }
       if (_deleteOriginal) {
         await OriginalFilesCleanupService.deleteAll([_sourcePath]);
       }
@@ -123,19 +134,41 @@ class _TextFromImageScreenState extends State<TextFromImageScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (OcrService.isOfflineAvailable) ...[
+              SegmentedButton<bool>(
+                segments: const [
+                  ButtonSegment(
+                    value: true,
+                    icon: Icon(Icons.phone_android),
+                    label: Text('Offline'),
+                  ),
+                  ButtonSegment(
+                    value: false,
+                    icon: Icon(Icons.cloud_outlined),
+                    label: Text('Google'),
+                  ),
+                ],
+                selected: {_offline},
+                onSelectionChanged: _busy ? null : (v) => setState(() => _offline = v.first),
+              ),
+              const SizedBox(height: 12),
+            ],
             Card(
               color: Theme.of(context).colorScheme.surfaceContainerHigh,
-              child: const Padding(
-                padding: EdgeInsets.all(16),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
-                    Icon(Icons.cloud_outlined),
-                    SizedBox(width: 12),
+                    Icon(_offline ? Icons.phone_android : Icons.cloud_outlined),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Läuft über dein Google-Konto (kostenlos) und braucht '
-                        'Internet - gleiche Texterkennung wie bei PDF → Word.',
-                        style: TextStyle(fontSize: 13),
+                        _offline
+                            ? 'Läuft direkt auf dem Gerät - ohne Internet und ohne '
+                                'Google-Konto. Für Handschrift ist "Google" oft genauer.'
+                            : 'Läuft über dein Google-Konto (kostenlos) und braucht '
+                                'Internet - gleiche Texterkennung wie bei PDF → Word.',
+                        style: const TextStyle(fontSize: 13),
                       ),
                     ),
                   ],

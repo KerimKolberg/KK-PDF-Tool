@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
 import 'screens/home_shell.dart';
+import 'services/settings_service.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await SettingsService.loadThemeMode();
   runApp(const DocScannerApp());
 }
 
@@ -13,12 +16,16 @@ class DocScannerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'KK-PDF-Tool',
-      debugShowCheckedModeBanner: false,
-      theme: _buildTheme(Brightness.light),
-      darkTheme: _buildTheme(Brightness.dark),
-      home: const HomeShell(),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: SettingsService.themeMode,
+      builder: (context, mode, _) => MaterialApp(
+        title: 'KK-PDF-Tool',
+        debugShowCheckedModeBanner: false,
+        theme: _buildTheme(Brightness.light),
+        darkTheme: _buildTheme(Brightness.dark),
+        themeMode: mode,
+        home: const HomeShell(),
+      ),
     );
   }
 

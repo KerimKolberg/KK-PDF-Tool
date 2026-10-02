@@ -1,11 +1,19 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/scan_document.dart';
+import '../services/document_builder.dart';
 import '../services/document_store.dart';
+import '../services/google_drive_convert_service.dart';
+import '../services/ocr_service.dart';
+import '../widgets/folder_picker.dart';
+import 'edit_pages_screen.dart';
+import 'sign_pages_screen.dart';
+import 'text_result_screen.dart';
 
 class DocumentViewerScreen extends StatefulWidget {
   final DocumentStore store;
@@ -26,6 +34,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
   List<File> _pages = [];
   String? _pdfPath;
   bool _loading = true;
+  String? _busyMessage;
 
   @override
   void initState() {
@@ -114,23 +123,189 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
     Navigator.of(context).pop(true);
   }
 
+  /// Runs [action] while showing [message] as a progress banner; shows an
+  /// error snackbar and returns null if it throws.
+  Future<T?> _withBusy<T>(String message, Future<T> Function() action) async {
+    setState(() => _busyMessage = message);
+    try {
+      return await action();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Fehlgeschlagen: $e')),
+        );
+      }
+      return null;
+    } finally {
+      if (mounted) setState(() => _busyMessage = null);
+    }
+  }
+
+  void _progress(String label, int done, int total) {
+    if (mounted) setState(() => _busyMessage = '$label ${done + 1 > total ? total : done + 1}/$total…');
+  }
+
+  Future<void> _editPages() async {
+    final pages = await _withBusy(
+      'Seiten werden geladen…',
+      () => DocumentBuilder.loadEditablePages(widget.store, _doc),
+    );
+    if (pages == null || !mounted) return;
+    final edited = await Navigator.of(context).push<List<Uint8List>>(
+      MaterialPageRoute(builder: (_) => EditPagesScreen(pages: pages)),
+    );
+    if (edited == null || !mounted) return;
+    await _replacePages(edited);
+  }
+
+  Future<void> _sign() async {
+    final pages = await _withBusy(
+      'Seiten werden geladen…',
+      () => DocumentBuilder.loadEditablePages(widget.store, _doc),
+    );
+    if (pages == null || !mounted) return;
+    final signed = await Navigator.of(context).push<List<Uint8List>>(
+      MaterialPageRoute(builder: (_) => SignPagesScreen(pages: pages)),
+    );
+    if (signed == null || !mounted) return;
+    await _replacePages(signed);
+  }
+
+  Future<void> _replacePages(List<Uint8List> pages) async {
+    final updated = await _withBusy('Speichere…', () async {
+      final built = await DocumentBuilder.build(
+        pages,
+        onProgress: (done, total) => _progress('Texterkennung', done, total),
+      );
+      final previousText = built.text == null ? await widget.store.readText(_doc.id) : null;
+      return widget.store.replaceContent(
+        _doc.id,
+        pageJpegBytes: built.pages,
+        pdfBytes: built.pdfBytes,
+        text: built.text ?? previousText,
+      );
+    });
+    if (updated == null || !mounted) return;
+    // Page files keep their names, so drop cached decodes of the old pages.
+    PaintingBinding.instance.imageCache
+      ..clear()
+      ..clearLiveImages();
+    setState(() {
+      _doc = updated;
+      _loading = true;
+    });
+    await _load();
+  }
+
+  Future<void> _recognizeText() async {
+    var text = await widget.store.readText(_doc.id);
+    if (text == null) {
+      text = await _withBusy('Texterkennung…', () async {
+        String? result;
+        if (OcrService.isOfflineAvailable) {
+          final pages = await DocumentBuilder.loadEditablePages(widget.store, _doc);
+          result = await DocumentBuilder.recognizeText(
+            pages,
+            onProgress: (done, total) => _progress('Texterkennung', done, total),
+          );
+        } else {
+          final pdf = await File(_pdfPath!).readAsBytes();
+          result = await GoogleDriveConvertService().pdfToText(pdf, '${_doc.title}.pdf');
+        }
+        await widget.store.writeText(_doc.id, result);
+        return result ?? '';
+      });
+      if (text == null) return;
+    }
+    if (!mounted) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => TextResultScreen(title: _doc.title, text: text!)),
+    );
+  }
+
+  Future<void> _moveToFolder() async {
+    final choice = await pickFolder(context, widget.store, current: _doc.folder);
+    if (choice == null) return;
+    await widget.store.moveToFolder(_doc.id, choice.folder);
+    if (!mounted) return;
+    setState(() => _doc = _doc.copyWith(folder: choice.folder));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(choice.folder == null
+            ? 'Aus dem Ordner entfernt'
+            : 'Verschoben nach "${choice.folder}"'),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final busy = _busyMessage != null;
     return Scaffold(
       appBar: AppBar(
         title: Text(_doc.title),
         actions: [
-          IconButton(
-            onPressed: _rename,
-            icon: const Icon(Icons.edit),
-            tooltip: 'Umbenennen',
-          ),
-          IconButton(
-            onPressed: _delete,
-            icon: const Icon(Icons.delete_outline),
-            tooltip: 'Löschen',
+          PopupMenuButton<VoidCallback>(
+            enabled: !busy && !_loading,
+            onSelected: (action) => action(),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: _editPages,
+                child: const ListTile(
+                  leading: Icon(Icons.view_agenda_outlined),
+                  title: Text('Seiten bearbeiten'),
+                ),
+              ),
+              PopupMenuItem(
+                value: _sign,
+                child: const ListTile(
+                  leading: Icon(Icons.draw_outlined),
+                  title: Text('Unterschreiben'),
+                ),
+              ),
+              PopupMenuItem(
+                value: _recognizeText,
+                child: const ListTile(
+                  leading: Icon(Icons.text_snippet_outlined),
+                  title: Text('Text erkennen'),
+                ),
+              ),
+              PopupMenuItem(
+                value: _moveToFolder,
+                child: const ListTile(
+                  leading: Icon(Icons.drive_file_move_outlined),
+                  title: Text('In Ordner verschieben'),
+                ),
+              ),
+              PopupMenuItem(
+                value: _rename,
+                child: const ListTile(
+                  leading: Icon(Icons.edit_outlined),
+                  title: Text('Umbenennen'),
+                ),
+              ),
+              PopupMenuItem(
+                value: _delete,
+                child: const ListTile(
+                  leading: Icon(Icons.delete_outline),
+                  title: Text('Löschen'),
+                ),
+              ),
+            ],
           ),
         ],
+        bottom: busy
+            ? PreferredSize(
+                preferredSize: const Size.fromHeight(28),
+                child: Column(
+                  children: [
+                    Text(_busyMessage!, style: const TextStyle(fontSize: 12)),
+                    const SizedBox(height: 4),
+                    const LinearProgressIndicator(),
+                  ],
+                ),
+              )
+            : null,
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -158,7 +333,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: _loading ? null : _sharePdf,
+                  onPressed: _loading || busy ? null : _sharePdf,
                   icon: const Icon(Icons.ios_share),
                   label: const Text('Teilen'),
                 ),
@@ -166,7 +341,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: _loading ? null : _openPdf,
+                  onPressed: _loading || busy ? null : _openPdf,
                   icon: const Icon(Icons.picture_as_pdf),
                   label: const Text('PDF öffnen'),
                 ),

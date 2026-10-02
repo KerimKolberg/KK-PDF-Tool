@@ -7,6 +7,32 @@ import 'package:printing/printing.dart';
 import 'pdf_service.dart';
 import 'pptx_writer_service.dart';
 
+enum PageNumberFormat {
+  plain('1'),
+  seite('Seite 1'),
+  seiteVon('Seite 1 von 5'),
+  slash('1 / 5');
+
+  final String example;
+  const PageNumberFormat(this.example);
+
+  String format(int number, int total) => switch (this) {
+        PageNumberFormat.plain => '$number',
+        PageNumberFormat.seite => 'Seite $number',
+        PageNumberFormat.seiteVon => 'Seite $number von $total',
+        PageNumberFormat.slash => '$number / $total',
+      };
+}
+
+enum PageNumberPosition {
+  bottomCenter('Unten Mitte'),
+  bottomRight('Unten rechts'),
+  topRight('Oben rechts');
+
+  final String label;
+  const PageNumberPosition(this.label);
+}
+
 /// PDF manipulation built on rasterizing pages, since there is no
 /// pure-Dart/Flutter library that can copy vector pages between existing
 /// PDFs on both Android and Windows. Output files are image-based PDFs:
@@ -142,6 +168,86 @@ class PdfToolsService {
     });
     return PdfService.buildPdf(cropped);
   }
+
+  /// Re-encodes images (e.g. PNG page renders) as JPEGs, which are much
+  /// smaller to store and embed.
+  static Future<List<Uint8List>> toJpegs(
+    List<Uint8List> images, {
+    int quality = 90,
+  }) {
+    return compute(_reencodeJpegBatchIsolate, {
+      'images': images,
+      'quality': quality,
+    });
+  }
+
+  /// Adds page numbers (when [numberFormat] is set) and an optional header
+  /// (top centre) and footer (bottom left) text to every page.
+  static Future<Uint8List> addPageNumbers(
+    Uint8List pdfBytes, {
+    PageNumberFormat? numberFormat,
+    PageNumberPosition position = PageNumberPosition.bottomCenter,
+    int startAt = 1,
+    String header = '',
+    String footer = '',
+  }) async {
+    final images = await rasterPages(pdfBytes, dpi: 150);
+    return compute(_buildPageNumberedPdfIsolate, {
+      'images': images,
+      'format': numberFormat?.index,
+      'position': position.index,
+      'startAt': startAt,
+      'header': header,
+      'footer': footer,
+    });
+  }
+}
+
+Future<Uint8List> _buildPageNumberedPdfIsolate(Map<String, dynamic> args) async {
+  final images = (args['images'] as List).cast<Uint8List>();
+  final formatIndex = args['format'] as int?;
+  final position = PageNumberPosition.values[args['position'] as int];
+  final startAt = args['startAt'] as int;
+  final header = args['header'] as String;
+  final footer = args['footer'] as String;
+  final format = formatIndex == null ? null : PageNumberFormat.values[formatIndex];
+
+  const style = pw.TextStyle(fontSize: 10, color: PdfColors.grey800);
+  final numberAlignment = switch (position) {
+    PageNumberPosition.bottomCenter => pw.Alignment.bottomCenter,
+    PageNumberPosition.bottomRight => pw.Alignment.bottomRight,
+    PageNumberPosition.topRight => pw.Alignment.topRight,
+  };
+  final total = images.length + startAt - 1;
+
+  pw.Widget overlay(pw.Alignment alignment, String text) => pw.Positioned.fill(
+        child: pw.Padding(
+          padding: const pw.EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+          child: pw.Align(alignment: alignment, child: pw.Text(text, style: style)),
+        ),
+      );
+
+  final doc = pw.Document();
+  for (var i = 0; i < images.length; i++) {
+    final image = pw.MemoryImage(images[i]);
+    doc.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        margin: pw.EdgeInsets.zero,
+        build: (context) => pw.Stack(
+          children: [
+            pw.Positioned.fill(
+              child: pw.Center(child: pw.Image(image, fit: pw.BoxFit.contain)),
+            ),
+            if (header.trim().isNotEmpty) overlay(pw.Alignment.topCenter, header.trim()),
+            if (footer.trim().isNotEmpty) overlay(pw.Alignment.bottomLeft, footer.trim()),
+            if (format != null) overlay(numberAlignment, format.format(startAt + i, total)),
+          ],
+        ),
+      ),
+    );
+  }
+  return doc.save();
 }
 
 Uint8List _buildPptxIsolate(List<Uint8List> images) {

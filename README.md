@@ -22,14 +22,34 @@ für Android (APK) und Windows (EXE).
   `Downloads/DocScanner` (Android: über die MediaStore-API, Windows: im
   echten Downloads-Ordner)
 - Bibliotheksansicht aller gespeicherten Scans, umbenennen, löschen, teilen
+- **Ordner & Suche:** Scans in Ordner sortieren (Chips oben in der
+  Bibliothek, lange auf ein Dokument tippen zum Verschieben; neue Scans
+  landen im gerade geöffneten Ordner). Die Suche findet Titel *und* den
+  erkannten Text in den Dokumenten.
+- **Seiten bearbeiten:** In gespeicherten Scans Seiten umsortieren, drehen,
+  löschen oder neue Seiten hinzufügen (Menü ⋮ im Dokument).
+- **Unterschreiben:** Unterschrift einmal mit dem Finger/Stift zeichnen
+  (schwarz oder blau), speichern und dann auf beliebigen Seiten platzieren,
+  verschieben und in der Größe anpassen - im Dokument (Menü ⋮) oder als
+  Werkzeug für beliebige PDFs. Offline.
+- **Durchsuchbare PDFs (nur Android, offline):** Beim Speichern erkennt ML
+  Kit den Text jeder Seite direkt auf dem Gerät und legt ihn unsichtbar
+  hinter das Bild - die PDF sieht gleich aus, aber Strg+F und Text kopieren
+  funktionieren. Abschaltbar in den Einstellungen.
+- **Text erkennen:** Im Dokument (Menü ⋮) den erkannten Text anzeigen,
+  kopieren oder als .txt speichern - Android offline, Windows über Google.
+- **Dunkler Modus:** System / Hell / Dunkel in den Einstellungen.
 - **"Öffnen mit" / Teilen (nur Android):** KK-PDF-Tool erscheint in der
   "Öffnen mit"-Liste und im Teilen-Menü für PDFs und Bilder aus anderen
   Apps (z. B. Dateien-App) und importiert sie in die Bibliothek.
 - **Werkzeuge-Tab:**
   - *Umwandeln:* Bilder → PDF, PDF → Bilder, PDF → PowerPoint (offline,
     Bild-Folien), PowerPoint → PDF ☁️, Word → PDF ☁️, PDF → Word ☁️ (OCR),
-    HTML → PDF ☁️, Markdown → PDF (offline), Text aus Bild (OCR) ☁️
-  - *Bearbeiten:* PDFs zusammenführen, PDF aufteilen (nach Seitenbereich),
+    HTML → PDF ☁️, Markdown → PDF (offline), Text aus Bild (OCR; Android
+    wahlweise offline oder ☁️, Windows ☁️), PDF durchsuchbar machen (nur
+    Android, offline)
+  - *Bearbeiten:* PDF unterschreiben, Seitenzahlen & Kopf-/Fußzeile,
+    PDFs zusammenführen, PDF aufteilen (nach Seitenbereich),
     PDF drehen (ganze Datei(en) oder einzelne Seiten/Bereiche), PDF
     zuschneiden (Ränder entfernen, auf allen oder gewählten Seiten),
     Wasserzeichen (Text diagonal über jede Seite), PDF komprimieren
@@ -188,8 +208,12 @@ lib/
 
 ## Bekannte Einschränkungen
 
-- Automatische Kantenerkennung (ML Kit) gibt es nur auf Android, nicht unter
-  Windows (dafür existiert keine vergleichbare Offline-Bibliothek).
+- Automatische Kantenerkennung und Offline-Texterkennung (ML Kit) gibt es nur
+  auf Android, nicht unter Windows (dafür existiert keine vergleichbare
+  Offline-Bibliothek). Unter Windows läuft Texterkennung über Google.
+- Die unsichtbare Textebene durchsuchbarer PDFs nutzt die eingebaute
+  PDF-Schrift (Latin-1, inkl. äöüß); seltene Sonderzeichen werden dort
+  vereinfacht (z. B. € → EUR). Die App-interne Suche nutzt den Originaltext.
 - PDF → PowerPoint erzeugt Bild-Folien, keine text-editierbare Rekonstruktion
   (dafür gibt es keinen kostenlosen Dienst).
 - PowerPoint → PDF und PDF → Word brauchen Internet und ein Google-Konto.

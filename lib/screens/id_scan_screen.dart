@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 
 import '../models/scan_document.dart';
 import '../services/document_store.dart';
+import '../services/document_builder.dart';
 import '../services/downloads_export_service.dart';
+import '../services/ocr_service.dart';
 import '../services/pdf_service.dart';
 import '../services/pdf_tools_service.dart';
 import '../services/settings_service.dart';
@@ -16,8 +18,9 @@ import 'crop_screen.dart';
 /// sheet" layout most offices/authorities ask for.
 class IdScanScreen extends StatefulWidget {
   final DocumentStore store;
+  final String? folder;
 
-  const IdScanScreen({super.key, required this.store});
+  const IdScanScreen({super.key, required this.store, this.folder});
 
   @override
   State<IdScanScreen> createState() => _IdScanScreenState();
@@ -73,10 +76,18 @@ class _IdScanScreenState extends State<IdScanScreen> {
     try {
       final pdfBytes = await PdfService.buildIdCardPdf(front, back);
       final thumbnail = await PdfToolsService.rasterPages(pdfBytes, pages: [0], dpi: 120);
+      // Recognised text is only stored for library search here; the
+      // two-sides layout itself stays a plain image PDF.
+      String? text;
+      if (OcrService.isOfflineAvailable) {
+        text = await DocumentBuilder.recognizeText([front, back]);
+      }
       final doc = await widget.store.createDocument(
         title: title,
         pageJpegBytes: thumbnail,
         pdfBytes: pdfBytes,
+        text: text,
+        folder: widget.folder,
       );
       String? location;
       try {

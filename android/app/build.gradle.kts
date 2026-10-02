@@ -68,3 +68,9 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // Bundled Latin-script OCR model: works fully offline from the first
+    // launch (no Play Services download), used via MainActivity.kt.
+    implementation("com.google.mlkit:text-recognition:16.0.1")
+}
