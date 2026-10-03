@@ -4,8 +4,10 @@ import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 
 import '../../services/downloads_export_service.dart';
+import '../../services/file_picker_service.dart';
 import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
+import '../../services/settings_service.dart';
 import '../../widgets/delete_originals_switch.dart';
 
 /// Adds page numbers and/or a header/footer text to every page of a PDF.
@@ -18,15 +20,25 @@ class PageNumbersScreen extends StatefulWidget {
 
 class _PageNumbersScreenState extends State<PageNumbersScreen> {
   final _downloadsExport = DownloadsExportService();
-  final _headerController = TextEditingController();
-  final _footerController = TextEditingController();
+  final _headerController =
+      TextEditingController(text: AppPrefs.getString('pageNumbers.header') ?? '');
+  final _footerController =
+      TextEditingController(text: AppPrefs.getString('pageNumbers.footer') ?? '');
   final _startController = TextEditingController(text: '1');
   String? _fileName;
   String? _sourcePath;
   Uint8List? _pdfBytes;
-  bool _numbersEnabled = true;
-  PageNumberFormat _format = PageNumberFormat.seiteVon;
-  PageNumberPosition _position = PageNumberPosition.bottomCenter;
+  bool _numbersEnabled = AppPrefs.getBool('pageNumbers.enabled', true);
+  PageNumberFormat _format = AppPrefs.getEnum(
+    'pageNumbers.format',
+    PageNumberFormat.values,
+    PageNumberFormat.seiteVon,
+  );
+  PageNumberPosition _position = AppPrefs.getEnum(
+    'pageNumbers.position',
+    PageNumberPosition.values,
+    PageNumberPosition.bottomCenter,
+  );
   bool _deleteOriginal = false;
   bool _busy = false;
 
@@ -40,7 +52,7 @@ class _PageNumbersScreenState extends State<PageNumbersScreen> {
 
   Future<void> _pickPdf() async {
     const typeGroup = XTypeGroup(label: 'PDF', extensions: ['pdf']);
-    final file = await openFile(acceptedTypeGroups: [typeGroup]);
+    final file = await FilePickers.openOne('page_numbers', [typeGroup]);
     if (file == null) return;
     final bytes = await file.readAsBytes();
     setState(() {
@@ -61,6 +73,11 @@ class _PageNumbersScreenState extends State<PageNumbersScreen> {
     if (bytes == null || name == null || _busy || !_hasSomethingToAdd) return;
     setState(() => _busy = true);
     try {
+      AppPrefs.setBool('pageNumbers.enabled', _numbersEnabled);
+      AppPrefs.setEnum('pageNumbers.format', _format);
+      AppPrefs.setEnum('pageNumbers.position', _position);
+      AppPrefs.setString('pageNumbers.header', _headerController.text);
+      AppPrefs.setString('pageNumbers.footer', _footerController.text);
       final result = await PdfToolsService.addPageNumbers(
         bytes,
         numberFormat: _numbersEnabled ? _format : null,

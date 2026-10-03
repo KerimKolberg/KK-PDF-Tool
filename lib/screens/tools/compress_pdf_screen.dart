@@ -5,8 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
 import '../../services/downloads_export_service.dart';
+import '../../services/file_picker_service.dart';
 import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
+import '../../services/settings_service.dart';
 import '../../widgets/delete_originals_switch.dart';
 
 enum _CompressLevel { low, medium, high }
@@ -44,13 +46,14 @@ class _CompressPdfScreenState extends State<CompressPdfScreen> {
   String? _fileName;
   String? _sourcePath;
   Uint8List? _pdfBytes;
-  _CompressLevel _level = _CompressLevel.medium;
+  _CompressLevel _level =
+      AppPrefs.getEnum('compress.level', _CompressLevel.values, _CompressLevel.medium);
   bool _deleteOriginal = false;
   bool _busy = false;
 
   Future<void> _pickPdf() async {
     const typeGroup = XTypeGroup(label: 'PDF', extensions: ['pdf']);
-    final file = await openFile(acceptedTypeGroups: [typeGroup]);
+    final file = await FilePickers.openOne('compress_pdf', [typeGroup]);
     if (file == null) return;
     final bytes = await file.readAsBytes();
     setState(() {
@@ -130,7 +133,12 @@ class _CompressPdfScreenState extends State<CompressPdfScreen> {
               const SizedBox(height: 4),
               RadioGroup<_CompressLevel>(
                 groupValue: _level,
-                onChanged: _busy ? (_) {} : (v) => setState(() => _level = v!),
+                onChanged: _busy
+                    ? (_) {}
+                    : (v) {
+                        setState(() => _level = v!);
+                        AppPrefs.setEnum('compress.level', v!);
+                      },
                 child: Column(
                   children: [
                     for (final level in _CompressLevel.values)

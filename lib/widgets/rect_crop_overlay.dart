@@ -17,11 +17,15 @@ class RectCropOverlay extends StatefulWidget {
   final double imageWidth;
   final double imageHeight;
 
+  /// Starting rectangle as fractions (0..1); defaults to an 8% inset.
+  final ({double left, double top, double right, double bottom})? initialRect;
+
   const RectCropOverlay({
     super.key,
     required this.imageBytes,
     required this.imageWidth,
     required this.imageHeight,
+    this.initialRect,
   });
 
   @override
@@ -35,10 +39,9 @@ class RectCropOverlayState extends State<RectCropOverlay> {
   @override
   void initState() {
     super.initState();
-    final mx = widget.imageWidth * 0.08;
-    final my = widget.imageHeight * 0.08;
-    _topLeft = Offset(mx, my);
-    _bottomRight = Offset(widget.imageWidth - mx, widget.imageHeight - my);
+    final r = widget.initialRect ?? (left: 0.08, top: 0.08, right: 0.92, bottom: 0.92);
+    _topLeft = Offset(r.left * widget.imageWidth, r.top * widget.imageHeight);
+    _bottomRight = Offset(r.right * widget.imageWidth, r.bottom * widget.imageHeight);
   }
 
   /// Current crop rectangle as fractions (0..1) of the image dimensions.

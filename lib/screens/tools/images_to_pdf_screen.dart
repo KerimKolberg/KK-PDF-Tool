@@ -4,6 +4,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
 import '../../services/downloads_export_service.dart';
+import '../../services/file_picker_service.dart';
 import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_service.dart';
 import '../../widgets/delete_originals_switch.dart';
@@ -33,7 +34,7 @@ class _ImagesToPdfScreenState extends State<ImagesToPdfScreen> {
       label: 'Bilder',
       extensions: ['jpg', 'jpeg', 'png', 'webp'],
     );
-    final files = await openFiles(acceptedTypeGroups: [typeGroup]);
+    final files = await FilePickers.openMany('images_to_pdf', [typeGroup]);
     if (files.isEmpty) return;
     final picked = await Future.wait(
       files.map((f) async => _PickedImage(f.path, await f.readAsBytes())),

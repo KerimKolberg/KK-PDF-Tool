@@ -71,6 +71,25 @@ class MainActivity : FlutterActivity() {
                     } catch (e: Exception) {
                         result.error("save_failed", e.message, null)
                     }
+                } else if (call.method == "saveFileToDownloads") {
+                    // Streams a (possibly very large) file, e.g. a library
+                    // backup, on a background thread instead of passing its
+                    // bytes through the channel.
+                    val fileName = call.argument<String>("fileName")
+                    val sourcePath = call.argument<String>("sourcePath")
+                    val mimeType = call.argument<String>("mimeType")
+                    if (fileName == null || sourcePath == null) {
+                        result.error("bad_args", "fileName and sourcePath are required", null)
+                        return@setMethodCallHandler
+                    }
+                    Thread {
+                        try {
+                            val location = copyFileToDownloads(fileName, File(sourcePath), mimeType)
+                            runOnUiThread { result.success(location) }
+                        } catch (e: Exception) {
+                            runOnUiThread { result.error("save_failed", e.message, null) }
+                        }
+                    }.start()
                 } else {
                     result.notImplemented()
                 }
@@ -212,6 +231,31 @@ class MainActivity : FlutterActivity() {
             )
         } catch (e: Exception) {
             null
+        }
+    }
+
+    private fun copyFileToDownloads(fileName: String, source: File, mimeType: String?): String {
+        val subFolder = "DocScanner"
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val values = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                if (mimeType != null) put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
+                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/" + subFolder)
+            }
+            val resolver = applicationContext.contentResolver
+            val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+                ?: throw IllegalStateException("MediaStore lehnte das Erstellen der Datei ab")
+            resolver.openOutputStream(uri)?.use { output ->
+                source.inputStream().use { input -> input.copyTo(output) }
+            } ?: throw IllegalStateException("Konnte Datei nicht öffnen")
+            return "Downloads/$subFolder/$fileName"
+        } else {
+            @Suppress("DEPRECATION")
+            val dir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), subFolder)
+            if (!dir.exists()) dir.mkdirs()
+            val target = File(dir, fileName)
+            source.copyTo(target, overwrite = true)
+            return target.absolutePath
         }
     }
 

@@ -5,6 +5,7 @@ import 'services/settings_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AppPrefs.init();
   await SettingsService.loadThemeMode();
   runApp(const DocScannerApp());
 }

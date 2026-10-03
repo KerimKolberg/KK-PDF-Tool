@@ -4,11 +4,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../services/image_processing.dart';
+import '../services/settings_service.dart';
 import '../widgets/corner_crop_overlay.dart';
 
 /// Lets the user fine-tune the four document corners on a captured photo,
 /// optionally rotate it, and pick a filter, before it is flattened into a
-/// single processed page.
+/// single processed page. With cropping off it doubles as a "filter and
+/// rotate" editor for pages that are already cropped.
 class CropScreen extends StatefulWidget {
   final Uint8List initialBytes;
   final bool initialCropEnabled;
@@ -24,7 +26,7 @@ class CropScreen extends StatefulWidget {
 }
 
 class _CropScreenState extends State<CropScreen> {
-  final _overlayKey = GlobalKey<CornerCropOverlayState>();
+  var _overlayKey = GlobalKey<CornerCropOverlayState>();
 
   Uint8List? _workingBytes;
   double _imgW = 0;
@@ -32,15 +34,22 @@ class _CropScreenState extends State<CropScreen> {
   bool _loading = true;
   bool _busy = false;
   String? _error;
-  ScanFilter _filter = ScanFilter.original;
   late bool _cropEnabled = widget.initialCropEnabled;
 
-  static const _grayscaleMatrix = <double>[
-    0.2126, 0.7152, 0.0722, 0, 0,
-    0.2126, 0.7152, 0.0722, 0, 0,
-    0.2126, 0.7152, 0.0722, 0, 0,
-    0, 0, 0, 1, 0,
-  ];
+  ScanFilter _filter = AppPrefs.getEnum('scan.filter', ScanFilter.values, ScanFilter.original);
+  bool _removeShadows = AppPrefs.getBool('scan.removeShadows', false);
+
+  /// Small copy of the photo used to render filter previews quickly; the
+  /// full-resolution image is only processed once on "Übernehmen".
+  Uint8List? _previewBase;
+  final Map<String, Uint8List> _previewCache = {};
+  Uint8List? _previewBytes;
+  bool _previewLoading = false;
+  int _previewRequest = 0;
+
+  bool get _needsPreview => _filter != ScanFilter.original || _removeShadows;
+  String get _previewKey => '${_filter.name}-${_removeShadows && !_filter.includesShadowRemoval}';
+  Uint8List get _displayBytes => (_needsPreview ? _previewBytes : null) ?? _workingBytes!;
 
   @override
   void initState() {
@@ -51,14 +60,9 @@ class _CropScreenState extends State<CropScreen> {
   Future<void> _prepare(Uint8List rawBytes) async {
     try {
       final baked = await compute(bakeOrientationJpegIsolate, rawBytes);
-      final size = await _decodeSize(baked);
+      await _setWorkingImage(baked);
       if (!mounted) return;
-      setState(() {
-        _workingBytes = baked;
-        _imgW = size.width;
-        _imgH = size.height;
-        _loading = false;
-      });
+      setState(() => _loading = false);
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -66,6 +70,21 @@ class _CropScreenState extends State<CropScreen> {
         _loading = false;
       });
     }
+  }
+
+  Future<void> _setWorkingImage(Uint8List bytes) async {
+    final size = await _decodeSize(bytes);
+    final previewBase = await compute(downscaleJpegIsolate, {'bytes': bytes, 'maxSide': 1000});
+    if (!mounted) return;
+    setState(() {
+      _workingBytes = bytes;
+      _imgW = size.width;
+      _imgH = size.height;
+      _previewBase = previewBase;
+      _previewCache.clear();
+      _previewBytes = null;
+    });
+    _updatePreview();
   }
 
   Future<ui.Size> _decodeSize(Uint8List bytes) async {
@@ -78,6 +97,55 @@ class _CropScreenState extends State<CropScreen> {
     frame.image.dispose();
     codec.dispose();
     return size;
+  }
+
+  Future<void> _updatePreview() async {
+    if (!_needsPreview) {
+      setState(() => _previewLoading = false);
+      return;
+    }
+    final key = _previewKey;
+    final cached = _previewCache[key];
+    if (cached != null) {
+      setState(() {
+        _previewBytes = cached;
+        _previewLoading = false;
+      });
+      return;
+    }
+    final base = _previewBase;
+    if (base == null) return;
+    final request = ++_previewRequest;
+    setState(() => _previewLoading = true);
+    try {
+      final bytes = await compute(previewFilterIsolate, {
+        'bytes': base,
+        'filter': _filter.index,
+        'shadows': _removeShadows,
+      });
+      if (!mounted) return;
+      _previewCache[key] = bytes;
+      // A newer filter choice may have been made meanwhile.
+      if (request != _previewRequest) return;
+      setState(() {
+        _previewBytes = bytes;
+        _previewLoading = false;
+      });
+    } catch (_) {
+      if (mounted && request == _previewRequest) setState(() => _previewLoading = false);
+    }
+  }
+
+  void _selectFilter(ScanFilter filter) {
+    setState(() => _filter = filter);
+    AppPrefs.setEnum('scan.filter', filter);
+    _updatePreview();
+  }
+
+  void _setRemoveShadows(bool value) {
+    setState(() => _removeShadows = value);
+    AppPrefs.setBool('scan.removeShadows', value);
+    _updatePreview();
   }
 
   List<Offset> get _defaultCorners {
@@ -96,14 +164,10 @@ class _CropScreenState extends State<CropScreen> {
     setState(() => _busy = true);
     try {
       final rotated = await compute(rotateJpeg90Isolate, _workingBytes!);
-      final size = await _decodeSize(rotated);
+      _overlayKey = GlobalKey<CornerCropOverlayState>();
+      await _setWorkingImage(rotated);
       if (!mounted) return;
-      setState(() {
-        _workingBytes = rotated;
-        _imgW = size.width;
-        _imgH = size.height;
-        _busy = false;
-      });
+      setState(() => _busy = false);
     } catch (e) {
       if (!mounted) return;
       setState(() => _busy = false);
@@ -136,6 +200,7 @@ class _CropScreenState extends State<CropScreen> {
         'bytes': bytes,
         'corners': cornersFlat,
         'filter': _filter.index,
+        'shadows': _removeShadows,
       });
       if (!mounted) return;
       Navigator.of(context).pop<Uint8List>(processed);
@@ -148,28 +213,15 @@ class _CropScreenState extends State<CropScreen> {
     }
   }
 
-  ColorFilter? get _previewColorFilter {
-    switch (_filter) {
-      case ScanFilter.original:
-      case ScanFilter.enhanced:
-        return null;
-      case ScanFilter.grayscale:
-      case ScanFilter.blackAndWhite:
-        return const ColorFilter.matrix(_grayscaleMatrix);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('Zuschneiden'),
+        title: Text(_cropEnabled ? 'Zuschneiden' : 'Filter & Drehen'),
         actions: [
           IconButton(
-            onPressed: _busy
-                ? null
-                : () => setState(() => _cropEnabled = !_cropEnabled),
+            onPressed: _busy ? null : () => setState(() => _cropEnabled = !_cropEnabled),
             icon: Icon(_cropEnabled ? Icons.crop : Icons.crop_free),
             tooltip: _cropEnabled ? 'Zuschnitt aus' : 'Zuschnitt an',
           ),
@@ -192,20 +244,30 @@ class _CropScreenState extends State<CropScreen> {
                   children: [
                     SizedBox(
                       height: 44,
-                      child: ListView.separated(
+                      child: ListView(
                         scrollDirection: Axis.horizontal,
-                        itemCount: ScanFilter.values.length,
-                        separatorBuilder: (_, _) => const SizedBox(width: 8),
-                        itemBuilder: (context, i) {
-                          final f = ScanFilter.values[i];
-                          return ChoiceChip(
-                            label: Text(f.label),
-                            selected: _filter == f,
-                            onSelected: _busy
+                        children: [
+                          for (final f in scanFilterOrder)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: ChoiceChip(
+                                label: Text(f.label),
+                                selected: _filter == f,
+                                onSelected: _busy ? null : (_) => _selectFilter(f),
+                              ),
+                            ),
+                          FilterChip(
+                            avatar: const Icon(Icons.wb_shade, size: 18),
+                            label: const Text('Schatten entfernen'),
+                            tooltip: _filter.includesShadowRemoval
+                                ? 'Bei diesem Filter schon enthalten'
+                                : null,
+                            selected: _removeShadows || _filter.includesShadowRemoval,
+                            onSelected: _busy || _filter.includesShadowRemoval
                                 ? null
-                                : (_) => setState(() => _filter = f),
-                          );
-                        },
+                                : _setRemoveShadows,
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -217,8 +279,7 @@ class _CropScreenState extends State<CropScreen> {
                             ? const SizedBox(
                                 width: 18,
                                 height: 18,
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 2, color: Colors.white),
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                               )
                             : const Icon(Icons.check),
                         label: Text(_busy ? 'Verarbeite…' : 'Übernehmen'),
@@ -245,10 +306,10 @@ class _CropScreenState extends State<CropScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    Widget inner = _cropEnabled
+    final inner = _cropEnabled
         ? CornerCropOverlay(
             key: _overlayKey,
-            imageBytes: _workingBytes!,
+            imageBytes: _displayBytes,
             imageWidth: _imgW,
             imageHeight: _imgH,
             initialCorners: _defaultCorners,
@@ -256,13 +317,24 @@ class _CropScreenState extends State<CropScreen> {
         : Center(
             child: AspectRatio(
               aspectRatio: _imgW / _imgH,
-              child: Image.memory(_workingBytes!, fit: BoxFit.contain),
+              child: Image.memory(_displayBytes, fit: BoxFit.contain, gaplessPlayback: true),
             ),
           );
-    if (_previewColorFilter != null) {
-      inner = ColorFiltered(colorFilter: _previewColorFilter!, child: inner);
-    }
-    final content = Padding(padding: const EdgeInsets.all(16), child: inner);
+    final content = Stack(
+      children: [
+        Positioned.fill(child: Padding(padding: const EdgeInsets.all(16), child: inner)),
+        if (_previewLoading)
+          const Positioned(
+            top: 8,
+            right: 8,
+            child: SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+            ),
+          ),
+      ],
+    );
 
     return _busy ? IgnorePointer(child: content) : content;
   }

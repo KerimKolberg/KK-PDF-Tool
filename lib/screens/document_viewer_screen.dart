@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/scan_document.dart';
@@ -11,8 +10,9 @@ import '../services/document_store.dart';
 import '../services/google_drive_convert_service.dart';
 import '../services/ocr_service.dart';
 import '../widgets/folder_picker.dart';
+import '../widgets/share_sheet.dart';
+import 'annotate_pages_screen.dart';
 import 'edit_pages_screen.dart';
-import 'sign_pages_screen.dart';
 import 'text_result_screen.dart';
 
 class DocumentViewerScreen extends StatefulWidget {
@@ -66,13 +66,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
     }
   }
 
-  Future<void> _sharePdf() async {
-    final path = _pdfPath;
-    if (path == null) return;
-    await SharePlus.instance.share(
-      ShareParams(files: [XFile(path)], text: _doc.title),
-    );
-  }
+  Future<void> _share() => showShareSheet(context, widget.store, _doc);
 
   Future<void> _rename() async {
     final controller = TextEditingController(text: _doc.title);
@@ -158,17 +152,17 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
     await _replacePages(edited);
   }
 
-  Future<void> _sign() async {
+  Future<void> _annotate(AnnotateMode mode) async {
     final pages = await _withBusy(
       'Seiten werden geladen…',
       () => DocumentBuilder.loadEditablePages(widget.store, _doc),
     );
     if (pages == null || !mounted) return;
-    final signed = await Navigator.of(context).push<List<Uint8List>>(
-      MaterialPageRoute(builder: (_) => SignPagesScreen(pages: pages)),
+    final edited = await Navigator.of(context).push<List<Uint8List>>(
+      MaterialPageRoute(builder: (_) => AnnotatePagesScreen(pages: pages, initialMode: mode)),
     );
-    if (signed == null || !mounted) return;
-    await _replacePages(signed);
+    if (edited == null || !mounted) return;
+    await _replacePages(edited);
   }
 
   Future<void> _replacePages(List<Uint8List> pages) async {
@@ -183,6 +177,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
         pageJpegBytes: built.pages,
         pdfBytes: built.pdfBytes,
         text: built.text ?? previousText,
+        ocr: built.ocr,
       );
     });
     if (updated == null || !mounted) return;
@@ -257,10 +252,17 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
                 ),
               ),
               PopupMenuItem(
-                value: _sign,
+                value: () => _annotate(AnnotateMode.fill),
                 child: const ListTile(
-                  leading: Icon(Icons.draw_outlined),
-                  title: Text('Unterschreiben'),
+                  leading: Icon(Icons.edit_note),
+                  title: Text('Ausfüllen & unterschreiben'),
+                ),
+              ),
+              PopupMenuItem(
+                value: () => _annotate(AnnotateMode.draw),
+                child: const ListTile(
+                  leading: Icon(Icons.brush_outlined),
+                  title: Text('Zeichnen & markieren'),
                 ),
               ),
               PopupMenuItem(
@@ -333,7 +335,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: _loading || busy ? null : _sharePdf,
+                  onPressed: _loading || busy ? null : _share,
                   icon: const Icon(Icons.ios_share),
                   label: const Text('Teilen'),
                 ),

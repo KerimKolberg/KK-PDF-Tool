@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
 import '../../services/downloads_export_service.dart';
+import '../../services/file_picker_service.dart';
 import '../../services/google_drive_convert_service.dart';
 import '../../services/original_files_cleanup_service.dart';
 import '../../widgets/delete_originals_switch.dart';
@@ -54,7 +55,7 @@ class _CloudConvertScreenState extends State<CloudConvertScreen> {
   bool _busy = false;
 
   Future<void> _pickFile() async {
-    final file = await openFile(acceptedTypeGroups: [widget.typeGroup]);
+    final file = await FilePickers.openOne('cloud_${widget.sourceExtension}', [widget.typeGroup]);
     if (file == null) return;
     final bytes = await file.readAsBytes();
     setState(() {

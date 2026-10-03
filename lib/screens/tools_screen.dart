@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import 'annotate_pages_screen.dart';
+import 'tools/annotate_pdf_screen.dart';
 import 'tools/compress_pdf_screen.dart';
 import 'tools/crop_pdf_screen.dart';
 import 'tools/html_to_pdf_screen.dart';
@@ -15,7 +17,6 @@ import 'tools/pdf_to_word_screen.dart';
 import 'tools/pptx_to_pdf_screen.dart';
 import 'tools/rotate_pdf_screen.dart';
 import 'tools/searchable_pdf_screen.dart';
-import 'tools/sign_pdf_screen.dart';
 import 'tools/split_pdf_screen.dart';
 import 'tools/text_from_image_screen.dart';
 import 'tools/watermark_pdf_screen.dart';
@@ -118,10 +119,16 @@ class ToolsScreen extends StatelessWidget {
     ]),
     _ToolSection('Bearbeiten', [
       _ToolEntry(
-        'PDF unterschreiben',
-        'Unterschrift zeichnen und auf Seiten platzieren',
-        Icons.draw_outlined,
-        (_) => const SignPdfScreen(),
+        'PDF ausfüllen & unterschreiben',
+        'Text, Datum, Haken und Unterschrift einfügen',
+        Icons.edit_note,
+        (_) => const AnnotatePdfScreen(mode: AnnotateMode.fill),
+      ),
+      _ToolEntry(
+        'PDF markieren & zeichnen',
+        'Mit Stift und Textmarker auf Seiten zeichnen',
+        Icons.brush_outlined,
+        (_) => const AnnotatePdfScreen(mode: AnnotateMode.draw),
       ),
       _ToolEntry(
         'Seitenzahlen & Kopfzeile',

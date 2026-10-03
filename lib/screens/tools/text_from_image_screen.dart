@@ -6,9 +6,11 @@ import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 
 import '../../services/downloads_export_service.dart';
+import '../../services/file_picker_service.dart';
 import '../../services/google_drive_convert_service.dart';
 import '../../services/ocr_service.dart';
 import '../../services/original_files_cleanup_service.dart';
+import '../../services/settings_service.dart';
 import '../../widgets/delete_originals_switch.dart';
 
 const _mimeByExtension = {
@@ -39,12 +41,13 @@ class _TextFromImageScreenState extends State<TextFromImageScreen> {
 
   /// Android can recognise text offline on the device; Windows always uses
   /// the Google (online) engine.
-  bool _offline = OcrService.isOfflineAvailable;
+  bool _offline =
+      OcrService.isOfflineAvailable && AppPrefs.getBool('ocr.offline', true);
   bool _busy = false;
 
   Future<void> _pickFile() async {
     const typeGroup = XTypeGroup(label: 'Bilder', extensions: ['jpg', 'jpeg', 'png', 'webp']);
-    final file = await openFile(acceptedTypeGroups: [typeGroup]);
+    final file = await FilePickers.openOne('text_from_image', [typeGroup]);
     if (file == null) return;
     final bytes = await file.readAsBytes();
     setState(() {
@@ -149,7 +152,12 @@ class _TextFromImageScreenState extends State<TextFromImageScreen> {
                   ),
                 ],
                 selected: {_offline},
-                onSelectionChanged: _busy ? null : (v) => setState(() => _offline = v.first),
+                onSelectionChanged: _busy
+                    ? null
+                    : (v) {
+                        setState(() => _offline = v.first);
+                        AppPrefs.setBool('ocr.offline', v.first);
+                      },
               ),
               const SizedBox(height: 12),
             ],

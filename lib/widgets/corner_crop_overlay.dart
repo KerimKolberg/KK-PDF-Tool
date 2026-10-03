@@ -45,7 +45,10 @@ class CornerCropOverlayState extends State<CornerCropOverlay> {
   @override
   void didUpdateWidget(covariant CornerCropOverlay oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.imageBytes != widget.imageBytes) {
+    // A new preview of the same photo (e.g. another filter) keeps the
+    // corners; only a different size (rotation) starts over.
+    if (oldWidget.imageWidth != widget.imageWidth ||
+        oldWidget.imageHeight != widget.imageHeight) {
       _corners = List.of(widget.initialCorners);
     }
   }
@@ -77,7 +80,7 @@ class CornerCropOverlayState extends State<CornerCropOverlay> {
               clipBehavior: Clip.none,
               children: [
                 Positioned.fill(
-                  child: Image.memory(widget.imageBytes, fit: BoxFit.fill),
+                  child: Image.memory(widget.imageBytes, fit: BoxFit.fill, gaplessPlayback: true),
                 ),
                 Positioned.fill(
                   child: IgnorePointer(

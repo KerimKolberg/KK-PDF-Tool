@@ -169,6 +169,20 @@ class PdfToolsService {
     return PdfService.buildPdf(cropped);
   }
 
+  /// Downscales each image so its longer side is at most [maxSide] and
+  /// re-encodes it as JPEG at [quality]. One image at a time, to keep
+  /// memory low for long documents.
+  static Future<List<Uint8List>> shrinkImages(
+    List<Uint8List> images, {
+    required int maxSide,
+    required int quality,
+  }) async {
+    return [
+      for (final image in images)
+        await compute(_shrinkIsolate, {'bytes': image, 'maxSide': maxSide, 'quality': quality}),
+    ];
+  }
+
   /// Re-encodes images (e.g. PNG page renders) as JPEGs, which are much
   /// smaller to store and embed.
   static Future<List<Uint8List>> toJpegs(
@@ -248,6 +262,23 @@ Future<Uint8List> _buildPageNumberedPdfIsolate(Map<String, dynamic> args) async 
     );
   }
   return doc.save();
+}
+
+Uint8List _shrinkIsolate(Map<String, dynamic> args) {
+  final decoded = img.decodeImage(args['bytes'] as Uint8List);
+  if (decoded == null) throw const FormatException('Bild konnte nicht gelesen werden');
+  final image = img.bakeOrientation(decoded);
+  final maxSide = args['maxSide'] as int;
+  final longer = image.width > image.height ? image.width : image.height;
+  final resized = longer <= maxSide
+      ? image
+      : img.copyResize(
+          image,
+          width: image.width >= image.height ? maxSide : null,
+          height: image.width < image.height ? maxSide : null,
+          interpolation: img.Interpolation.average,
+        );
+  return img.encodeJpg(resized, quality: args['quality'] as int);
 }
 
 Uint8List _buildPptxIsolate(List<Uint8List> images) {

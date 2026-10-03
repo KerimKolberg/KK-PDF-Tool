@@ -1,8 +1,16 @@
 import 'dart:io';
 
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
+import 'package:share_plus/share_plus.dart';
 
+import '../services/backup_service.dart';
+import '../services/document_store.dart';
+import '../services/downloads_export_service.dart';
+import '../services/file_picker_service.dart';
 import '../services/settings_service.dart';
+import '../widgets/share_sheet.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -41,6 +49,127 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void dispose() {
     _clientIdController.dispose();
     super.dispose();
+  }
+
+  /// Runs [task] behind a modal progress dialog (it reports 0..1 progress).
+  Future<void> _withProgress(
+    String title,
+    Future<void> Function(void Function(double) onProgress) task,
+  ) async {
+    final progress = ValueNotifier<double?>(null);
+    final navigator = Navigator.of(context, rootNavigator: true);
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          title: Text(title),
+          content: ValueListenableBuilder<double?>(
+            valueListenable: progress,
+            builder: (_, value, _) => LinearProgressIndicator(value: value),
+          ),
+        ),
+      ),
+    );
+    try {
+      await task((v) => progress.value = v);
+    } finally {
+      navigator.pop();
+      progress.dispose();
+    }
+  }
+
+  Future<void> _createBackup() async {
+    BackupSummary? summary;
+    String? location;
+    Object? error;
+    await _withProgress('Sicherung wird erstellt…', (onProgress) async {
+      try {
+        summary = await BackupService(DocumentStore()).create(onProgress: onProgress);
+        location = await DownloadsExportService().exportFile(
+          summary!.file,
+          p.basename(summary!.file.path),
+          mimeType: 'application/zip',
+        );
+      } catch (e) {
+        error = e;
+      }
+    });
+    if (!mounted) return;
+    final done = summary;
+    if (done == null || error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Sicherung fehlgeschlagen: $error')),
+      );
+      return;
+    }
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Sicherung erstellt'),
+        content: Text(
+          '${done.documents} ${done.documents == 1 ? 'Dokument' : 'Dokumente'} '
+          '(${formatFileSize(done.bytes)})\n\nGespeichert unter:\n$location\n\n'
+          'Tipp: Lege die Datei zusätzlich woanders ab (z. B. Google Drive), '
+          'damit sie auch bei Verlust des Geräts erhalten bleibt.',
+        ),
+        actions: [
+          TextButton.icon(
+            onPressed: () => SharePlus.instance.share(
+              ShareParams(files: [XFile(done.file.path, mimeType: 'application/zip')]),
+            ),
+            icon: const Icon(Icons.ios_share),
+            label: const Text('Teilen…'),
+          ),
+          FilledButton(onPressed: () => Navigator.pop(context), child: const Text('OK')),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _restoreBackup() async {
+    const typeGroup = XTypeGroup(
+      label: 'Sicherung (ZIP)',
+      extensions: ['zip'],
+      mimeTypes: ['application/zip', 'application/x-zip-compressed'],
+    );
+    final file = await FilePickers.openOne('backup', [typeGroup]);
+    if (file == null || !mounted) return;
+    RestoreSummary? summary;
+    Object? error;
+    await _withProgress('Sicherung wird wiederhergestellt…', (_) async {
+      try {
+        summary = await BackupService(DocumentStore()).restore(File(file.path));
+      } catch (e) {
+        error = e;
+      }
+    });
+    if (!mounted) return;
+    final done = summary;
+    if (done == null) {
+      final message = error is FormatException
+          ? (error as FormatException).message
+          : 'Wiederherstellen fehlgeschlagen: $error';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      return;
+    }
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Wiederhergestellt'),
+        content: Text([
+          '${done.added} ${done.added == 1 ? 'Dokument' : 'Dokumente'} hinzugefügt',
+          if (done.skipped > 0) '${done.skipped} waren schon vorhanden (unverändert)',
+          if (done.folders > 0) '${done.folders} Ordner hinzugefügt',
+          if (done.signatures > 0)
+            '${done.signatures} ${done.signatures == 1 ? 'Unterschrift' : 'Unterschriften'} hinzugefügt',
+        ].join('\n')),
+        actions: [
+          FilledButton(onPressed: () => Navigator.pop(context), child: const Text('OK')),
+        ],
+      ),
+    );
   }
 
   @override
@@ -121,6 +250,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ? 'Fertige PDFs landen zusätzlich in Downloads/DocScanner'
                         : 'Fertige PDFs landen zusätzlich im Downloads-Ordner, Unterordner "DocScanner"',
                   ),
+                ),
+                const Divider(height: 1),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  child: Text('Datensicherung', style: Theme.of(context).textTheme.titleSmall),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.backup_outlined),
+                  title: const Text('Sicherung erstellen'),
+                  subtitle: const Text(
+                    'Alle Scans, Ordner und Unterschriften als eine ZIP-Datei in Downloads/DocScanner',
+                  ),
+                  onTap: _createBackup,
+                ),
+                ListTile(
+                  leading: const Icon(Icons.settings_backup_restore),
+                  title: const Text('Sicherung wiederherstellen'),
+                  subtitle: const Text(
+                    'Fügt die Dokumente einer Sicherung hinzu - vorhandene bleiben unverändert',
+                  ),
+                  onTap: _restoreBackup,
                 ),
                 const Divider(height: 1),
                 Padding(

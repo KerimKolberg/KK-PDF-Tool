@@ -5,8 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
 import '../../services/downloads_export_service.dart';
+import '../../services/file_picker_service.dart';
 import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
+import '../../services/settings_service.dart';
 import '../../widgets/delete_originals_switch.dart';
 
 class _PickedPdf {
@@ -55,13 +57,13 @@ class _RotatePdfScreenState extends State<RotatePdfScreen> {
   final _downloadsExport = DownloadsExportService();
   final _pageSpecController = TextEditingController();
   final List<_PickedPdf> _pdfs = [];
-  int _degrees = 90;
+  int _degrees = AppPrefs.getInt('rotate.degrees', 90);
   bool _deleteOriginals = false;
   bool _busy = false;
 
   Future<void> _addPdfs() async {
     const typeGroup = XTypeGroup(label: 'PDF', extensions: ['pdf']);
-    final files = await openFiles(acceptedTypeGroups: [typeGroup]);
+    final files = await FilePickers.openMany('rotate_pdf', [typeGroup]);
     if (files.isEmpty) return;
     final picked = await Future.wait(files.map((f) async {
       final bytes = await f.readAsBytes();
@@ -164,7 +166,10 @@ class _RotatePdfScreenState extends State<RotatePdfScreen> {
                   selected: {_degrees},
                   onSelectionChanged: _busy
                       ? null
-                      : (v) => setState(() => _degrees = v.first),
+                      : (v) {
+                          setState(() => _degrees = v.first);
+                          AppPrefs.setInt('rotate.degrees', v.first);
+                        },
                 ),
                 const SizedBox(height: 16),
                 Text('Seiten (optional)', style: Theme.of(context).textTheme.titleSmall),

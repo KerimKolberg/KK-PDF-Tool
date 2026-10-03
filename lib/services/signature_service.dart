@@ -37,6 +37,25 @@ class SignatureService {
     if (await file.exists()) await file.delete();
   }
 
+  /// The folder holding saved signatures (for backups).
+  Future<Directory> get directory => _dir;
+
+  /// Copies signature PNGs from a backup folder, skipping ones already
+  /// present (same file name). Returns how many were added.
+  Future<int> importFrom(Directory source) async {
+    if (!await source.exists()) return 0;
+    final dir = await _dir;
+    var added = 0;
+    await for (final entity in source.list()) {
+      if (entity is! File || !entity.path.toLowerCase().endsWith('.png')) continue;
+      final target = File(p.join(dir.path, p.basename(entity.path)));
+      if (await target.exists()) continue;
+      await entity.copy(target.path);
+      added++;
+    }
+    return added;
+  }
+
   /// Draws [signaturePng] onto [pageBytes]. Position and width are fractions
   /// of the page (0..1); the height follows the signature's aspect ratio.
   static Future<Uint8List> stamp({

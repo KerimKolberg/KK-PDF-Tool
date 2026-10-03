@@ -4,22 +4,25 @@ import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 
 import '../../services/downloads_export_service.dart';
+import '../../services/file_picker_service.dart';
 import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_service.dart';
 import '../../services/pdf_tools_service.dart';
 import '../../widgets/delete_originals_switch.dart';
-import '../sign_pages_screen.dart';
+import '../annotate_pages_screen.dart';
 
-/// Picks a PDF, lets the user place signatures on its pages and saves the
-/// signed copy to Downloads.
-class SignPdfScreen extends StatefulWidget {
-  const SignPdfScreen({super.key});
+/// Picks a PDF, opens it in the fill-in/drawing editor and saves the edited
+/// copy to Downloads.
+class AnnotatePdfScreen extends StatefulWidget {
+  final AnnotateMode mode;
+
+  const AnnotatePdfScreen({super.key, required this.mode});
 
   @override
-  State<SignPdfScreen> createState() => _SignPdfScreenState();
+  State<AnnotatePdfScreen> createState() => _AnnotatePdfScreenState();
 }
 
-class _SignPdfScreenState extends State<SignPdfScreen> {
+class _AnnotatePdfScreenState extends State<AnnotatePdfScreen> {
   final _downloadsExport = DownloadsExportService();
   String? _fileName;
   String? _sourcePath;
@@ -27,9 +30,11 @@ class _SignPdfScreenState extends State<SignPdfScreen> {
   bool _deleteOriginal = false;
   String? _busyLabel;
 
+  bool get _fill => widget.mode == AnnotateMode.fill;
+
   Future<void> _pickPdf() async {
     const typeGroup = XTypeGroup(label: 'PDF', extensions: ['pdf']);
-    final file = await openFile(acceptedTypeGroups: [typeGroup]);
+    final file = await FilePickers.openOne('annotate_pdf', [typeGroup]);
     if (file == null) return;
     final bytes = await file.readAsBytes();
     setState(() {
@@ -39,7 +44,7 @@ class _SignPdfScreenState extends State<SignPdfScreen> {
     });
   }
 
-  Future<void> _sign() async {
+  Future<void> _edit() async {
     final bytes = _pdfBytes;
     final name = _fileName;
     if (bytes == null || name == null || _busyLabel != null) return;
@@ -50,14 +55,17 @@ class _SignPdfScreenState extends State<SignPdfScreen> {
       if (!mounted) return;
       setState(() => _busyLabel = null);
 
-      final signed = await Navigator.of(context).push<List<Uint8List>>(
-        MaterialPageRoute(builder: (_) => SignPagesScreen(pages: pages)),
+      final edited = await Navigator.of(context).push<List<Uint8List>>(
+        MaterialPageRoute(
+          builder: (_) => AnnotatePagesScreen(pages: pages, initialMode: widget.mode),
+        ),
       );
-      if (signed == null || !mounted) return;
+      if (edited == null || !mounted) return;
 
       setState(() => _busyLabel = 'Speichere…');
-      final pdf = await PdfService.buildPdf(signed);
-      final location = await _downloadsExport.export(pdf, '${name}_unterschrieben.pdf');
+      final pdf = await PdfService.buildPdf(edited);
+      final suffix = _fill ? '_ausgefuellt' : '_markiert';
+      final location = await _downloadsExport.export(pdf, '$name$suffix.pdf');
       var message = 'Gespeichert unter $location';
       if (_deleteOriginal) {
         final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
@@ -70,7 +78,7 @@ class _SignPdfScreenState extends State<SignPdfScreen> {
       if (!mounted) return;
       setState(() => _busyLabel = null);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Unterschreiben fehlgeschlagen: $e')),
+        SnackBar(content: Text('Bearbeiten fehlgeschlagen: $e')),
       );
     }
   }
@@ -79,7 +87,7 @@ class _SignPdfScreenState extends State<SignPdfScreen> {
   Widget build(BuildContext context) {
     final busy = _busyLabel != null;
     return Scaffold(
-      appBar: AppBar(title: const Text('PDF unterschreiben')),
+      appBar: AppBar(title: Text(_fill ? 'PDF ausfüllen & unterschreiben' : 'PDF markieren & zeichnen')),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -87,8 +95,11 @@ class _SignPdfScreenState extends State<SignPdfScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Unterschrift einmal zeichnen und speichern, danach auf beliebigen '
-              'Seiten platzieren. Läuft komplett offline.',
+              _fill
+                  ? 'Text, Datum, Haken/Kreuze und Unterschriften auf beliebigen Seiten '
+                      'platzieren - z. B. um Formulare auszufüllen. Läuft komplett offline.'
+                  : 'Mit Stift und Textmarker direkt auf die Seiten zeichnen. Läuft '
+                      'komplett offline.',
               style: TextStyle(color: Theme.of(context).colorScheme.outline),
             ),
             const SizedBox(height: 24),
@@ -114,15 +125,15 @@ class _SignPdfScreenState extends State<SignPdfScreen> {
               ),
               const SizedBox(height: 12),
               FilledButton.icon(
-                onPressed: busy ? null : _sign,
+                onPressed: busy ? null : _edit,
                 icon: busy
                     ? const SizedBox(
                         width: 18,
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
-                    : const Icon(Icons.draw_outlined),
-                label: Text(_busyLabel ?? 'Unterschreiben'),
+                    : Icon(_fill ? Icons.edit_note : Icons.brush_outlined),
+                label: Text(_busyLabel ?? (_fill ? 'Ausfüllen' : 'Zeichnen')),
               ),
             ],
           ],

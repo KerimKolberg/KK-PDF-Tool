@@ -18,7 +18,48 @@ class DownloadsExportService {
   static const _folderName = 'DocScanner';
   static const _channel = MethodChannel('docscanner/downloads');
 
+  /// Replaces characters that aren't allowed in Windows/Android file names
+  /// (titles like "Scan 3.10.2026 14:05" contain a colon).
+  static String safeFileName(String name) {
+    var safe = name
+        .replaceAll(':', '-')
+        .replaceAll(RegExp(r'[<>"/\\|?*\x00-\x1F]'), '_')
+        .trim();
+    while (safe.endsWith('.') || safe.endsWith(' ')) {
+      safe = safe.substring(0, safe.length - 1);
+    }
+    return safe.isEmpty ? 'Dokument' : safe;
+  }
+
+  /// Like [export], but copies an existing (possibly very large) file without
+  /// loading it into memory.
+  Future<String> exportFile(File source, String fileName, {String? mimeType}) async {
+    fileName = safeFileName(fileName);
+    if (Platform.isAndroid) {
+      final location = await _channel.invokeMethod<String>('saveFileToDownloads', {
+        'fileName': fileName,
+        'sourcePath': source.path,
+        'mimeType': mimeType,
+      });
+      return location ?? 'Downloads/$_folderName/$fileName';
+    }
+    final targetDir = await _desktopTargetDir();
+    final copy = await source.copy(p.join(targetDir.path, fileName));
+    return copy.path;
+  }
+
+  Future<Directory> _desktopTargetDir() async {
+    final downloads = await getDownloadsDirectory();
+    final baseDir = downloads ?? await getApplicationDocumentsDirectory();
+    final targetDir = Directory(p.join(baseDir.path, _folderName));
+    if (!await targetDir.exists()) {
+      await targetDir.create(recursive: true);
+    }
+    return targetDir;
+  }
+
   Future<String> export(Uint8List bytes, String fileName) async {
+    fileName = safeFileName(fileName);
     if (Platform.isAndroid) {
       final location = await _channel.invokeMethod<String>('saveToDownloads', {
         'fileName': fileName,
@@ -27,12 +68,7 @@ class DownloadsExportService {
       return location ?? 'Downloads/$_folderName/$fileName';
     }
 
-    final downloads = await getDownloadsDirectory();
-    final baseDir = downloads ?? await getApplicationDocumentsDirectory();
-    final targetDir = Directory(p.join(baseDir.path, _folderName));
-    if (!await targetDir.exists()) {
-      await targetDir.create(recursive: true);
-    }
+    final targetDir = await _desktopTargetDir();
     final file = File(p.join(targetDir.path, fileName));
     await file.writeAsBytes(bytes, flush: true);
     return file.path;

@@ -6,8 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
 import '../../services/downloads_export_service.dart';
+import '../../services/file_picker_service.dart';
 import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
+import '../../services/settings_service.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/rect_crop_overlay.dart';
 
@@ -38,7 +40,7 @@ class _CropPdfScreenState extends State<CropPdfScreen> {
 
   Future<void> _pickPdf() async {
     const typeGroup = XTypeGroup(label: 'PDF', extensions: ['pdf']);
-    final file = await openFile(acceptedTypeGroups: [typeGroup]);
+    final file = await FilePickers.openOne('crop_pdf', [typeGroup]);
     if (file == null) return;
     final bytes = await file.readAsBytes();
     setState(() {
@@ -73,6 +75,18 @@ class _CropPdfScreenState extends State<CropPdfScreen> {
     }
   }
 
+  /// The crop area used last time, so similar documents can be trimmed
+  /// the same way without redrawing the rectangle.
+  ({double left, double top, double right, double bottom})? get _rememberedRect {
+    final left = AppPrefs.getDouble('cropPdf.left', -1);
+    final top = AppPrefs.getDouble('cropPdf.top', -1);
+    final right = AppPrefs.getDouble('cropPdf.right', -1);
+    final bottom = AppPrefs.getDouble('cropPdf.bottom', -1);
+    final valid = left >= 0 && top >= 0 && right <= 1 && bottom <= 1 &&
+        right - left > 0.05 && bottom - top > 0.05;
+    return valid ? (left: left, top: top, right: right, bottom: bottom) : null;
+  }
+
   Set<int>? _parsePageSpec(String spec) {
     final trimmed = spec.trim();
     if (trimmed.isEmpty) return null;
@@ -104,6 +118,10 @@ class _CropPdfScreenState extends State<CropPdfScreen> {
     if (bytes == null || name == null || overlay == null || _busy) return;
     final rect = overlay.fractionalRect;
     final pageIndices = _parsePageSpec(_pageSpecController.text);
+    AppPrefs.setDouble('cropPdf.left', rect.left);
+    AppPrefs.setDouble('cropPdf.top', rect.top);
+    AppPrefs.setDouble('cropPdf.right', rect.right);
+    AppPrefs.setDouble('cropPdf.bottom', rect.bottom);
 
     setState(() => _busy = true);
     try {
@@ -178,6 +196,7 @@ class _CropPdfScreenState extends State<CropPdfScreen> {
                     imageBytes: _previewImage!,
                     imageWidth: _previewW,
                     imageHeight: _previewH,
+                    initialRect: _rememberedRect,
                   ),
                 ),
       bottomNavigationBar: _fileName == null || _loadingPreview

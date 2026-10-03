@@ -39,6 +39,22 @@ für Android (APK) und Windows (EXE).
 - **Text erkennen:** Im Dokument (Menü ⋮) den erkannten Text anzeigen,
   kopieren oder als .txt speichern - Android offline, Windows über Google.
 - **Dunkler Modus:** System / Hell / Dunkel in den Einstellungen.
+- **Stapel-Modus:** Beim Scannen jede Seite als eigenes Dokument speichern
+  (z. B. ein Stapel Belege), automatisch nummeriert.
+- **Bessere Filter:** "Dokument" (Papier weiß, Text scharf, Farben bleiben)
+  und "Schatten entfernen" für jeden Filter; Schwarz/Weiß gleicht Licht
+  automatisch aus. Seiten aus "Automatisch scannen" per Tipp nachbearbeiten.
+- **Teilen als PDF, verkleinerte PDF (bleibt durchsuchbar) oder JPG-Bilder**
+  - im Dokument oder per langem Tipp in der Bibliothek.
+- **Ausfüllen & Zeichnen:** Text, Datum, Haken/Kreuz und Unterschrift
+  platzieren; mit Stift und Textmarker zeichnen; Rückgängig-Funktion.
+- **Bibliothek:** sortieren (Datum, Name, Größe), Raster- oder Listenansicht.
+- **Datensicherung:** Einstellungen → Sicherung erstellen / wiederherstellen
+  (eine ZIP-Datei mit allen Scans, Ordnern und Unterschriften;
+  Wiederherstellen fügt hinzu und überschreibt nichts).
+- Werkzeuge merken sich ihre letzten Einstellungen und (unter Windows) den
+  zuletzt benutzten Ordner. Die Option "Originale löschen" wird bewusst nie
+  gemerkt.
 - **"Öffnen mit" / Teilen (nur Android):** KK-PDF-Tool erscheint in der
   "Öffnen mit"-Liste und im Teilen-Menü für PDFs und Bilder aus anderen
   Apps (z. B. Dateien-App) und importiert sie in die Bibliothek.

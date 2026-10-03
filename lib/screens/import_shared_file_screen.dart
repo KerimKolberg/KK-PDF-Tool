@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import '../models/ocr_result.dart';
 import '../services/document_builder.dart';
 import '../services/document_store.dart';
 import '../services/incoming_file_service.dart';
@@ -57,6 +58,7 @@ class _ImportSharedFileScreenState extends State<ImportSharedFileScreen> {
       final Uint8List pdfBytes;
       final List<Uint8List> pageJpegs;
       String? text;
+      List<OcrResult?>? ocr;
 
       if (widget.file.isPdf) {
         pdfBytes = sourceBytes;
@@ -67,6 +69,7 @@ class _ImportSharedFileScreenState extends State<ImportSharedFileScreen> {
         pageJpegs = built.pages;
         pdfBytes = built.pdfBytes;
         text = built.text;
+        ocr = built.ocr;
       }
 
       final doc = await widget.store.createDocument(
@@ -74,6 +77,7 @@ class _ImportSharedFileScreenState extends State<ImportSharedFileScreen> {
         pageJpegBytes: pageJpegs,
         pdfBytes: pdfBytes,
         text: text,
+        ocr: ocr,
       );
 
       if (!mounted) return;

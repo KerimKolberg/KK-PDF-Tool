@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../models/ocr_result.dart';
 import '../models/scan_document.dart';
 
 /// Manages persistence of scanned documents on disk.
@@ -15,7 +16,16 @@ import '../models/scan_document.dart';
 ///   scans/`<id>`/page_0.jpg ...        - processed page images
 ///   scans/`<id>`/document.pdf          - generated multi-page PDF
 ///   scans/`<id>`/text.txt              - recognised text (OCR), if any
+///   scans/`<id>`/ocr.json              - OCR line positions per page, if any
 class DocumentStore {
+  /// Bumped on every change to the library index, so screens that stay
+  /// open (the library tab) can refresh, e.g. after a restore in Settings.
+  static final changes = ValueNotifier<int>(0);
+
+  /// Only ids like the ones this app creates are accepted from a backup
+  /// (they become folder names).
+  static final _validId = RegExp(r'^[A-Za-z0-9_-]{1,64}$');
+
   Directory? _scansDir;
 
   Future<Directory> get _root async {
@@ -51,6 +61,55 @@ class DocumentStore {
     final file = await _indexFile;
     final raw = jsonEncode(docs.map((d) => d.toJson()).toList());
     await file.writeAsString(raw);
+    changes.value++;
+  }
+
+  /// The library's own folder (for backups).
+  Future<Directory> get rootDirectory => _root;
+
+  /// Moves documents from an extracted backup ([sourceScans] is its "scans"
+  /// folder) into the library. Documents already in the library (same id)
+  /// are skipped, so restoring the same backup twice is harmless.
+  Future<({int added, int skipped})> importDocuments(
+    Directory sourceScans,
+    List<ScanDocument> docs,
+  ) async {
+    final root = await _root;
+    final all = await loadAll();
+    final existing = {for (final d in all) d.id};
+    var added = 0;
+    var skipped = 0;
+    for (final doc in docs) {
+      final src = Directory(p.join(sourceScans.path, doc.id));
+      if (!_validId.hasMatch(doc.id) || existing.contains(doc.id) || !await src.exists()) {
+        skipped++;
+        continue;
+      }
+      final dst = Directory(p.join(root.path, doc.id));
+      try {
+        await src.rename(dst.path);
+      } on FileSystemException {
+        // Different drive/volume: copy instead of move.
+        await _copyDirectory(src, dst);
+      }
+      all.add(doc);
+      existing.add(doc.id);
+      added++;
+    }
+    if (added > 0) await _writeIndex(all);
+    return (added: added, skipped: skipped);
+  }
+
+  static Future<void> _copyDirectory(Directory src, Directory dst) async {
+    await dst.create(recursive: true);
+    await for (final entity in src.list()) {
+      final target = p.join(dst.path, p.basename(entity.path));
+      if (entity is File) {
+        await entity.copy(target);
+      } else if (entity is Directory) {
+        await _copyDirectory(entity, Directory(target));
+      }
+    }
   }
 
   Future<Directory> documentDir(String id) async {
@@ -82,10 +141,16 @@ class DocumentStore {
     required List<Uint8List> pageJpegBytes,
     required Uint8List pdfBytes,
     String? text,
+    List<OcrResult?>? ocr,
     String? folder,
   }) async {
-    final id = DateTime.now().microsecondsSinceEpoch.toString();
-    await _writeContent(id, pageJpegBytes, pdfBytes, text);
+    // Batch scans create documents in quick succession; make sure two never
+    // share an id (= folder).
+    var id = DateTime.now().microsecondsSinceEpoch.toString();
+    while (await Directory(p.join((await _root).path, id)).exists()) {
+      id = '${int.parse(id) + 1}';
+    }
+    await _writeContent(id, pageJpegBytes, pdfBytes, text, ocr);
 
     final doc = ScanDocument(
       id: id,
@@ -108,6 +173,7 @@ class DocumentStore {
     required List<Uint8List> pageJpegBytes,
     required Uint8List pdfBytes,
     String? text,
+    List<OcrResult?>? ocr,
   }) async {
     final dir = await documentDir(id);
     await for (final entity in dir.list()) {
@@ -115,7 +181,7 @@ class DocumentStore {
         await entity.delete();
       }
     }
-    await _writeContent(id, pageJpegBytes, pdfBytes, text);
+    await _writeContent(id, pageJpegBytes, pdfBytes, text, ocr);
 
     final all = await loadAll();
     final idx = all.indexWhere((d) => d.id == id);
@@ -130,6 +196,7 @@ class DocumentStore {
     List<Uint8List> pageJpegBytes,
     Uint8List pdfBytes,
     String? text,
+    List<OcrResult?>? ocr,
   ) async {
     final dir = await documentDir(id);
     for (var i = 0; i < pageJpegBytes.length; i++) {
@@ -139,6 +206,32 @@ class DocumentStore {
     final pdfFile = File(p.join(dir.path, 'document.pdf'));
     await pdfFile.writeAsBytes(pdfBytes, flush: true);
     await writeText(id, text);
+    await _writeOcr(id, ocr);
+  }
+
+  /// Per-page OCR line positions (same order as the pages), used to rebuild
+  /// a searchable PDF (e.g. a smaller copy for sharing) without running text
+  /// recognition again. Null when the document has none or it's unreadable.
+  Future<List<OcrResult?>?> readOcr(String id) async {
+    final file = File(p.join((await documentDir(id)).path, 'ocr.json'));
+    if (!await file.exists()) return null;
+    try {
+      final list = jsonDecode(await file.readAsString()) as List;
+      return [
+        for (final e in list) e == null ? null : OcrResult.fromMap(e as Map),
+      ];
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _writeOcr(String id, List<OcrResult?>? ocr) async {
+    final file = File(p.join((await documentDir(id)).path, 'ocr.json'));
+    if (ocr == null || ocr.every((r) => r == null)) {
+      if (await file.exists()) await file.delete();
+      return;
+    }
+    await file.writeAsString(jsonEncode([for (final r in ocr) r?.toMap()]), flush: true);
   }
 
   Future<String?> readText(String id) async {

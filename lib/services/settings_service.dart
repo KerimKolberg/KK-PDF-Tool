@@ -1,5 +1,43 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+/// Remembered choices (last options per tool, library view, scan filter).
+/// Loaded once at startup via [init] so screens can read them
+/// synchronously when they open; writes are fire-and-forget.
+class AppPrefs {
+  static SharedPreferences? _prefs;
+
+  static Future<void> init() async {
+    _prefs = await SharedPreferences.getInstance();
+  }
+
+  static String _k(String key) => 'pref.$key';
+
+  static bool getBool(String key, bool fallback) => _prefs?.getBool(_k(key)) ?? fallback;
+  static int getInt(String key, int fallback) => _prefs?.getInt(_k(key)) ?? fallback;
+  static double getDouble(String key, double fallback) =>
+      _prefs?.getDouble(_k(key)) ?? fallback;
+  static String? getString(String key) => _prefs?.getString(_k(key));
+
+  static T getEnum<T extends Enum>(String key, List<T> values, T fallback) =>
+      values.asNameMap()[getString(key)] ?? fallback;
+
+  static void setBool(String key, bool value) => _write(_prefs?.setBool(_k(key), value));
+  static void setInt(String key, int value) => _write(_prefs?.setInt(_k(key), value));
+  static void setDouble(String key, double value) => _write(_prefs?.setDouble(_k(key), value));
+  static void setEnum(String key, Enum value) => setString(key, value.name);
+
+  /// null removes the value.
+  static void setString(String key, String? value) => _write(
+        value == null ? _prefs?.remove(_k(key)) : _prefs?.setString(_k(key), value),
+      );
+
+  static void _write(Future<bool>? write) {
+    if (write != null) unawaited(write);
+  }
+}
 
 /// Small persisted app preferences, backed by [SharedPreferences].
 class SettingsService {

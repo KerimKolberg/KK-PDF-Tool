@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
 import '../../services/downloads_export_service.dart';
+import '../../services/file_picker_service.dart';
 import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
 import '../../widgets/delete_originals_switch.dart';
@@ -29,7 +30,7 @@ class _PdfToImagesScreenState extends State<PdfToImagesScreen> {
 
   Future<void> _pickPdf() async {
     const typeGroup = XTypeGroup(label: 'PDF', extensions: ['pdf']);
-    final file = await openFile(acceptedTypeGroups: [typeGroup]);
+    final file = await FilePickers.openOne('pdf_to_images', [typeGroup]);
     if (file == null) return;
     final bytes = await file.readAsBytes();
     setState(() {

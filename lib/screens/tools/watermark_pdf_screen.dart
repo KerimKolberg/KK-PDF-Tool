@@ -5,8 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
 import '../../services/downloads_export_service.dart';
+import '../../services/file_picker_service.dart';
 import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
+import '../../services/settings_service.dart';
 import '../../widgets/delete_originals_switch.dart';
 
 /// Stamps a diagonal text watermark across every page of a PDF.
@@ -19,17 +21,18 @@ class WatermarkPdfScreen extends StatefulWidget {
 
 class _WatermarkPdfScreenState extends State<WatermarkPdfScreen> {
   final _downloadsExport = DownloadsExportService();
-  final _textController = TextEditingController(text: 'ENTWURF');
+  final _textController =
+      TextEditingController(text: AppPrefs.getString('watermark.text') ?? 'ENTWURF');
   String? _fileName;
   String? _sourcePath;
   Uint8List? _pdfBytes;
-  double _opacity = 0.35;
+  double _opacity = AppPrefs.getDouble('watermark.opacity', 0.35);
   bool _deleteOriginal = false;
   bool _busy = false;
 
   Future<void> _pickPdf() async {
     const typeGroup = XTypeGroup(label: 'PDF', extensions: ['pdf']);
-    final file = await openFile(acceptedTypeGroups: [typeGroup]);
+    final file = await FilePickers.openOne('watermark_pdf', [typeGroup]);
     if (file == null) return;
     final bytes = await file.readAsBytes();
     setState(() {
@@ -43,6 +46,8 @@ class _WatermarkPdfScreenState extends State<WatermarkPdfScreen> {
     final bytes = _pdfBytes;
     final name = _fileName;
     final text = _textController.text.trim();
+    AppPrefs.setString('watermark.text', text);
+    AppPrefs.setDouble('watermark.opacity', _opacity);
     if (bytes == null || name == null || text.isEmpty || _busy) return;
     setState(() => _busy = true);
     try {

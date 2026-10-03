@@ -4,6 +4,8 @@ import 'package:camera/camera.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
+import '../services/file_picker_service.dart';
+
 /// Lets the user take a photo of a document page, or import an existing
 /// image file (useful on desktop machines without a usable camera).
 /// Pops the route with the raw image bytes once one is chosen.
@@ -82,7 +84,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
       label: 'Bilder',
       extensions: ['jpg', 'jpeg', 'png', 'webp'],
     );
-    final file = await openFile(acceptedTypeGroups: [typeGroup]);
+    final file = await FilePickers.openOne('capture', [typeGroup]);
     if (file == null) return;
     final bytes = await file.readAsBytes();
     if (!mounted) return;

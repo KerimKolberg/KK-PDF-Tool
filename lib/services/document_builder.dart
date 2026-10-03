@@ -18,7 +18,10 @@ class BuiltDocument {
   final Uint8List pdfBytes;
   final String? text;
 
-  const BuiltDocument({required this.pages, required this.pdfBytes, this.text});
+  /// Per-page OCR results when text recognition ran (for [DocumentStore]).
+  final List<OcrResult?>? ocr;
+
+  const BuiltDocument({required this.pages, required this.pdfBytes, this.text, this.ocr});
 }
 
 /// Turns page images into the stored PDF. On Android (unless turned off in
@@ -61,7 +64,7 @@ class DocumentBuilder {
     } catch (_) {
       pdf = await PdfService.buildPdf(normalized);
     }
-    return BuiltDocument(pages: normalized, pdfBytes: pdf, text: text);
+    return BuiltDocument(pages: normalized, pdfBytes: pdf, text: text, ocr: results);
   }
 
   /// Offline OCR of [pages] without building a PDF (Android only).
