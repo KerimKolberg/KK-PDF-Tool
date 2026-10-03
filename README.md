@@ -207,19 +207,27 @@ flutter build windows --release
 
 ```
 lib/
-  main.dart                     Einstiegspunkt
-  models/scan_document.dart     Datenmodell eines gespeicherten Scans
-  services/
-    document_store.dart         Speichern/Laden auf der Festplatte (JSON-Index)
-    image_processing.dart       Perspektivkorrektur, Filter, JPEG-Encoding
-    pdf_service.dart            PDF-Erzeugung aus den Seitenbildern
-  screens/
-    library_screen.dart         Startbildschirm: Liste aller Scans
-    scan_flow_screen.dart       Mehrseitiger Scan-Vorgang
-    capture_screen.dart         Kamera-Aufnahme / Datei-Import
-    crop_screen.dart            Ecken anpassen, drehen, Filter wählen
-    document_viewer_screen.dart Gespeichertes Dokument ansehen/teilen/löschen
-  widgets/corner_crop_overlay.dart  Ziehbare Eck-Overlay-UI
+  main.dart                       Einstiegspunkt, Theme (hell/dunkel)
+  models/                         ScanDocument, OcrResult
+  services/                       Logik ohne UI
+    document_store.dart           Bibliothek auf der Festplatte (Index, Ordner, Text)
+    document_builder.dart         Seiten -> PDF (+ durchsuchbare Textebene)
+    image_processing.dart         Zuschnitt, Filter, Schattenentfernung
+    pdf_service.dart / pdf_tools_service.dart   PDF erzeugen / bearbeiten
+    searchable_pdf_service.dart   unsichtbare OCR-Textebene
+    ocr_service.dart              Offline-Texterkennung (Android, ML Kit)
+    google_drive_convert_service.dart   Online-Umwandlungen über Google
+    backup_service.dart           Sicherung / Wiederherstellung (ZIP)
+    document_share_service.dart   Teilen als PDF / klein / JPG
+    signature_service.dart        gespeicherte Unterschriften
+    settings_service.dart         Einstellungen + gemerkte Werkzeug-Optionen
+    file_picker_service.dart / downloads_export_service.dart   Dateien wählen / speichern
+  screens/                        Bildschirme (Bibliothek, Scan, Zuschnitt,
+                                  Dokument, Ausfüllen & Zeichnen, Einstellungen …)
+    tools/                        je ein Bildschirm pro Werkzeug
+  widgets/                        wiederverwendbare UI-Bausteine
+  utils/formatting.dart           kleine gemeinsame Helfer
+android/app/src/main/kotlin/…/MainActivity.kt   Downloads, "Öffnen mit", OCR
 ```
 
 ## Bekannte Einschränkungen

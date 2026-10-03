@@ -10,6 +10,7 @@ import '../../services/file_picker_service.dart';
 import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
 import '../../services/settings_service.dart';
+import '../../utils/formatting.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/rect_crop_overlay.dart';
 
@@ -87,37 +88,13 @@ class _CropPdfScreenState extends State<CropPdfScreen> {
     return valid ? (left: left, top: top, right: right, bottom: bottom) : null;
   }
 
-  Set<int>? _parsePageSpec(String spec) {
-    final trimmed = spec.trim();
-    if (trimmed.isEmpty) return null;
-    final indices = <int>{};
-    for (final part in trimmed.split(',')) {
-      final token = part.trim();
-      if (token.isEmpty) continue;
-      final range = token.split('-');
-      if (range.length == 1) {
-        final n = int.tryParse(range[0].trim());
-        if (n != null && n >= 1) indices.add(n - 1);
-      } else if (range.length == 2) {
-        final start = int.tryParse(range[0].trim());
-        final end = int.tryParse(range[1].trim());
-        if (start != null && end != null && start >= 1 && end >= start) {
-          for (var i = start; i <= end; i++) {
-            indices.add(i - 1);
-          }
-        }
-      }
-    }
-    return indices;
-  }
-
   Future<void> _apply() async {
     final bytes = _pdfBytes;
     final name = _fileName;
     final overlay = _overlayKey.currentState;
     if (bytes == null || name == null || overlay == null || _busy) return;
     final rect = overlay.fractionalRect;
-    final pageIndices = _parsePageSpec(_pageSpecController.text);
+    final pageIndices = parsePageSpec(_pageSpecController.text);
     AppPrefs.setDouble('cropPdf.left', rect.left);
     AppPrefs.setDouble('cropPdf.top', rect.top);
     AppPrefs.setDouble('cropPdf.right', rect.right);

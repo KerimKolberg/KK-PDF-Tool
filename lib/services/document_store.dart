@@ -272,7 +272,8 @@ class DocumentStore {
 
   /// All folder names: explicitly created ones plus any referenced by a
   /// document, sorted alphabetically.
-  Future<List<String>> loadFolders() async {
+  /// Pass [docs] when already loaded to avoid reading the index twice.
+  Future<List<String>> loadFolders({List<ScanDocument>? docs}) async {
     final names = <String>{};
     final file = await _foldersFile;
     if (await file.exists()) {
@@ -281,7 +282,7 @@ class DocumentStore {
         names.addAll((jsonDecode(raw) as List).cast<String>());
       }
     }
-    for (final doc in await loadAll()) {
+    for (final doc in docs ?? await loadAll()) {
       if (doc.folder != null) names.add(doc.folder!);
     }
     return names.toList()..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));

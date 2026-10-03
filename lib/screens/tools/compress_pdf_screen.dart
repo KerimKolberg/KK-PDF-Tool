@@ -9,6 +9,7 @@ import '../../services/file_picker_service.dart';
 import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
 import '../../services/settings_service.dart';
+import '../../utils/formatting.dart';
 import '../../widgets/delete_originals_switch.dart';
 
 enum _CompressLevel { low, medium, high }
@@ -63,11 +64,6 @@ class _CompressPdfScreenState extends State<CompressPdfScreen> {
     });
   }
 
-  String _formatSize(int bytes) {
-    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(0)} KB';
-    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
-  }
-
   Future<void> _compress() async {
     final bytes = _pdfBytes;
     final name = _fileName;
@@ -81,8 +77,8 @@ class _CompressPdfScreenState extends State<CompressPdfScreen> {
       );
       final location =
           await _downloadsExport.export(compressed, '${name}_komprimiert.pdf');
-      final before = _formatSize(bytes.length);
-      final after = _formatSize(compressed.length);
+      final before = formatFileSize(bytes.length);
+      final after = formatFileSize(compressed.length);
       var message = '$before → $after · gespeichert unter $location';
       if (_deleteOriginal) {
         final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
@@ -122,7 +118,7 @@ class _CompressPdfScreenState extends State<CompressPdfScreen> {
               ListTile(
                 leading: const Icon(Icons.description_outlined),
                 title: Text(_fileName!),
-                subtitle: Text(_formatSize(_pdfBytes!.length)),
+                subtitle: Text(formatFileSize(_pdfBytes!.length)),
                 trailing: TextButton(
                   onPressed: _busy ? null : _pickPdf,
                   child: const Text('Ändern'),

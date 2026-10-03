@@ -9,6 +9,7 @@ import '../../services/file_picker_service.dart';
 import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
 import '../../services/settings_service.dart';
+import '../../utils/formatting.dart';
 import '../../widgets/delete_originals_switch.dart';
 
 class _PickedPdf {
@@ -16,32 +17,6 @@ class _PickedPdf {
   final String? path;
   final Uint8List bytes;
   _PickedPdf(this.name, this.path, this.bytes);
-}
-
-/// Parses a page spec like "1-3,5,8-9" (1-based, as typed by a user) into
-/// 0-based page indices. Returns null (meaning "all pages") for blank input.
-Set<int>? _parsePageSpec(String spec) {
-  final trimmed = spec.trim();
-  if (trimmed.isEmpty) return null;
-  final indices = <int>{};
-  for (final part in trimmed.split(',')) {
-    final token = part.trim();
-    if (token.isEmpty) continue;
-    final range = token.split('-');
-    if (range.length == 1) {
-      final n = int.tryParse(range[0].trim());
-      if (n != null && n >= 1) indices.add(n - 1);
-    } else if (range.length == 2) {
-      final start = int.tryParse(range[0].trim());
-      final end = int.tryParse(range[1].trim());
-      if (start != null && end != null && start >= 1 && end >= start) {
-        for (var i = start; i <= end; i++) {
-          indices.add(i - 1);
-        }
-      }
-    }
-  }
-  return indices;
 }
 
 /// Rotates one or more PDFs, either entirely or just a chosen set of pages
@@ -76,7 +51,7 @@ class _RotatePdfScreenState extends State<RotatePdfScreen> {
 
   Future<void> _rotate() async {
     if (_pdfs.isEmpty || _busy) return;
-    final pageIndices = _parsePageSpec(_pageSpecController.text);
+    final pageIndices = parsePageSpec(_pageSpecController.text);
     setState(() => _busy = true);
     try {
       String? lastLocation;
@@ -92,7 +67,7 @@ class _RotatePdfScreenState extends State<RotatePdfScreen> {
         );
       }
       var message =
-          '${_pdfs.length} Datei(en) gedreht${lastLocation != null ? ' → ${_folderOf(lastLocation)}' : ''}';
+          '${_pdfs.length} Datei(en) gedreht${lastLocation != null ? ' → ${folderOf(lastLocation)}' : ''}';
       if (_deleteOriginals) {
         final notDeleted = await OriginalFilesCleanupService.deleteAll(
           [for (final pdf in _pdfs) pdf.path],
@@ -111,11 +86,6 @@ class _RotatePdfScreenState extends State<RotatePdfScreen> {
         SnackBar(content: Text('Drehen fehlgeschlagen: $e')),
       );
     }
-  }
-
-  String _folderOf(String location) {
-    final idx = location.lastIndexOf(RegExp(r'[\\/]'));
-    return idx == -1 ? location : location.substring(0, idx);
   }
 
   @override

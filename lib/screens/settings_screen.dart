@@ -10,7 +10,7 @@ import '../services/document_store.dart';
 import '../services/downloads_export_service.dart';
 import '../services/file_picker_service.dart';
 import '../services/settings_service.dart';
-import '../widgets/share_sheet.dart';
+import '../utils/formatting.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});

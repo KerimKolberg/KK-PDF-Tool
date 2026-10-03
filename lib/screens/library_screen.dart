@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../models/scan_document.dart';
 import '../services/document_store.dart';
 import '../services/settings_service.dart';
+import '../utils/formatting.dart';
 import '../widgets/folder_picker.dart';
 import '../widgets/share_sheet.dart';
 import 'document_viewer_screen.dart';
@@ -75,15 +76,18 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   Future<void> _reload() async {
     final docs = await _store.loadAll();
-    final folders = await _store.loadFolders();
+    final folders = await _store.loadFolders(docs: docs);
     final texts = <String, String>{};
     final sizes = <String, int>{};
-    for (final d in docs) {
-      final text = await _store.readText(d.id);
-      if (text != null) texts[d.id] = text;
-      final pdf = File(await _store.pdfPath(d.id));
-      sizes[d.id] = await pdf.exists() ? await pdf.length() : 0;
-    }
+    await Future.wait([
+      for (final d in docs)
+        () async {
+          final text = await _store.readText(d.id);
+          if (text != null) texts[d.id] = text;
+          final pdf = File(await _store.pdfPath(d.id));
+          sizes[d.id] = await pdf.exists() ? await pdf.length() : 0;
+        }(),
+    ]);
     if (!mounted) return;
     setState(() {
       _docs = docs;

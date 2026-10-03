@@ -6,11 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import '../models/scan_document.dart';
 import '../services/document_share_service.dart';
 import '../services/document_store.dart';
-
-String formatFileSize(int bytes) {
-  if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(0)} KB';
-  return '${(bytes / (1024 * 1024)).toStringAsFixed(1).replaceAll('.', ',')} MB';
-}
+import '../utils/formatting.dart';
 
 /// Asks how to share [doc] (original PDF, smaller PDF or JPG images),
 /// prepares the files with a progress indicator and opens the system share

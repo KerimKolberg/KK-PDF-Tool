@@ -8,6 +8,7 @@ import '../../services/downloads_export_service.dart';
 import '../../services/file_picker_service.dart';
 import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
+import '../../utils/formatting.dart';
 import '../../widgets/delete_originals_switch.dart';
 
 /// Rasterizes every page of a picked PDF into a JPEG image and exports
@@ -76,7 +77,7 @@ class _PdfToImagesScreenState extends State<PdfToImagesScreen> {
         );
       }
       var message =
-          '${images.length} Bild(er) gespeichert${lastLocation != null ? ' in ${_folderOf(lastLocation)}' : ''}';
+          '${images.length} Bild(er) gespeichert${lastLocation != null ? ' in ${folderOf(lastLocation)}' : ''}';
       if (_deleteOriginal) {
         final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
         if (notDeleted.isNotEmpty) {
@@ -93,11 +94,6 @@ class _PdfToImagesScreenState extends State<PdfToImagesScreen> {
         SnackBar(content: Text('Export fehlgeschlagen: $e')),
       );
     }
-  }
-
-  String _folderOf(String location) {
-    final idx = location.lastIndexOf(RegExp(r'[\\/]'));
-    return idx == -1 ? location : location.substring(0, idx);
   }
 
   @override
