@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 
 import 'screens/home_shell.dart';
 import 'services/settings_service.dart';
+import 'services/windows_desktop_service.dart';
 
-Future<void> main() async {
+Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppPrefs.init();
   await SettingsService.loadThemeMode();
+  await WindowsDesktopService.instance.init(args);
   runApp(const DocScannerApp());
 }
 

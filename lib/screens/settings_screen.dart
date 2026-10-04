@@ -10,6 +10,7 @@ import '../services/document_store.dart';
 import '../services/downloads_export_service.dart';
 import '../services/file_picker_service.dart';
 import '../services/settings_service.dart';
+import '../services/windows_desktop_service.dart';
 import '../utils/formatting.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -24,6 +25,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _clientIdController = TextEditingController();
   bool _cropEnabled = true;
   bool _searchablePdf = true;
+  bool _autostart = false;
+  bool _startMinimized = WindowsDesktopService.instance.startMinimized;
   bool _loading = true;
 
   @override
@@ -36,10 +39,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final cropEnabled = await _settings.getCropEnabledDefault();
     final searchablePdf = await _settings.getSearchablePdfEnabled();
     final clientId = await _settings.getGoogleWebClientId();
+    final autostart = WindowsDesktopService.supported
+        ? await WindowsDesktopService.instance.isAutostartEnabled()
+        : false;
     if (!mounted) return;
     setState(() {
       _cropEnabled = cropEnabled;
       _searchablePdf = searchablePdf;
+      _autostart = autostart;
       _clientIdController.text = clientId ?? '';
       _loading = false;
     });
@@ -215,6 +222,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 const Divider(height: 1),
+                if (WindowsDesktopService.supported) ...[
+                  SwitchListTile(
+                    secondary: const Icon(Icons.power_settings_new),
+                    title: const Text('Mit Windows starten'),
+                    subtitle: const Text('KK-PDF-Tool startet automatisch beim Anmelden'),
+                    value: _autostart,
+                    onChanged: (value) async {
+                      setState(() => _autostart = value);
+                      await WindowsDesktopService.instance.setAutostart(value, minimized: _startMinimized);
+                    },
+                  ),
+                  SwitchListTile(
+                    secondary: const Icon(Icons.minimize),
+                    title: const Text('Dabei nur im Infobereich starten'),
+                    subtitle: const Text(
+                      'Startet unsichtbar mit Symbol unten rechts neben der Uhr - Klick darauf öffnet die App',
+                    ),
+                    value: _startMinimized,
+                    onChanged: !_autostart
+                        ? null
+                        : (value) async {
+                            setState(() => _startMinimized = value);
+                            await WindowsDesktopService.instance.setAutostart(true, minimized: value);
+                          },
+                  ),
+                  const Divider(height: 1),
+                ],
                 if (Platform.isAndroid) ...[
                   SwitchListTile(
                     title: const Text('Durchsuchbare PDFs'),

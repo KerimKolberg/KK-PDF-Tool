@@ -50,6 +50,8 @@ dependencies:
   google_sign_in: ^7.2.0
   http: ^1.6.0
   markdown: ^7.3.1
+  window_manager: ^0.5.2
+  tray_manager: ^0.2.4
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -80,6 +82,9 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/icon/app_icon.ico
 
   # To add assets to your application, add an assets section, like this:
   # assets:
