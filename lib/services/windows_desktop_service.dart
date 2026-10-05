@@ -40,6 +40,11 @@ class WindowsDesktopService with TrayListener {
       MenuItem(key: 'quit', label: 'Beenden'),
     ]));
     trayManager.addListener(this);
+    // After an update/reinstall the exe may live elsewhere; refresh the
+    // autostart entry so it never points at a missing file.
+    if (await isAutostartEnabled()) {
+      await setAutostart(true, minimized: startMinimized);
+    }
   }
 
   Future<void> _showWindow() async {

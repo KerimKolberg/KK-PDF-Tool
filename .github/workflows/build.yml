@@ -59,6 +59,18 @@ jobs:
       - name: Zip Windows build
         run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath doc-scanner-windows.zip
 
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $version = (Select-String -Path pubspec.yaml -Pattern '^version:\s*([0-9.]+)').Matches[0].Groups[1].Value
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\iscc.exe" "/DAppVersion=$version" windows\installer\kk-pdf-tool.iss
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: KK-PDF-Tool-Windows-Setup
+          path: build/installer/KK-PDF-Tool-Setup.exe
+          if-no-files-found: error
+
       - uses: actions/upload-artifact@v4
         with:
           name: doc-scanner-windows-exe
