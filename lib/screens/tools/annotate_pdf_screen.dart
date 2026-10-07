@@ -10,6 +10,7 @@ import '../../services/pdf_service.dart';
 import '../../services/pdf_tools_service.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../annotate_pages_screen.dart';
+import '../../widgets/tool_result.dart';
 
 /// Picks a PDF, opens it in the fill-in/drawing editor and saves the edited
 /// copy to Downloads.
@@ -72,8 +73,7 @@ class _AnnotatePdfScreenState extends State<AnnotatePdfScreen> {
         if (notDeleted.isNotEmpty) message += ' · Original konnte nicht gelöscht werden';
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-      Navigator.of(context).pop();
+      finishTool(context, widget, message);
     } catch (e) {
       if (!mounted) return;
       setState(() => _busyLabel = null);

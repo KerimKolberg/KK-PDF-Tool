@@ -24,7 +24,7 @@ class IncomingFile {
   }
 }
 
-/// Receives files the OS hands to DocScanner because the user picked it
+/// Receives files the OS hands to KK-PDF-Tool because the user picked it
 /// from "Open with" or the share sheet for a PDF/image (Android only - see
 /// the intent-filters in AndroidManifest.xml and the native handling in
 /// MainActivity.kt).

@@ -9,6 +9,7 @@ import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
 import '../../services/settings_service.dart';
 import '../../widgets/delete_originals_switch.dart';
+import '../../widgets/tool_result.dart';
 
 /// Adds page numbers and/or a header/footer text to every page of a PDF.
 class PageNumbersScreen extends StatefulWidget {
@@ -93,8 +94,7 @@ class _PageNumbersScreenState extends State<PageNumbersScreen> {
         if (notDeleted.isNotEmpty) message += ' · Original konnte nicht gelöscht werden';
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-      Navigator.of(context).pop();
+      finishTool(context, widget, message);
     } catch (e) {
       if (!mounted) return;
       setState(() => _busy = false);

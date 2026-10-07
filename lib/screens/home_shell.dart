@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'dart:io';
+
+import 'package:desktop_drop/desktop_drop.dart';
 
 import 'package:flutter/material.dart';
 
@@ -21,6 +24,7 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   int _index = 0;
+  bool _dragging = false;
   final _store = DocumentStore();
   final _incomingFiles = IncomingFileService();
   StreamSubscription<IncomingFile>? _incomingSub;
@@ -52,10 +56,62 @@ class _HomeShellState extends State<HomeShell> {
     );
   }
 
+  static const _droppableExtensions = {'.pdf', '.jpg', '.jpeg', '.png'};
+
+  /// Windows: files dragged from Explorer onto the window go through the
+  /// same import flow as "Open with" on Android, one after another.
+  Future<void> _onDrop(DropDoneDetails details) async {
+    for (final f in details.files) {
+      final lower = f.path.toLowerCase();
+      if (!_droppableExtensions.any(lower.endsWith)) continue;
+      if (!mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ImportSharedFileScreen(
+            file: IncomingFile(path: f.path, name: f.name),
+            store: _store,
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final tabs = IndexedStack(index: _index, children: _tabs);
     return Scaffold(
-      body: IndexedStack(index: _index, children: _tabs),
+      body: Platform.isWindows
+          ? DropTarget(
+              onDragEntered: (_) => setState(() => _dragging = true),
+              onDragExited: (_) => setState(() => _dragging = false),
+              onDragDone: (d) {
+                setState(() => _dragging = false);
+                _onDrop(d);
+              },
+              child: Stack(
+                children: [
+                  tabs,
+                  if (_dragging)
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: ColoredBox(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withValues(alpha: 0.12),
+                          child: const Center(
+                            child: Text(
+                              'PDF oder Bild hier ablegen',
+                              style: TextStyle(fontSize: 20),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            )
+          : tabs,
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),

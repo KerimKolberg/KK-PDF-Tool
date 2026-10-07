@@ -52,6 +52,7 @@ dependencies:
   markdown: ^7.3.1
   window_manager: ^0.5.2
   tray_manager: ^0.2.4
+  desktop_drop: ^0.8.4
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -66,7 +67,10 @@ dev_dependencies:
 
 flutter_launcher_icons:
   android: true
-  image_path: "assets/icon/app_icon.png"
+  # Padded so round/rounded launcher masks don't cut the logo off.
+  image_path: "assets/icon/app_icon_padded.png"
+  adaptive_icon_background: "#0E2038"
+  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
   windows:
     generate: true
     image_path: "assets/icon/app_icon.png"

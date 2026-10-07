@@ -19,7 +19,7 @@ für Android (APK) und Windows (EXE).
   zusammen, beschriftet, auf einer einzigen PDF-Seite statt auf zwei
   getrennten Seiten.
 - Export als Mehrseiten-PDF, zusätzlich automatisch abgelegt unter
-  `Downloads/DocScanner` (Android: über die MediaStore-API, Windows: im
+  `Downloads/KK-PDF-Tool` (Android: über die MediaStore-API, Windows: im
   echten Downloads-Ordner)
 - Bibliotheksansicht aller gespeicherten Scans, umbenennen, löschen, teilen
 - **Ordner & Suche:** Scans in Ordner sortieren (Chips oben in der

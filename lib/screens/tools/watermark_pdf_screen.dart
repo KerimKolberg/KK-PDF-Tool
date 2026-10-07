@@ -10,6 +10,7 @@ import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
 import '../../services/settings_service.dart';
 import '../../widgets/delete_originals_switch.dart';
+import '../../widgets/tool_result.dart';
 
 /// Stamps a diagonal text watermark across every page of a PDF.
 class WatermarkPdfScreen extends StatefulWidget {
@@ -66,8 +67,7 @@ class _WatermarkPdfScreenState extends State<WatermarkPdfScreen> {
         }
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-      Navigator.of(context).pop();
+      finishTool(context, widget, message);
     } catch (e) {
       if (!mounted) return;
       setState(() => _busy = false);

@@ -101,13 +101,13 @@ $overrides
 
   static const _coreXml = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/">
-<dc:title>DocScanner Export</dc:title>
-<dc:creator>DocScanner</dc:creator>
+<dc:title>KK-PDF-Tool Export</dc:title>
+<dc:creator>KK-PDF-Tool</dc:creator>
 </cp:coreProperties>''';
 
   static String _appXml(int slideCount) => '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties">
-<Application>DocScanner</Application>
+<Application>KK-PDF-Tool</Application>
 <Slides>$slideCount</Slides>
 </Properties>''';
 
@@ -186,9 +186,9 @@ $rels
   // Minimal Office theme (color/font/format schemes trimmed to the parts
   // PowerPoint requires to open the file without repair prompts).
   static const _themeXml = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="DocScanner">
+<a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="KK-PDF-Tool">
 <a:themeElements>
-<a:clrScheme name="DocScanner">
+<a:clrScheme name="KK-PDF-Tool">
 <a:dk1><a:sysClr val="windowText" lastClr="000000"/></a:dk1>
 <a:lt1><a:sysClr val="window" lastClr="FFFFFF"/></a:lt1>
 <a:dk2><a:srgbClr val="1F1F1F"/></a:dk2>
@@ -202,11 +202,11 @@ $rels
 <a:hlink><a:srgbClr val="2C5F6F"/></a:hlink>
 <a:folHlink><a:srgbClr val="7BA7B5"/></a:folHlink>
 </a:clrScheme>
-<a:fontScheme name="DocScanner">
+<a:fontScheme name="KK-PDF-Tool">
 <a:majorFont><a:latin typeface="Calibri"/><a:ea typeface=""/><a:cs typeface=""/></a:majorFont>
 <a:minorFont><a:latin typeface="Calibri"/><a:ea typeface=""/><a:cs typeface=""/></a:minorFont>
 </a:fontScheme>
-<a:fmtScheme name="DocScanner">
+<a:fmtScheme name="KK-PDF-Tool">
 <a:fillStyleLst>
 <a:solidFill><a:schemeClr val="phClr"/></a:solidFill>
 <a:solidFill><a:schemeClr val="phClr"/></a:solidFill>

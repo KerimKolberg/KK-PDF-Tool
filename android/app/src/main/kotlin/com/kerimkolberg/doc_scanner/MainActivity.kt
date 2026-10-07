@@ -22,7 +22,7 @@ import java.io.FileOutputStream
 /**
  * Small native features that don't need a third-party Flutter plugin:
  *
- *  - Saves exported PDFs/images into the public Downloads/DocScanner folder
+ *  - Saves exported PDFs/images into the public Downloads/KK-PDF-Tool folder
  *    via MediaStore (API 29+) or a plain file write (older versions), which
  *    needs no runtime permission at all.
  *  - Lets the app show up in "Open with" / the share sheet for PDFs and
@@ -235,7 +235,7 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun copyFileToDownloads(fileName: String, source: File, mimeType: String?): String {
-        val subFolder = "DocScanner"
+        val subFolder = "KK-PDF-Tool"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val values = ContentValues().apply {
                 put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
@@ -260,7 +260,7 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun saveToDownloads(fileName: String, bytes: ByteArray): String {
-        val subFolder = "DocScanner"
+        val subFolder = "KK-PDF-Tool"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val values = ContentValues().apply {
                 put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)

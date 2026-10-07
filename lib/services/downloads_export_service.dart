@@ -5,17 +5,17 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 /// Exports finished files (PDFs, images) into a public, user-visible
-/// "DocScanner" folder inside the platform's normal Downloads location, so
+/// "KK-PDF-Tool" folder inside the platform's normal Downloads location, so
 /// files show up in the system Files app / Explorer, not just inside the
 /// app's own library.
 ///
-///  - Android: `Download/DocScanner/`, via a small native MethodChannel
+///  - Android: `Download/KK-PDF-Tool/`, via a small native MethodChannel
 ///    (`android/.../MainActivity.kt`) that writes through MediaStore on
 ///    API 29+, which needs no runtime permission at all.
-///  - Windows: `<Downloads>/DocScanner/`.
+///  - Windows: `<Downloads>/KK-PDF-Tool/`.
 ///  - Other desktop platforms: falls back to the app documents directory.
 class DownloadsExportService {
-  static const _folderName = 'DocScanner';
+  static const _folderName = 'KK-PDF-Tool';
   static const _channel = MethodChannel('docscanner/downloads');
 
   /// Replaces characters that aren't allowed in Windows/Android file names

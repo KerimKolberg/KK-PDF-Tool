@@ -13,6 +13,7 @@ import '../../services/settings_service.dart';
 import '../../utils/formatting.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/rect_crop_overlay.dart';
+import '../../widgets/tool_result.dart';
 
 /// Lets the user draw a crop rectangle on the first page's preview, then
 /// applies that same rectangle (as a fraction of the page) to every page,
@@ -120,8 +121,7 @@ class _CropPdfScreenState extends State<CropPdfScreen> {
         }
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-      Navigator.of(context).pop();
+      finishTool(context, widget, message);
     } catch (e) {
       if (!mounted) return;
       setState(() => _busy = false);

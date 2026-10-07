@@ -3,13 +3,13 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+import 'app_paths.dart';
 
 /// Saved signatures (transparent PNGs) in `<app documents>/signatures/`,
 /// plus stamping one onto a page image.
 class SignatureService {
   Future<Directory> get _dir async {
-    final base = await getApplicationDocumentsDirectory();
+    final base = await appDataDirectory();
     final dir = Directory(p.join(base.path, 'signatures'));
     if (!await dir.exists()) await dir.create(recursive: true);
     return dir;

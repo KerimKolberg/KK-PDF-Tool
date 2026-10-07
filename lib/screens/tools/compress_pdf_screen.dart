@@ -11,6 +11,7 @@ import '../../services/pdf_tools_service.dart';
 import '../../services/settings_service.dart';
 import '../../utils/formatting.dart';
 import '../../widgets/delete_originals_switch.dart';
+import '../../widgets/tool_result.dart';
 
 enum _CompressLevel { low, medium, high }
 
@@ -87,8 +88,7 @@ class _CompressPdfScreenState extends State<CompressPdfScreen> {
         }
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-      Navigator.of(context).pop();
+      finishTool(context, widget, message);
     } catch (e) {
       if (!mounted) return;
       setState(() => _busy = false);

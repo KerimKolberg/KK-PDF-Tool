@@ -10,9 +10,10 @@ import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
 import '../../utils/formatting.dart';
 import '../../widgets/delete_originals_switch.dart';
+import '../../widgets/tool_result.dart';
 
 /// Rasterizes every page of a picked PDF into a JPEG image and exports
-/// them all into a per-document subfolder under Downloads/DocScanner.
+/// them all into a per-document subfolder under Downloads/KK-PDF-Tool.
 class PdfToImagesScreen extends StatefulWidget {
   const PdfToImagesScreen({super.key});
 
@@ -85,8 +86,7 @@ class _PdfToImagesScreenState extends State<PdfToImagesScreen> {
         }
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-      Navigator.of(context).pop();
+      finishTool(context, widget, message);
     } catch (e) {
       if (!mounted) return;
       setState(() => _busy = false);

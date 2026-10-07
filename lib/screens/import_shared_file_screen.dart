@@ -10,7 +10,7 @@ import '../services/incoming_file_service.dart';
 import '../services/pdf_tools_service.dart';
 import 'document_viewer_screen.dart';
 
-/// Shown when the OS hands DocScanner a PDF or image via "Open with" / the
+/// Shown when the OS hands KK-PDF-Tool a PDF or image via "Open with" / the
 /// share sheet. Imports it into the local library so it shows up like any
 /// scanned document.
 class ImportSharedFileScreen extends StatefulWidget {

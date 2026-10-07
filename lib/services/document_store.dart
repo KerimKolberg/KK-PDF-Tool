@@ -3,10 +3,10 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 
 import '../models/ocr_result.dart';
 import '../models/scan_document.dart';
+import 'app_paths.dart';
 
 /// Manages persistence of scanned documents on disk.
 ///
@@ -30,7 +30,7 @@ class DocumentStore {
 
   Future<Directory> get _root async {
     if (_scansDir != null) return _scansDir!;
-    final base = await getApplicationDocumentsDirectory();
+    final base = await appDataDirectory();
     final dir = Directory(p.join(base.path, 'scans'));
     if (!await dir.exists()) {
       await dir.create(recursive: true);

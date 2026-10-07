@@ -9,6 +9,7 @@ import '../../services/file_picker_service.dart';
 import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
 import '../../widgets/delete_originals_switch.dart';
+import '../../widgets/tool_result.dart';
 
 /// Android only: OCRs every page of a scanned PDF offline and saves a copy
 /// with an invisible text layer, so it can be searched and text copied.
@@ -65,8 +66,7 @@ class _SearchablePdfScreenState extends State<SearchablePdfScreen> {
         if (notDeleted.isNotEmpty) message += ' · Original konnte nicht gelöscht werden';
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-      Navigator.of(context).pop();
+      finishTool(context, widget, message);
     } catch (e) {
       if (!mounted) return;
       setState(() => _busyLabel = null);

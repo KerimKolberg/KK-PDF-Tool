@@ -281,8 +281,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: const Text('Speicherort'),
                   subtitle: Text(
                     Platform.isAndroid
-                        ? 'Fertige PDFs landen zusätzlich in Downloads/DocScanner'
-                        : 'Fertige PDFs landen zusätzlich im Downloads-Ordner, Unterordner "DocScanner"',
+                        ? 'Fertige PDFs landen zusätzlich in Downloads/KK-PDF-Tool'
+                        : 'Fertige PDFs landen zusätzlich im Downloads-Ordner, Unterordner "KK-PDF-Tool"',
                   ),
                 ),
                 const Divider(height: 1),
@@ -294,7 +294,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   leading: const Icon(Icons.backup_outlined),
                   title: const Text('Sicherung erstellen'),
                   subtitle: const Text(
-                    'Alle Scans, Ordner und Unterschriften als eine ZIP-Datei in Downloads/DocScanner',
+                    'Alle Scans, Ordner und Unterschriften als eine ZIP-Datei in Downloads/KK-PDF-Tool',
                   ),
                   onTap: _createBackup,
                 ),

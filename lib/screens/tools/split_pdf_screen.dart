@@ -10,6 +10,7 @@ import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
 import '../../utils/formatting.dart';
 import '../../widgets/delete_originals_switch.dart';
+import '../../widgets/tool_result.dart';
 
 class _PageRange {
   final TextEditingController from;
@@ -128,8 +129,7 @@ class _SplitPdfScreenState extends State<SplitPdfScreen> {
         }
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-      Navigator.of(context).pop();
+      finishTool(context, widget, message);
     } catch (e) {
       if (!mounted) return;
       setState(() => _busy = false);
