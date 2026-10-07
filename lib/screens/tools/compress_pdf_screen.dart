@@ -11,6 +11,7 @@ import '../../services/pdf_tools_service.dart';
 import '../../services/settings_service.dart';
 import '../../utils/formatting.dart';
 import '../../widgets/delete_originals_switch.dart';
+import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_result.dart';
 
 enum _CompressLevel { low, medium, high }
@@ -100,72 +101,75 @@ class _CompressPdfScreenState extends State<CompressPdfScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('PDF komprimieren')),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (_fileName == null)
-              FilledButton.icon(
-                onPressed: _pickPdf,
-                icon: const Icon(Icons.picture_as_pdf_outlined),
-                label: const Text('PDF wählen'),
-              )
-            else ...[
-              ListTile(
-                leading: const Icon(Icons.description_outlined),
-                title: Text(_fileName!),
-                subtitle: Text(formatFileSize(_pdfBytes!.length)),
-                trailing: TextButton(
-                  onPressed: _busy ? null : _pickPdf,
-                  child: const Text('Ändern'),
+    return ToolDropZone(
+      onDrop: _pickPdf,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('PDF komprimieren')),
+        body: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (_fileName == null)
+                FilledButton.icon(
+                  onPressed: _pickPdf,
+                  icon: const Icon(Icons.picture_as_pdf_outlined),
+                  label: const Text('PDF wählen'),
+                )
+              else ...[
+                ListTile(
+                  leading: const Icon(Icons.description_outlined),
+                  title: Text(_fileName!),
+                  subtitle: Text(formatFileSize(_pdfBytes!.length)),
+                  trailing: TextButton(
+                    onPressed: _busy ? null : _pickPdf,
+                    child: const Text('Ändern'),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Text('Kompressionsgrad', style: Theme.of(context).textTheme.titleSmall),
-              const SizedBox(height: 4),
-              RadioGroup<_CompressLevel>(
-                groupValue: _level,
-                onChanged: _busy
-                    ? (_) {}
-                    : (v) {
-                        setState(() => _level = v!);
-                        AppPrefs.setEnum('compress.level', v!);
-                      },
-                child: Column(
-                  children: [
-                    for (final level in _CompressLevel.values)
-                      RadioListTile<_CompressLevel>(
-                        value: level,
-                        title: Text(level.label),
-                        dense: true,
-                      ),
-                  ],
+                const SizedBox(height: 12),
+                Text('Kompressionsgrad', style: Theme.of(context).textTheme.titleSmall),
+                const SizedBox(height: 4),
+                RadioGroup<_CompressLevel>(
+                  groupValue: _level,
+                  onChanged: _busy
+                      ? (_) {}
+                      : (v) {
+                          setState(() => _level = v!);
+                          AppPrefs.setEnum('compress.level', v!);
+                        },
+                  child: Column(
+                    children: [
+                      for (final level in _CompressLevel.values)
+                        RadioListTile<_CompressLevel>(
+                          value: level,
+                          title: Text(level.label),
+                          dense: true,
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-              DeleteOriginalsSwitch(
-                label: 'Originaldatei danach löschen',
-                value: _deleteOriginal,
-                onChanged: (v) => setState(() => _deleteOriginal = v),
-              ),
-              const SizedBox(height: 12),
-              FilledButton.icon(
-                onPressed: _busy ? null : _compress,
-                icon: _busy
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Icon(Icons.compress),
-                label: Text(_busy ? 'Komprimiere…' : 'Komprimieren'),
-              ),
+                DeleteOriginalsSwitch(
+                  label: 'Originaldatei danach löschen',
+                  value: _deleteOriginal,
+                  onChanged: (v) => setState(() => _deleteOriginal = v),
+                ),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: _busy ? null : _compress,
+                  icon: _busy
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.compress),
+                  label: Text(_busy ? 'Komprimiere…' : 'Komprimieren'),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

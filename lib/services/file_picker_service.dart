@@ -9,7 +9,42 @@ import 'settings_service.dart';
 /// Only matters on desktop: Android's system picker manages its own
 /// "recent" location and ignores a starting folder.
 class FilePickers {
+  /// Files dragged onto a tool (Windows); consumed by the next open call
+  /// instead of showing the dialog.
+  static List<XFile>? _dropped;
+  static bool _droppedMatched = false;
+
+  static void setDropped(List<XFile> files) {
+    _dropped = files;
+    _droppedMatched = false;
+  }
+
+  /// Clears pending dropped files; true if none of them fit the tool.
+  static bool clearDropped() {
+    final unmatched = _dropped != null && !_droppedMatched;
+    _dropped = null;
+    return unmatched;
+  }
+
+  static List<XFile>? _takeDropped(List<XTypeGroup> groups) {
+    final dropped = _dropped;
+    if (dropped == null) return null;
+    _dropped = null;
+    final exts = {
+      for (final g in groups)
+        for (final e in g.extensions ?? const <String>[]) '.${e.toLowerCase()}',
+    };
+    final matching = [
+      for (final f in dropped)
+        if (exts.isEmpty || exts.contains(p.extension(f.path).toLowerCase())) f,
+    ];
+    _droppedMatched = matching.isNotEmpty;
+    return matching;
+  }
+
   static Future<XFile?> openOne(String toolKey, List<XTypeGroup> groups) async {
+    final dropped = _takeDropped(groups);
+    if (dropped != null) return dropped.isEmpty ? null : dropped.first;
     final file = await openFile(
       acceptedTypeGroups: groups,
       initialDirectory: _initialDirectory(toolKey),
@@ -19,6 +54,8 @@ class FilePickers {
   }
 
   static Future<List<XFile>> openMany(String toolKey, List<XTypeGroup> groups) async {
+    final dropped = _takeDropped(groups);
+    if (dropped != null) return dropped;
     final files = await openFiles(
       acceptedTypeGroups: groups,
       initialDirectory: _initialDirectory(toolKey),

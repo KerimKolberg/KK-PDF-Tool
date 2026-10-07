@@ -9,6 +9,7 @@ import '../../services/file_picker_service.dart';
 import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
 import '../../widgets/delete_originals_switch.dart';
+import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_result.dart';
 
 /// Android only: OCRs every page of a scanned PDF offline and saves a copy
@@ -77,55 +78,58 @@ class _SearchablePdfScreenState extends State<SearchablePdfScreen> {
   @override
   Widget build(BuildContext context) {
     final busy = _busyLabel != null;
-    return Scaffold(
-      appBar: AppBar(title: const Text('PDF durchsuchbar machen')),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Erkennt den Text jeder Seite offline und legt ihn unsichtbar hinter '
-              'das Bild. Die PDF sieht gleich aus, lässt sich aber durchsuchen '
-              '(Strg+F) und Text kopieren.',
-              style: TextStyle(color: Theme.of(context).colorScheme.outline),
-            ),
-            const SizedBox(height: 24),
-            if (_fileName == null)
-              FilledButton.icon(
-                onPressed: _pickPdf,
-                icon: const Icon(Icons.picture_as_pdf_outlined),
-                label: const Text('PDF wählen'),
-              )
-            else ...[
-              ListTile(
-                leading: const Icon(Icons.description_outlined),
-                title: Text(_fileName!),
-                trailing: TextButton(
-                  onPressed: busy ? null : _pickPdf,
-                  child: const Text('Ändern'),
+    return ToolDropZone(
+      onDrop: _pickPdf,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('PDF durchsuchbar machen')),
+        body: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Erkennt den Text jeder Seite offline und legt ihn unsichtbar hinter '
+                'das Bild. Die PDF sieht gleich aus, lässt sich aber durchsuchen '
+                '(Strg+F) und Text kopieren.',
+                style: TextStyle(color: Theme.of(context).colorScheme.outline),
+              ),
+              const SizedBox(height: 24),
+              if (_fileName == null)
+                FilledButton.icon(
+                  onPressed: _pickPdf,
+                  icon: const Icon(Icons.picture_as_pdf_outlined),
+                  label: const Text('PDF wählen'),
+                )
+              else ...[
+                ListTile(
+                  leading: const Icon(Icons.description_outlined),
+                  title: Text(_fileName!),
+                  trailing: TextButton(
+                    onPressed: busy ? null : _pickPdf,
+                    child: const Text('Ändern'),
+                  ),
                 ),
-              ),
-              DeleteOriginalsSwitch(
-                label: 'Originaldatei danach löschen',
-                value: _deleteOriginal,
-                onChanged: (v) => setState(() => _deleteOriginal = v),
-              ),
-              const SizedBox(height: 12),
-              FilledButton.icon(
-                onPressed: busy ? null : _convert,
-                icon: busy
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Icon(Icons.manage_search),
-                label: Text(_busyLabel ?? 'Durchsuchbar machen'),
-              ),
+                DeleteOriginalsSwitch(
+                  label: 'Originaldatei danach löschen',
+                  value: _deleteOriginal,
+                  onChanged: (v) => setState(() => _deleteOriginal = v),
+                ),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: busy ? null : _convert,
+                  icon: busy
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.manage_search),
+                  label: Text(_busyLabel ?? 'Durchsuchbar machen'),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

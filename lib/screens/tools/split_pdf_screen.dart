@@ -10,6 +10,7 @@ import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
 import '../../utils/formatting.dart';
 import '../../widgets/delete_originals_switch.dart';
+import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_result.dart';
 
 class _PageRange {
@@ -141,113 +142,116 @@ class _SplitPdfScreenState extends State<SplitPdfScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('PDF aufteilen')),
-      body: _pdfBytes == null
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Wähle eine PDF-Datei, die in mehrere Dateien aufgeteilt werden soll.',
-                      textAlign: TextAlign.center,
-                      style:
-                          TextStyle(color: Theme.of(context).colorScheme.outline),
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton.icon(
-                      onPressed: _pickPdf,
-                      icon: const Icon(Icons.picture_as_pdf_outlined),
-                      label: const Text('PDF wählen'),
-                    ),
-                  ],
+    return ToolDropZone(
+      onDrop: _pickPdf,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('PDF aufteilen')),
+        body: _pdfBytes == null
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Wähle eine PDF-Datei, die in mehrere Dateien aufgeteilt werden soll.',
+                        textAlign: TextAlign.center,
+                        style:
+                            TextStyle(color: Theme.of(context).colorScheme.outline),
+                      ),
+                      const SizedBox(height: 16),
+                      FilledButton.icon(
+                        onPressed: _pickPdf,
+                        icon: const Icon(Icons.picture_as_pdf_outlined),
+                        label: const Text('PDF wählen'),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            )
-          : _counting
-              ? const Center(child: CircularProgressIndicator())
-              : ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    Text(
-                      '$_fileName · $_pageCount Seiten',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 16),
-                    for (var i = 0; i < _ranges.length; i++)
-                      Card(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Row(
-                            children: [
-                              Text('Teil ${i + 1}:'),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: TextField(
-                                  controller: _ranges[i].from,
-                                  keyboardType: TextInputType.number,
-                                  decoration:
-                                      const InputDecoration(labelText: 'von Seite'),
+              )
+            : _counting
+                ? const Center(child: CircularProgressIndicator())
+                : ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      Text(
+                        '$_fileName · $_pageCount Seiten',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 16),
+                      for (var i = 0; i < _ranges.length; i++)
+                        Card(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Row(
+                              children: [
+                                Text('Teil ${i + 1}:'),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: TextField(
+                                    controller: _ranges[i].from,
+                                    keyboardType: TextInputType.number,
+                                    decoration:
+                                        const InputDecoration(labelText: 'von Seite'),
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: TextField(
-                                  controller: _ranges[i].to,
-                                  keyboardType: TextInputType.number,
-                                  decoration:
-                                      const InputDecoration(labelText: 'bis Seite'),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: TextField(
+                                    controller: _ranges[i].to,
+                                    keyboardType: TextInputType.number,
+                                    decoration:
+                                        const InputDecoration(labelText: 'bis Seite'),
+                                  ),
                                 ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline),
-                                onPressed: _ranges.length > 1
-                                    ? () => _removeRange(i)
-                                    : null,
-                              ),
-                            ],
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline),
+                                  onPressed: _ranges.length > 1
+                                      ? () => _removeRange(i)
+                                      : null,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
+                      OutlinedButton.icon(
+                        onPressed: _addRange,
+                        icon: const Icon(Icons.add),
+                        label: const Text('Weiteren Bereich hinzufügen'),
                       ),
-                    OutlinedButton.icon(
-                      onPressed: _addRange,
-                      icon: const Icon(Icons.add),
-                      label: const Text('Weiteren Bereich hinzufügen'),
-                    ),
-                  ],
-                ),
-      bottomNavigationBar: _pdfBytes == null || _counting
-          ? null
-          : SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    DeleteOriginalsSwitch(
-                      label: 'Originaldatei danach löschen',
-                      value: _deleteOriginal,
-                      onChanged: (v) => setState(() => _deleteOriginal = v),
-                    ),
-                    FilledButton.icon(
-                      onPressed: _busy ? null : _split,
-                      icon: _busy
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Icon(Icons.content_cut),
-                      label: Text(_busy ? 'Teile auf…' : 'Aufteilen & speichern'),
-                    ),
-                  ],
+                    ],
+                  ),
+        bottomNavigationBar: _pdfBytes == null || _counting
+            ? null
+            : SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      DeleteOriginalsSwitch(
+                        label: 'Originaldatei danach löschen',
+                        value: _deleteOriginal,
+                        onChanged: (v) => setState(() => _deleteOriginal = v),
+                      ),
+                      FilledButton.icon(
+                        onPressed: _busy ? null : _split,
+                        icon: _busy
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white),
+                              )
+                            : const Icon(Icons.content_cut),
+                        label: Text(_busy ? 'Teile auf…' : 'Aufteilen & speichern'),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
+      ),
     );
   }
 }

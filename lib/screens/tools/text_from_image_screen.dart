@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 
 import '../../services/downloads_export_service.dart';
 import '../../services/file_picker_service.dart';
+import '../../widgets/tool_drop_zone.dart';
 import '../../services/google_drive_convert_service.dart';
 import '../../services/ocr_service.dart';
 import '../../services/original_files_cleanup_service.dart';
@@ -130,132 +131,135 @@ class _TextFromImageScreenState extends State<TextFromImageScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Text aus Bild (OCR)')),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (OcrService.isOfflineAvailable) ...[
-              SegmentedButton<bool>(
-                segments: const [
-                  ButtonSegment(
-                    value: true,
-                    icon: Icon(Icons.phone_android),
-                    label: Text('Offline'),
-                  ),
-                  ButtonSegment(
-                    value: false,
-                    icon: Icon(Icons.cloud_outlined),
-                    label: Text('Google'),
-                  ),
-                ],
-                selected: {_offline},
-                onSelectionChanged: _busy
-                    ? null
-                    : (v) {
-                        setState(() => _offline = v.first);
-                        AppPrefs.setBool('ocr.offline', v.first);
-                      },
-              ),
-              const SizedBox(height: 12),
-            ],
-            Card(
-              color: Theme.of(context).colorScheme.surfaceContainerHigh,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Icon(_offline ? Icons.phone_android : Icons.cloud_outlined),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        _offline
-                            ? 'Läuft direkt auf dem Gerät - ohne Internet und ohne '
-                                'Google-Konto. Für Handschrift ist "Google" oft genauer.'
-                            : 'Läuft über dein Google-Konto (kostenlos) und braucht '
-                                'Internet - gleiche Texterkennung wie bei PDF → Word.',
-                        style: const TextStyle(fontSize: 13),
-                      ),
+    return ToolDropZone(
+      onDrop: _pickFile,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Text aus Bild (OCR)')),
+        body: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (OcrService.isOfflineAvailable) ...[
+                SegmentedButton<bool>(
+                  segments: const [
+                    ButtonSegment(
+                      value: true,
+                      icon: Icon(Icons.phone_android),
+                      label: Text('Offline'),
+                    ),
+                    ButtonSegment(
+                      value: false,
+                      icon: Icon(Icons.cloud_outlined),
+                      label: Text('Google'),
                     ),
                   ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            if (_fileName == null)
-              FilledButton.icon(
-                onPressed: _pickFile,
-                icon: const Icon(Icons.image_outlined),
-                label: const Text('Bild wählen'),
-              )
-            else ...[
-              ListTile(
-                leading: const Icon(Icons.image_outlined),
-                title: Text(_fileName!),
-                trailing: TextButton(
-                  onPressed: _busy ? null : _pickFile,
-                  child: const Text('Ändern'),
-                ),
-              ),
-              DeleteOriginalsSwitch(
-                label: 'Originalbild danach löschen',
-                value: _deleteOriginal,
-                onChanged: (v) => setState(() => _deleteOriginal = v),
-              ),
-              const SizedBox(height: 8),
-              FilledButton.icon(
-                onPressed: _busy ? null : _extract,
-                icon: _busy
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Icon(Icons.text_snippet_outlined),
-                label: Text(_busy ? 'Erkenne Text…' : 'Text erkennen'),
-              ),
-              if (_extractedText != null) ...[
-                const SizedBox(height: 16),
-                Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: SingleChildScrollView(
-                      child: SelectableText(
-                        _extractedText!.isEmpty ? '(kein Text erkannt)' : _extractedText!,
-                      ),
-                    ),
-                  ),
+                  selected: {_offline},
+                  onSelectionChanged: _busy
+                      ? null
+                      : (v) {
+                          setState(() => _offline = v.first);
+                          AppPrefs.setBool('ocr.offline', v.first);
+                        },
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _copy,
-                        icon: const Icon(Icons.copy_outlined),
-                        label: const Text('Kopieren'),
+              ],
+              Card(
+                color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Icon(_offline ? Icons.phone_android : Icons.cloud_outlined),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _offline
+                              ? 'Läuft direkt auf dem Gerät - ohne Internet und ohne '
+                                  'Google-Konto. Für Handschrift ist "Google" oft genauer.'
+                              : 'Läuft über dein Google-Konto (kostenlos) und braucht '
+                                  'Internet - gleiche Texterkennung wie bei PDF → Word.',
+                          style: const TextStyle(fontSize: 13),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: FilledButton.icon(
-                        onPressed: _saveAsTxt,
-                        icon: const Icon(Icons.save_outlined),
-                        label: const Text('Als .txt speichern'),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+              ),
+              const SizedBox(height: 24),
+              if (_fileName == null)
+                FilledButton.icon(
+                  onPressed: _pickFile,
+                  icon: const Icon(Icons.image_outlined),
+                  label: const Text('Bild wählen'),
+                )
+              else ...[
+                ListTile(
+                  leading: const Icon(Icons.image_outlined),
+                  title: Text(_fileName!),
+                  trailing: TextButton(
+                    onPressed: _busy ? null : _pickFile,
+                    child: const Text('Ändern'),
+                  ),
+                ),
+                DeleteOriginalsSwitch(
+                  label: 'Originalbild danach löschen',
+                  value: _deleteOriginal,
+                  onChanged: (v) => setState(() => _deleteOriginal = v),
+                ),
+                const SizedBox(height: 8),
+                FilledButton.icon(
+                  onPressed: _busy ? null : _extract,
+                  icon: _busy
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.text_snippet_outlined),
+                  label: Text(_busy ? 'Erkenne Text…' : 'Text erkennen'),
+                ),
+                if (_extractedText != null) ...[
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: SingleChildScrollView(
+                        child: SelectableText(
+                          _extractedText!.isEmpty ? '(kein Text erkannt)' : _extractedText!,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _copy,
+                          icon: const Icon(Icons.copy_outlined),
+                          label: const Text('Kopieren'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: FilledButton.icon(
+                          onPressed: _saveAsTxt,
+                          icon: const Icon(Icons.save_outlined),
+                          label: const Text('Als .txt speichern'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ],
-          ],
+          ),
         ),
       ),
     );

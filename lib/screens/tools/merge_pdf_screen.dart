@@ -9,6 +9,7 @@ import '../../services/file_picker_service.dart';
 import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
 import '../../widgets/delete_originals_switch.dart';
+import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_result.dart';
 
 class _PickedPdf {
@@ -102,79 +103,82 @@ class _MergePdfScreenState extends State<MergePdfScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('PDFs zusammenführen')),
-      body: _pdfs.isEmpty
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  'Füge mindestens zwei PDFs hinzu. Sie werden in dieser Reihenfolge zusammengeführt.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Theme.of(context).colorScheme.outline),
+    return ToolDropZone(
+      onDrop: _addPdfs,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('PDFs zusammenführen')),
+        body: _pdfs.isEmpty
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    'Füge mindestens zwei PDFs hinzu. Sie werden in dieser Reihenfolge zusammengeführt.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Theme.of(context).colorScheme.outline),
+                  ),
                 ),
-              ),
-            )
-          : ReorderableListView.builder(
-              padding: const EdgeInsets.all(12),
-              itemCount: _pdfs.length,
-              onReorderItem: (oldIndex, newIndex) {
-                setState(() {
-                  final item = _pdfs.removeAt(oldIndex);
-                  _pdfs.insert(newIndex, item);
-                });
-              },
-              itemBuilder: (context, i) => Card(
-                key: ValueKey('${_pdfs[i].name}_$i'),
-                margin: const EdgeInsets.symmetric(vertical: 4),
-                child: ListTile(
-                  leading: CircleAvatar(child: Text('${i + 1}')),
-                  title: Text(_pdfs[i].name),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    onPressed: () => _remove(i),
+              )
+            : ReorderableListView.builder(
+                padding: const EdgeInsets.all(12),
+                itemCount: _pdfs.length,
+                onReorderItem: (oldIndex, newIndex) {
+                  setState(() {
+                    final item = _pdfs.removeAt(oldIndex);
+                    _pdfs.insert(newIndex, item);
+                  });
+                },
+                itemBuilder: (context, i) => Card(
+                  key: ValueKey('${_pdfs[i].name}_$i'),
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  child: ListTile(
+                    leading: CircleAvatar(child: Text('${i + 1}')),
+                    title: Text(_pdfs[i].name),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete_outline),
+                      onPressed: () => _remove(i),
+                    ),
                   ),
                 ),
               ),
+        bottomNavigationBar: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_pdfs.isNotEmpty)
+                  DeleteOriginalsSwitch(
+                    value: _deleteOriginals,
+                    onChanged: (v) => setState(() => _deleteOriginals = v),
+                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _busy ? null : _addPdfs,
+                        icon: const Icon(Icons.picture_as_pdf_outlined),
+                        label: const Text('PDFs hinzufügen'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: _pdfs.length < 2 || _busy ? null : _merge,
+                        icon: _busy
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white),
+                              )
+                            : const Icon(Icons.merge_type),
+                        label: Text(_busy ? 'Führe zusammen…' : 'Zusammenführen'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (_pdfs.isNotEmpty)
-                DeleteOriginalsSwitch(
-                  value: _deleteOriginals,
-                  onChanged: (v) => setState(() => _deleteOriginals = v),
-                ),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _busy ? null : _addPdfs,
-                      icon: const Icon(Icons.picture_as_pdf_outlined),
-                      label: const Text('PDFs hinzufügen'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: _pdfs.length < 2 || _busy ? null : _merge,
-                      icon: _busy
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Icon(Icons.merge_type),
-                      label: Text(_busy ? 'Führe zusammen…' : 'Zusammenführen'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
           ),
         ),
       ),

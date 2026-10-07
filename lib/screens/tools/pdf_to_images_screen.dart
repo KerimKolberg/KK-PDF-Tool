@@ -10,6 +10,7 @@ import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
 import '../../utils/formatting.dart';
 import '../../widgets/delete_originals_switch.dart';
+import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_result.dart';
 
 /// Rasterizes every page of a picked PDF into a JPEG image and exports
@@ -98,80 +99,83 @@ class _PdfToImagesScreenState extends State<PdfToImagesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('PDF → Bilder')),
-      body: _pdfBytes == null
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Wähle eine PDF-Datei, deren Seiten als Bilder exportiert werden sollen.',
-                      textAlign: TextAlign.center,
-                      style:
-                          TextStyle(color: Theme.of(context).colorScheme.outline),
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton.icon(
-                      onPressed: _pickPdf,
-                      icon: const Icon(Icons.picture_as_pdf_outlined),
-                      label: const Text('PDF wählen'),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          : _busy && _previewImages == null
-              ? const Center(child: CircularProgressIndicator())
-              : GridView.builder(
-                  padding: const EdgeInsets.all(12),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
-                    childAspectRatio: 0.72,
-                  ),
-                  itemCount: _previewImages?.length ?? 0,
-                  itemBuilder: (context, i) => ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.memory(_previewImages![i], fit: BoxFit.cover),
-                  ),
-                ),
-      bottomNavigationBar: _previewImages == null
-          ? null
-          : SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    DeleteOriginalsSwitch(
-                      label: 'Originaldatei danach löschen',
-                      value: _deleteOriginal,
-                      onChanged: (v) => setState(() => _deleteOriginal = v),
-                    ),
-                    FilledButton.icon(
-                      onPressed: _busy ? null : _exportAll,
-                      icon: _busy
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Icon(Icons.download_outlined),
-                      label: Text(
-                        _busy
-                            ? 'Exportiere…'
-                            : '${_previewImages!.length} Bild(er) speichern',
+    return ToolDropZone(
+      onDrop: _pickPdf,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('PDF → Bilder')),
+        body: _pdfBytes == null
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Wähle eine PDF-Datei, deren Seiten als Bilder exportiert werden sollen.',
+                        textAlign: TextAlign.center,
+                        style:
+                            TextStyle(color: Theme.of(context).colorScheme.outline),
                       ),
+                      const SizedBox(height: 16),
+                      FilledButton.icon(
+                        onPressed: _pickPdf,
+                        icon: const Icon(Icons.picture_as_pdf_outlined),
+                        label: const Text('PDF wählen'),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            : _busy && _previewImages == null
+                ? const Center(child: CircularProgressIndicator())
+                : GridView.builder(
+                    padding: const EdgeInsets.all(12),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                      childAspectRatio: 0.72,
                     ),
-                  ],
+                    itemCount: _previewImages?.length ?? 0,
+                    itemBuilder: (context, i) => ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.memory(_previewImages![i], fit: BoxFit.cover),
+                    ),
+                  ),
+        bottomNavigationBar: _previewImages == null
+            ? null
+            : SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      DeleteOriginalsSwitch(
+                        label: 'Originaldatei danach löschen',
+                        value: _deleteOriginal,
+                        onChanged: (v) => setState(() => _deleteOriginal = v),
+                      ),
+                      FilledButton.icon(
+                        onPressed: _busy ? null : _exportAll,
+                        icon: _busy
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white),
+                              )
+                            : const Icon(Icons.download_outlined),
+                        label: Text(
+                          _busy
+                              ? 'Exportiere…'
+                              : '${_previewImages!.length} Bild(er) speichern',
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
+      ),
     );
   }
 }

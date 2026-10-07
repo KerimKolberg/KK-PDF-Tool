@@ -8,6 +8,7 @@ import '../../services/file_picker_service.dart';
 import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_service.dart';
 import '../../widgets/delete_originals_switch.dart';
+import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_result.dart';
 
 class _PickedImage {
@@ -102,83 +103,86 @@ class _ImagesToPdfScreenState extends State<ImagesToPdfScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Bilder → PDF')),
-      body: _images.isEmpty
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  'Füge Bilder hinzu, die zu einer PDF zusammengefasst werden sollen.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Theme.of(context).colorScheme.outline),
-                ),
-              ),
-            )
-          : ReorderableListView.builder(
-              padding: const EdgeInsets.all(12),
-              itemCount: _images.length,
-              onReorderItem: (oldIndex, newIndex) {
-                setState(() {
-                  final item = _images.removeAt(oldIndex);
-                  _images.insert(newIndex, item);
-                });
-              },
-              itemBuilder: (context, i) => Card(
-                key: ValueKey('img_$i${_images[i].bytes.length}'),
-                margin: const EdgeInsets.symmetric(vertical: 4),
-                child: ListTile(
-                  leading: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: Image.memory(_images[i].bytes,
-                        width: 48, height: 48, fit: BoxFit.cover),
-                  ),
-                  title: Text('Seite ${i + 1}'),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    onPressed: () => _remove(i),
+    return ToolDropZone(
+      onDrop: _addImages,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Bilder → PDF')),
+        body: _images.isEmpty
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    'Füge Bilder hinzu, die zu einer PDF zusammengefasst werden sollen.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Theme.of(context).colorScheme.outline),
                   ),
                 ),
+              )
+            : ReorderableListView.builder(
+                padding: const EdgeInsets.all(12),
+                itemCount: _images.length,
+                onReorderItem: (oldIndex, newIndex) {
+                  setState(() {
+                    final item = _images.removeAt(oldIndex);
+                    _images.insert(newIndex, item);
+                  });
+                },
+                itemBuilder: (context, i) => Card(
+                  key: ValueKey('img_$i${_images[i].bytes.length}'),
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  child: ListTile(
+                    leading: ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: Image.memory(_images[i].bytes,
+                          width: 48, height: 48, fit: BoxFit.cover),
+                    ),
+                    title: Text('Seite ${i + 1}'),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete_outline),
+                      onPressed: () => _remove(i),
+                    ),
+                  ),
+                ),
               ),
+        bottomNavigationBar: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_images.isNotEmpty)
+                  DeleteOriginalsSwitch(
+                    value: _deleteOriginals,
+                    onChanged: (v) => setState(() => _deleteOriginals = v),
+                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _busy ? null : _addImages,
+                        icon: const Icon(Icons.add_photo_alternate_outlined),
+                        label: const Text('Bilder hinzufügen'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: _images.isEmpty || _busy ? null : _createPdf,
+                        icon: _busy
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white),
+                              )
+                            : const Icon(Icons.picture_as_pdf_outlined),
+                        label: Text(_busy ? 'Erstelle…' : 'PDF erstellen'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (_images.isNotEmpty)
-                DeleteOriginalsSwitch(
-                  value: _deleteOriginals,
-                  onChanged: (v) => setState(() => _deleteOriginals = v),
-                ),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _busy ? null : _addImages,
-                      icon: const Icon(Icons.add_photo_alternate_outlined),
-                      label: const Text('Bilder hinzufügen'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: _images.isEmpty || _busy ? null : _createPdf,
-                      icon: _busy
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Icon(Icons.picture_as_pdf_outlined),
-                      label: Text(_busy ? 'Erstelle…' : 'PDF erstellen'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
           ),
         ),
       ),

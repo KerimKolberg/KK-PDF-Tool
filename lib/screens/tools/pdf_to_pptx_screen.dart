@@ -9,6 +9,7 @@ import '../../services/file_picker_service.dart';
 import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
 import '../../widgets/delete_originals_switch.dart';
+import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_result.dart';
 
 /// Packs every page of a picked PDF as a full-slide picture into a new
@@ -71,70 +72,73 @@ class _PdfToPptxScreenState extends State<PdfToPptxScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('PDF → PowerPoint')),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Card(
-              color: Theme.of(context).colorScheme.surfaceContainerHigh,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline,
-                        color: Theme.of(context).colorScheme.primary),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Text(
-                        'Jede PDF-Seite wird als Bild auf eine eigene Folie '
-                        'gesetzt. Der Text ist danach nicht mehr bearbeitbar, '
-                        'nur das Bild verschieb- und skalierbar.',
-                        style: TextStyle(fontSize: 13),
+    return ToolDropZone(
+      onDrop: _pickPdf,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('PDF → PowerPoint')),
+        body: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Card(
+                color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline,
+                          color: Theme.of(context).colorScheme.primary),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                          'Jede PDF-Seite wird als Bild auf eine eigene Folie '
+                          'gesetzt. Der Text ist danach nicht mehr bearbeitbar, '
+                          'nur das Bild verschieb- und skalierbar.',
+                          style: TextStyle(fontSize: 13),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 24),
-            if (_fileName == null)
-              FilledButton.icon(
-                onPressed: _pickPdf,
-                icon: const Icon(Icons.picture_as_pdf_outlined),
-                label: const Text('PDF wählen'),
-              )
-            else ...[
-              ListTile(
-                leading: const Icon(Icons.description_outlined),
-                title: Text(_fileName!),
-                trailing: TextButton(
-                  onPressed: _busy ? null : _pickPdf,
-                  child: const Text('Ändern'),
+              const SizedBox(height: 24),
+              if (_fileName == null)
+                FilledButton.icon(
+                  onPressed: _pickPdf,
+                  icon: const Icon(Icons.picture_as_pdf_outlined),
+                  label: const Text('PDF wählen'),
+                )
+              else ...[
+                ListTile(
+                  leading: const Icon(Icons.description_outlined),
+                  title: Text(_fileName!),
+                  trailing: TextButton(
+                    onPressed: _busy ? null : _pickPdf,
+                    child: const Text('Ändern'),
+                  ),
                 ),
-              ),
-              DeleteOriginalsSwitch(
-                label: 'Originaldatei danach löschen',
-                value: _deleteOriginal,
-                onChanged: (v) => setState(() => _deleteOriginal = v),
-              ),
-              const SizedBox(height: 12),
-              FilledButton.icon(
-                onPressed: _busy ? null : _convert,
-                icon: _busy
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Icon(Icons.slideshow_outlined),
-                label: Text(_busy ? 'Wandle um…' : 'Als PPTX speichern'),
-              ),
+                DeleteOriginalsSwitch(
+                  label: 'Originaldatei danach löschen',
+                  value: _deleteOriginal,
+                  onChanged: (v) => setState(() => _deleteOriginal = v),
+                ),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: _busy ? null : _convert,
+                  icon: _busy
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.slideshow_outlined),
+                  label: Text(_busy ? 'Wandle um…' : 'Als PPTX speichern'),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

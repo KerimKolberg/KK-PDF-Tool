@@ -13,6 +13,7 @@ import '../../services/settings_service.dart';
 import '../../utils/formatting.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/rect_crop_overlay.dart';
+import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_result.dart';
 
 /// Lets the user draw a crop rectangle on the first page's preview, then
@@ -139,81 +140,84 @@ class _CropPdfScreenState extends State<CropPdfScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('PDF zuschneiden')),
-      body: _fileName == null
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Wähle eine PDF. Der Zuschnitt wird an der ersten Seite '
-                      'festgelegt und auf alle (oder gewählte) Seiten angewendet.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Theme.of(context).colorScheme.outline),
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton.icon(
-                      onPressed: _pickPdf,
-                      icon: const Icon(Icons.picture_as_pdf_outlined),
-                      label: const Text('PDF wählen'),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          : _loadingPreview || _previewImage == null
-              ? const Center(child: CircularProgressIndicator())
-              : Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: RectCropOverlay(
-                    key: _overlayKey,
-                    imageBytes: _previewImage!,
-                    imageWidth: _previewW,
-                    imageHeight: _previewH,
-                    initialRect: _rememberedRect,
+    return ToolDropZone(
+      onDrop: _pickPdf,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('PDF zuschneiden')),
+        body: _fileName == null
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Wähle eine PDF. Der Zuschnitt wird an der ersten Seite '
+                        'festgelegt und auf alle (oder gewählte) Seiten angewendet.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Theme.of(context).colorScheme.outline),
+                      ),
+                      const SizedBox(height: 16),
+                      FilledButton.icon(
+                        onPressed: _pickPdf,
+                        icon: const Icon(Icons.picture_as_pdf_outlined),
+                        label: const Text('PDF wählen'),
+                      ),
+                    ],
                   ),
                 ),
-      bottomNavigationBar: _fileName == null || _loadingPreview
-          ? null
-          : SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: _pageSpecController,
-                      decoration: const InputDecoration(
-                        hintText: 'z. B. 1-3,5 · leer lassen für alle Seiten',
-                        border: OutlineInputBorder(),
-                        isDense: true,
+              )
+            : _loadingPreview || _previewImage == null
+                ? const Center(child: CircularProgressIndicator())
+                : Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: RectCropOverlay(
+                      key: _overlayKey,
+                      imageBytes: _previewImage!,
+                      imageWidth: _previewW,
+                      imageHeight: _previewH,
+                      initialRect: _rememberedRect,
+                    ),
+                  ),
+        bottomNavigationBar: _fileName == null || _loadingPreview
+            ? null
+            : SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: _pageSpecController,
+                        decoration: const InputDecoration(
+                          hintText: 'z. B. 1-3,5 · leer lassen für alle Seiten',
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                        ),
                       ),
-                    ),
-                    DeleteOriginalsSwitch(
-                      label: 'Originaldatei danach löschen',
-                      value: _deleteOriginal,
-                      onChanged: (v) => setState(() => _deleteOriginal = v),
-                    ),
-                    const SizedBox(height: 10),
-                    FilledButton.icon(
-                      onPressed: _busy ? null : _apply,
-                      icon: _busy
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Icon(Icons.crop),
-                      label: Text(_busy ? 'Schneide zu…' : 'Zuschneiden & speichern'),
-                    ),
-                  ],
+                      DeleteOriginalsSwitch(
+                        label: 'Originaldatei danach löschen',
+                        value: _deleteOriginal,
+                        onChanged: (v) => setState(() => _deleteOriginal = v),
+                      ),
+                      const SizedBox(height: 10),
+                      FilledButton.icon(
+                        onPressed: _busy ? null : _apply,
+                        icon: _busy
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white),
+                              )
+                            : const Icon(Icons.crop),
+                        label: Text(_busy ? 'Schneide zu…' : 'Zuschneiden & speichern'),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
+      ),
     );
   }
 }

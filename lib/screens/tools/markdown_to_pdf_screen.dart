@@ -9,6 +9,7 @@ import '../../services/file_picker_service.dart';
 import '../../services/markdown_pdf_service.dart';
 import '../../services/original_files_cleanup_service.dart';
 import '../../widgets/delete_originals_switch.dart';
+import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_result.dart';
 
 /// Converts Markdown (.md) source into a styled PDF - fully offline, no
@@ -68,66 +69,69 @@ class _MarkdownToPdfScreenState extends State<MarkdownToPdfScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Markdown → PDF')),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Card(
-              color: Theme.of(context).colorScheme.surfaceContainerHigh,
-              child: const Padding(
-                padding: EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Icon(Icons.offline_bolt_outlined),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Läuft komplett offline, ohne Internet oder Google-Konto.',
-                        style: TextStyle(fontSize: 13),
+    return ToolDropZone(
+      onDrop: _pickFile,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Markdown → PDF')),
+        body: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Card(
+                color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                child: const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Icon(Icons.offline_bolt_outlined),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Läuft komplett offline, ohne Internet oder Google-Konto.',
+                          style: TextStyle(fontSize: 13),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 24),
-            if (_fileName == null)
-              FilledButton.icon(
-                onPressed: _pickFile,
-                icon: const Icon(Icons.article_outlined),
-                label: const Text('Markdown-Datei wählen'),
-              )
-            else ...[
-              ListTile(
-                leading: const Icon(Icons.description_outlined),
-                title: Text(_fileName!),
-                trailing: TextButton(
-                  onPressed: _busy ? null : _pickFile,
-                  child: const Text('Ändern'),
+              const SizedBox(height: 24),
+              if (_fileName == null)
+                FilledButton.icon(
+                  onPressed: _pickFile,
+                  icon: const Icon(Icons.article_outlined),
+                  label: const Text('Markdown-Datei wählen'),
+                )
+              else ...[
+                ListTile(
+                  leading: const Icon(Icons.description_outlined),
+                  title: Text(_fileName!),
+                  trailing: TextButton(
+                    onPressed: _busy ? null : _pickFile,
+                    child: const Text('Ändern'),
+                  ),
                 ),
-              ),
-              DeleteOriginalsSwitch(
-                label: 'Originaldatei danach löschen',
-                value: _deleteOriginal,
-                onChanged: (v) => setState(() => _deleteOriginal = v),
-              ),
-              const SizedBox(height: 12),
-              FilledButton.icon(
-                onPressed: _busy ? null : _convert,
-                icon: _busy
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Icon(Icons.picture_as_pdf_outlined),
-                label: Text(_busy ? 'Wandle um…' : 'In PDF umwandeln'),
-              ),
+                DeleteOriginalsSwitch(
+                  label: 'Originaldatei danach löschen',
+                  value: _deleteOriginal,
+                  onChanged: (v) => setState(() => _deleteOriginal = v),
+                ),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: _busy ? null : _convert,
+                  icon: _busy
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.picture_as_pdf_outlined),
+                  label: Text(_busy ? 'Wandle um…' : 'In PDF umwandeln'),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

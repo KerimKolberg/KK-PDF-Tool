@@ -9,6 +9,7 @@ import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
 import '../../services/settings_service.dart';
 import '../../widgets/delete_originals_switch.dart';
+import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_result.dart';
 
 /// Adds page numbers and/or a header/footer text to every page of a PDF.
@@ -104,114 +105,117 @@ class _PageNumbersScreenState extends State<PageNumbersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Seitenzahlen & Kopfzeile')),
-      body: _fileName == null
-          ? Center(
-              child: FilledButton.icon(
-                onPressed: _pickPdf,
-                icon: const Icon(Icons.picture_as_pdf_outlined),
-                label: const Text('PDF wählen'),
-              ),
-            )
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.description_outlined),
-                  title: Text(_fileName!),
-                  trailing: TextButton(
-                    onPressed: _busy ? null : _pickPdf,
-                    child: const Text('Ändern'),
+    return ToolDropZone(
+      onDrop: _pickPdf,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Seitenzahlen & Kopfzeile')),
+        body: _fileName == null
+            ? Center(
+                child: FilledButton.icon(
+                  onPressed: _pickPdf,
+                  icon: const Icon(Icons.picture_as_pdf_outlined),
+                  label: const Text('PDF wählen'),
+                ),
+              )
+            : ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.description_outlined),
+                    title: Text(_fileName!),
+                    trailing: TextButton(
+                      onPressed: _busy ? null : _pickPdf,
+                      child: const Text('Ändern'),
+                    ),
                   ),
-                ),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Seitenzahlen'),
-                  value: _numbersEnabled,
-                  onChanged: (v) => setState(() => _numbersEnabled = v),
-                ),
-                if (_numbersEnabled) ...[
-                  DropdownButtonFormField<PageNumberFormat>(
-                    initialValue: _format,
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Seitenzahlen'),
+                    value: _numbersEnabled,
+                    onChanged: (v) => setState(() => _numbersEnabled = v),
+                  ),
+                  if (_numbersEnabled) ...[
+                    DropdownButtonFormField<PageNumberFormat>(
+                      initialValue: _format,
+                      decoration: const InputDecoration(
+                        labelText: 'Format',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: [
+                        for (final f in PageNumberFormat.values)
+                          DropdownMenuItem(value: f, child: Text(f.example)),
+                      ],
+                      onChanged: (v) => setState(() => _format = v ?? _format),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<PageNumberPosition>(
+                      initialValue: _position,
+                      decoration: const InputDecoration(
+                        labelText: 'Position',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: [
+                        for (final pos in PageNumberPosition.values)
+                          DropdownMenuItem(value: pos, child: Text(pos.label)),
+                      ],
+                      onChanged: (v) => setState(() => _position = v ?? _position),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _startController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Beginnen bei',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: _headerController,
+                    onChanged: (_) => setState(() {}),
                     decoration: const InputDecoration(
-                      labelText: 'Format',
+                      labelText: 'Kopfzeile (optional, oben Mitte)',
                       border: OutlineInputBorder(),
                     ),
-                    items: [
-                      for (final f in PageNumberFormat.values)
-                        DropdownMenuItem(value: f, child: Text(f.example)),
-                    ],
-                    onChanged: (v) => setState(() => _format = v ?? _format),
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<PageNumberPosition>(
-                    initialValue: _position,
-                    decoration: const InputDecoration(
-                      labelText: 'Position',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: [
-                      for (final pos in PageNumberPosition.values)
-                        DropdownMenuItem(value: pos, child: Text(pos.label)),
-                    ],
-                    onChanged: (v) => setState(() => _position = v ?? _position),
                   ),
                   const SizedBox(height: 12),
                   TextField(
-                    controller: _startController,
-                    keyboardType: TextInputType.number,
+                    controller: _footerController,
+                    onChanged: (_) => setState(() {}),
                     decoration: const InputDecoration(
-                      labelText: 'Beginnen bei',
+                      labelText: 'Fußzeile (optional, unten links)',
                       border: OutlineInputBorder(),
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  DeleteOriginalsSwitch(
+                    label: 'Originaldatei danach löschen',
+                    value: _deleteOriginal,
+                    onChanged: (v) => setState(() => _deleteOriginal = v),
+                  ),
                 ],
-                const SizedBox(height: 20),
-                TextField(
-                  controller: _headerController,
-                  onChanged: (_) => setState(() {}),
-                  decoration: const InputDecoration(
-                    labelText: 'Kopfzeile (optional, oben Mitte)',
-                    border: OutlineInputBorder(),
+              ),
+        bottomNavigationBar: _fileName == null
+            ? null
+            : SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: FilledButton.icon(
+                    onPressed: _busy || !_hasSomethingToAdd ? null : _apply,
+                    icon: _busy
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Icon(Icons.format_list_numbered),
+                    label: Text(_busy ? 'Wird erstellt…' : 'Anwenden & speichern'),
                   ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _footerController,
-                  onChanged: (_) => setState(() {}),
-                  decoration: const InputDecoration(
-                    labelText: 'Fußzeile (optional, unten links)',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                DeleteOriginalsSwitch(
-                  label: 'Originaldatei danach löschen',
-                  value: _deleteOriginal,
-                  onChanged: (v) => setState(() => _deleteOriginal = v),
-                ),
-              ],
-            ),
-      bottomNavigationBar: _fileName == null
-          ? null
-          : SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: FilledButton.icon(
-                  onPressed: _busy || !_hasSomethingToAdd ? null : _apply,
-                  icon: _busy
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Icon(Icons.format_list_numbered),
-                  label: Text(_busy ? 'Wird erstellt…' : 'Anwenden & speichern'),
                 ),
               ),
-            ),
+      ),
     );
   }
 }

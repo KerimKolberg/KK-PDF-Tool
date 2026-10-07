@@ -10,6 +10,7 @@ import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
 import '../../services/settings_service.dart';
 import '../../widgets/delete_originals_switch.dart';
+import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_result.dart';
 
 /// Stamps a diagonal text watermark across every page of a PDF.
@@ -85,65 +86,68 @@ class _WatermarkPdfScreenState extends State<WatermarkPdfScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Wasserzeichen')),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (_fileName == null)
-              FilledButton.icon(
-                onPressed: _pickPdf,
-                icon: const Icon(Icons.picture_as_pdf_outlined),
-                label: const Text('PDF wählen'),
-              )
-            else ...[
-              ListTile(
-                leading: const Icon(Icons.description_outlined),
-                title: Text(_fileName!),
-                trailing: TextButton(
-                  onPressed: _busy ? null : _pickPdf,
-                  child: const Text('Ändern'),
+    return ToolDropZone(
+      onDrop: _pickPdf,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Wasserzeichen')),
+        body: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (_fileName == null)
+                FilledButton.icon(
+                  onPressed: _pickPdf,
+                  icon: const Icon(Icons.picture_as_pdf_outlined),
+                  label: const Text('PDF wählen'),
+                )
+              else ...[
+                ListTile(
+                  leading: const Icon(Icons.description_outlined),
+                  title: Text(_fileName!),
+                  trailing: TextButton(
+                    onPressed: _busy ? null : _pickPdf,
+                    child: const Text('Ändern'),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _textController,
-                decoration: const InputDecoration(
-                  labelText: 'Text',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _textController,
+                  decoration: const InputDecoration(
+                    labelText: 'Text',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Text('Deckkraft: ${(_opacity * 100).round()}%'),
-              Slider(
-                value: _opacity,
-                min: 0.1,
-                max: 0.7,
-                onChanged: _busy ? null : (v) => setState(() => _opacity = v),
-              ),
-              DeleteOriginalsSwitch(
-                label: 'Originaldatei danach löschen',
-                value: _deleteOriginal,
-                onChanged: (v) => setState(() => _deleteOriginal = v),
-              ),
-              const SizedBox(height: 12),
-              FilledButton.icon(
-                onPressed: _busy ? null : _apply,
-                icon: _busy
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Icon(Icons.water_drop_outlined),
-                label: Text(_busy ? 'Wende an…' : 'Wasserzeichen einfügen'),
-              ),
+                const SizedBox(height: 12),
+                Text('Deckkraft: ${(_opacity * 100).round()}%'),
+                Slider(
+                  value: _opacity,
+                  min: 0.1,
+                  max: 0.7,
+                  onChanged: _busy ? null : (v) => setState(() => _opacity = v),
+                ),
+                DeleteOriginalsSwitch(
+                  label: 'Originaldatei danach löschen',
+                  value: _deleteOriginal,
+                  onChanged: (v) => setState(() => _deleteOriginal = v),
+                ),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: _busy ? null : _apply,
+                  icon: _busy
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.water_drop_outlined),
+                  label: Text(_busy ? 'Wende an…' : 'Wasserzeichen einfügen'),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

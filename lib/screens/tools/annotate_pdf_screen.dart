@@ -10,6 +10,7 @@ import '../../services/pdf_service.dart';
 import '../../services/pdf_tools_service.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../annotate_pages_screen.dart';
+import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_result.dart';
 
 /// Picks a PDF, opens it in the fill-in/drawing editor and saves the edited
@@ -86,57 +87,60 @@ class _AnnotatePdfScreenState extends State<AnnotatePdfScreen> {
   @override
   Widget build(BuildContext context) {
     final busy = _busyLabel != null;
-    return Scaffold(
-      appBar: AppBar(title: Text(_fill ? 'PDF ausfüllen & unterschreiben' : 'PDF markieren & zeichnen')),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              _fill
-                  ? 'Text, Datum, Haken/Kreuze und Unterschriften auf beliebigen Seiten '
-                      'platzieren - z. B. um Formulare auszufüllen. Läuft komplett offline.'
-                  : 'Mit Stift und Textmarker direkt auf die Seiten zeichnen. Läuft '
-                      'komplett offline.',
-              style: TextStyle(color: Theme.of(context).colorScheme.outline),
-            ),
-            const SizedBox(height: 24),
-            if (_fileName == null)
-              FilledButton.icon(
-                onPressed: _pickPdf,
-                icon: const Icon(Icons.picture_as_pdf_outlined),
-                label: const Text('PDF wählen'),
-              )
-            else ...[
-              ListTile(
-                leading: const Icon(Icons.description_outlined),
-                title: Text(_fileName!),
-                trailing: TextButton(
-                  onPressed: busy ? null : _pickPdf,
-                  child: const Text('Ändern'),
+    return ToolDropZone(
+      onDrop: _pickPdf,
+      child: Scaffold(
+        appBar: AppBar(title: Text(_fill ? 'PDF ausfüllen & unterschreiben' : 'PDF markieren & zeichnen')),
+        body: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                _fill
+                    ? 'Text, Datum, Haken/Kreuze und Unterschriften auf beliebigen Seiten '
+                        'platzieren - z. B. um Formulare auszufüllen. Läuft komplett offline.'
+                    : 'Mit Stift und Textmarker direkt auf die Seiten zeichnen. Läuft '
+                        'komplett offline.',
+                style: TextStyle(color: Theme.of(context).colorScheme.outline),
+              ),
+              const SizedBox(height: 24),
+              if (_fileName == null)
+                FilledButton.icon(
+                  onPressed: _pickPdf,
+                  icon: const Icon(Icons.picture_as_pdf_outlined),
+                  label: const Text('PDF wählen'),
+                )
+              else ...[
+                ListTile(
+                  leading: const Icon(Icons.description_outlined),
+                  title: Text(_fileName!),
+                  trailing: TextButton(
+                    onPressed: busy ? null : _pickPdf,
+                    child: const Text('Ändern'),
+                  ),
                 ),
-              ),
-              DeleteOriginalsSwitch(
-                label: 'Originaldatei danach löschen',
-                value: _deleteOriginal,
-                onChanged: (v) => setState(() => _deleteOriginal = v),
-              ),
-              const SizedBox(height: 12),
-              FilledButton.icon(
-                onPressed: busy ? null : _edit,
-                icon: busy
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : Icon(_fill ? Icons.edit_note : Icons.brush_outlined),
-                label: Text(_busyLabel ?? (_fill ? 'Ausfüllen' : 'Zeichnen')),
-              ),
+                DeleteOriginalsSwitch(
+                  label: 'Originaldatei danach löschen',
+                  value: _deleteOriginal,
+                  onChanged: (v) => setState(() => _deleteOriginal = v),
+                ),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: busy ? null : _edit,
+                  icon: busy
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : Icon(_fill ? Icons.edit_note : Icons.brush_outlined),
+                  label: Text(_busyLabel ?? (_fill ? 'Ausfüllen' : 'Zeichnen')),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
