@@ -32,12 +32,14 @@ jobs:
           DOCSCANNER_KEYSTORE_PASSWORD: ${{ secrets.DOCSCANNER_KEYSTORE_PASSWORD }}
           DOCSCANNER_KEY_ALIAS: ${{ secrets.DOCSCANNER_KEY_ALIAS }}
           DOCSCANNER_KEY_PASSWORD: ${{ secrets.DOCSCANNER_KEY_PASSWORD }}
-        run: flutter build apk --release
+        run: |
+          flutter build apk --release
+          cp build/app/outputs/flutter-apk/app-release.apk KK-PDF-Tool.apk
 
       - uses: actions/upload-artifact@v4
         with:
-          name: doc-scanner-android-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: KK-PDF-Tool-Android-APK
+          path: KK-PDF-Tool.apk
           if-no-files-found: error
 
   build-windows:
@@ -57,7 +59,7 @@ jobs:
       - run: flutter build windows --release
 
       - name: Zip Windows build
-        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath doc-scanner-windows.zip
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath KK-PDF-Tool-Windows-Portable.zip
 
       - name: Build installer
         shell: pwsh
@@ -73,6 +75,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: doc-scanner-windows-exe
-          path: doc-scanner-windows.zip
+          name: KK-PDF-Tool-Windows-Portable
+          path: KK-PDF-Tool-Windows-Portable.zip
           if-no-files-found: error

@@ -168,16 +168,17 @@ Artefakte baut:
 
 1. Projekt in ein eigenes (privates oder öffentliches) GitHub-Repository pushen.
 2. Im Reiter **Actions** den Workflow-Lauf abwarten (ca. 5–10 Minuten).
-3. Unter dem abgeschlossenen Lauf im Bereich **Artifacts** zwei ZIP-Dateien
-   herunterladen:
-   - `doc-scanner-android-apk` → enthält `app-release.apk`
-   - `doc-scanner-windows-exe` → enthält `doc-scanner-windows.zip`
-     (die EXE plus alle nötigen DLLs/Daten — die ganze Zip auf dem PC entpacken,
-     nicht nur die .exe herauskopieren)
+3. Unter dem abgeschlossenen Lauf im Bereich **Artifacts** herunterladen:
+   - `KK-PDF-Tool-Android-APK` → enthält `KK-PDF-Tool.apk`
+   - `KK-PDF-Tool-Windows-Setup` → enthält `KK-PDF-Tool-Setup.exe`
+     (Installer — empfohlen)
+   - `KK-PDF-Tool-Windows-Portable` → enthält `KK-PDF-Tool-Windows-Portable.zip`
+     (die EXE plus alle nötigen DLLs/Daten ohne Installation — die ganze Zip
+     auf dem PC entpacken, nicht nur die .exe herauskopieren)
 
 ## APK auf dem Tablet installieren
 
-1. `app-release.apk` auf das Tablet übertragen (USB-Kabel, Google Drive, E-Mail …).
+1. `KK-PDF-Tool.apk` auf das Tablet übertragen (USB-Kabel, Google Drive, E-Mail …).
 2. Auf dem Tablet die Datei antippen. Falls Android "Installation aus
    unbekannten Quellen blockiert" meldet: in den Einstellungen für die
    verwendete App (z. B. Dateien/Browser) einmalig erlauben.
