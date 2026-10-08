@@ -71,6 +71,8 @@ flutter_launcher_icons:
   image_path: "assets/icon/app_icon_padded.png"
   adaptive_icon_background: "#0E2038"
   adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
+  # The foreground image already has its own margin; no extra shrinking.
+  adaptive_icon_foreground_inset: 0
   windows:
     generate: true
     image_path: "assets/icon/app_icon.png"
