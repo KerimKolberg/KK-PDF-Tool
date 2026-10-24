@@ -4,15 +4,20 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 class PdfService {
-  /// Builds a single PDF where every entry in [pageJpegBytes] becomes one
-  /// page, scaled to fit an A4 sheet.
-  static Future<Uint8List> buildPdf(List<Uint8List> pageJpegBytes) async {
+  /// Builds a single PDF where every entry in [pageImages] becomes one
+  /// page, scaled to fit an A4 sheet - or, for pages rendered from an
+  /// existing PDF, onto that page's original size from [pageFormats], so
+  /// slides stay slides instead of gaining white A4 margins.
+  static Future<Uint8List> buildPdf(
+    List<Uint8List> pageImages, {
+    List<PdfPageFormat>? pageFormats,
+  }) async {
     final doc = pw.Document();
-    for (final bytes in pageJpegBytes) {
-      final image = pw.MemoryImage(bytes);
+    for (var i = 0; i < pageImages.length; i++) {
+      final image = pw.MemoryImage(pageImages[i]);
       doc.addPage(
         pw.Page(
-          pageFormat: PdfPageFormat.a4,
+          pageFormat: formatAt(pageFormats, i),
           margin: pw.EdgeInsets.zero,
           build: (context) => pw.Center(
             child: pw.Image(image, fit: pw.BoxFit.contain),
@@ -22,6 +27,10 @@ class PdfService {
     }
     return doc.save();
   }
+
+  /// Page [index]'s entry in [pageFormats], or A4 when there is none.
+  static PdfPageFormat formatAt(List<PdfPageFormat>? pageFormats, int index) =>
+      pageFormats != null && index < pageFormats.length ? pageFormats[index] : PdfPageFormat.a4;
 
   /// Builds a single-page PDF with the front and back of an ID card/document
   /// stacked on one A4 sheet - the layout most offices/authorities expect

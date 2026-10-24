@@ -43,7 +43,7 @@ dependencies:
   camera_windows: ^0.2.6+5
   url_launcher: ^6.3.2
   share_plus: ^13.3.0
-  printing: ^5.15.0
+  pdfrx: ^2.10.1
   shared_preferences: ^2.5.5
   cunning_document_scanner: ^3.0.3
   archive: ^4.0.9

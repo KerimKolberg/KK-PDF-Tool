@@ -5,8 +5,9 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../models/ocr_result.dart';
+import 'pdf_service.dart';
 
-/// Builds an A4 PDF where each page shows the scanned image, with the OCR'd
+/// Builds a PDF (A4, or the given original page sizes) where each page shows the scanned image, with the OCR'd
 /// text laid invisibly on top at the same positions - so the PDF looks
 /// exactly like the scan but can be searched (Ctrl+F) and text can be
 /// selected/copied, the way CamScanner's "searchable PDF" works.
@@ -36,14 +37,16 @@ class SearchablePdfService {
 
   static Future<Uint8List> build(
     List<Uint8List> pageImages,
-    List<OcrResult?> ocrResults,
-  ) async {
-    final pageW = PdfPageFormat.a4.width;
-    final pageH = PdfPageFormat.a4.height;
+    List<OcrResult?> ocrResults, {
+    List<PdfPageFormat>? pageFormats,
+  }) async {
     final doc = pw.Document();
 
     for (var i = 0; i < pageImages.length; i++) {
       final image = pw.MemoryImage(pageImages[i]);
+      final format = PdfService.formatAt(pageFormats, i);
+      final pageW = format.width;
+      final pageH = format.height;
       final imgW = (image.width ?? 1).toDouble();
       final imgH = (image.height ?? 1).toDouble();
       final scale = math.min(pageW / imgW, pageH / imgH);
@@ -87,7 +90,7 @@ class SearchablePdfService {
 
       doc.addPage(
         pw.Page(
-          pageFormat: PdfPageFormat.a4,
+          pageFormat: format,
           margin: pw.EdgeInsets.zero,
           build: (context) => pw.SizedBox(
             width: pageW,

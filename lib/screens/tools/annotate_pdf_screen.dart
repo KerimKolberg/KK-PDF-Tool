@@ -53,6 +53,7 @@ class _AnnotatePdfScreenState extends State<AnnotatePdfScreen> {
     setState(() => _busyLabel = 'Seiten werden geladen…');
     try {
       final rendered = await PdfToolsService.rasterPages(bytes, dpi: 170);
+      final formats = await PdfToolsService.pageFormats(bytes);
       final pages = await PdfToolsService.toJpegs(rendered, quality: 90);
       if (!mounted) return;
       setState(() => _busyLabel = null);
@@ -65,7 +66,7 @@ class _AnnotatePdfScreenState extends State<AnnotatePdfScreen> {
       if (edited == null || !mounted) return;
 
       setState(() => _busyLabel = 'Speichere…');
-      final pdf = await PdfService.buildPdf(edited);
+      final pdf = await PdfService.buildPdf(edited, pageFormats: formats);
       final suffix = _fill ? '_ausgefuellt' : '_markiert';
       final location = await _downloadsExport.export(pdf, '$name$suffix.pdf');
       var message = 'Gespeichert unter $location';

@@ -1,8 +1,10 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
+import 'package:pdfrx/pdfrx.dart' as rx;
 
 import 'pdf_service.dart';
 import 'pptx_writer_service.dart';
@@ -33,57 +35,126 @@ enum PageNumberPosition {
   const PageNumberPosition(this.label);
 }
 
-/// PDF manipulation built on rasterizing pages, since there is no
-/// pure-Dart/Flutter library that can copy vector pages between existing
-/// PDFs on both Android and Windows. Output files are image-based PDFs:
-/// they look identical to the source but are not text-searchable.
+/// PDF manipulation on top of PDFium (via pdfrx).
+///
+/// Merging, splitting and rotating copy the original pages unchanged: text
+/// stays text, nothing gets re-rendered, and the files stay small. The
+/// tools that draw onto pages (watermark, page numbers, crop, compress)
+/// work on page renders, but every page keeps its original size - slides
+/// stay slides instead of being put onto A4.
 class PdfToolsService {
+  static Future<void>? _engine;
+  static int _docCounter = 0;
+
+  static Future<void> _ensureEngine() => _engine ??= rx.pdfrxFlutterInitialize();
+
+  static String _newName(String prefix) => '$prefix-${_docCounter++}';
+
+  /// Opens [pdfBytes], runs [action] on it and disposes the document again.
+  static Future<T> _withDocument<T>(
+    Uint8List pdfBytes,
+    Future<T> Function(rx.PdfDocument doc) action,
+  ) async {
+    await _ensureEngine();
+    final doc = await rx.PdfDocument.openData(pdfBytes, sourceName: _newName('in'));
+    try {
+      return await action(doc);
+    } finally {
+      await doc.dispose();
+    }
+  }
+
+  /// Writes [pages] (from documents that are still open) into a new PDF.
+  static Future<Uint8List> _encodePages(List<rx.PdfPage> pages) async {
+    final out = await rx.PdfDocument.createNew(sourceName: _newName('out'));
+    try {
+      out.pages = pages;
+      return await out.encodePdf();
+    } finally {
+      await out.dispose();
+    }
+  }
+
   /// Renders [pages] (0-based indices; all pages when omitted) of [pdfBytes]
   /// to PNG images at [dpi].
   static Future<List<Uint8List>> rasterPages(
     Uint8List pdfBytes, {
     List<int>? pages,
     double dpi = 150,
-  }) async {
-    final images = <Uint8List>[];
-    await for (final page in Printing.raster(pdfBytes, pages: pages, dpi: dpi)) {
-      images.add(await page.toPng());
-    }
-    return images;
+  }) {
+    return _withDocument(pdfBytes, (doc) async {
+      final all = doc.pages;
+      final images = <Uint8List>[];
+      for (final index in pages ?? [for (var i = 0; i < all.length; i++) i]) {
+        if (index < 0 || index >= all.length) continue;
+        images.add(await _renderPng(all[index], dpi));
+      }
+      return images;
+    });
   }
 
-  /// Total page count of [pdfBytes], found by rasterizing at a very low
-  /// resolution (cheap) since the `printing` package exposes no direct
-  /// page-count API.
-  static Future<int> countPages(Uint8List pdfBytes) async {
-    var count = 0;
-    await for (final _ in Printing.raster(pdfBytes, dpi: 36)) {
-      count++;
+  static Future<Uint8List> _renderPng(rx.PdfPage page, double dpi) async {
+    final raw = await page.render(
+      fullWidth: page.width * dpi / 72,
+      fullHeight: page.height * dpi / 72,
+      backgroundColor: 0xffffffff,
+    );
+    if (raw == null) {
+      throw StateError('Seite ${page.pageNumber} konnte nicht gelesen werden');
     }
-    return count;
+    try {
+      final image = await raw.createImage();
+      try {
+        final png = await image.toByteData(format: ui.ImageByteFormat.png);
+        return png!.buffer.asUint8List();
+      } finally {
+        image.dispose();
+      }
+    } finally {
+      raw.dispose();
+    }
+  }
+
+  /// The size of every page of [pdfBytes], as displayed (rotation applied).
+  static Future<List<PdfPageFormat>> pageFormats(Uint8List pdfBytes) {
+    return _withDocument(pdfBytes, (doc) async => [
+          for (final page in doc.pages) PdfPageFormat(page.width, page.height),
+        ]);
+  }
+
+  /// Total page count of [pdfBytes].
+  static Future<int> countPages(Uint8List pdfBytes) {
+    return _withDocument(pdfBytes, (doc) async => doc.pages.length);
   }
 
   /// Concatenates all pages of [pdfs], in order, into a single new PDF.
+  /// The pages are copied as they are, not re-rendered.
   static Future<Uint8List> merge(List<Uint8List> pdfs) async {
-    final allImages = <Uint8List>[];
-    for (final pdf in pdfs) {
-      allImages.addAll(await rasterPages(pdf));
+    await _ensureEngine();
+    final sources = <rx.PdfDocument>[];
+    try {
+      for (final pdf in pdfs) {
+        sources.add(await rx.PdfDocument.openData(pdf, sourceName: _newName('in')));
+      }
+      return await _encodePages([for (final source in sources) ...source.pages]);
+    } finally {
+      for (final source in sources) {
+        await source.dispose();
+      }
     }
-    return PdfService.buildPdf(allImages);
   }
 
-  /// Extracts the inclusive 1-based page range [startPage]..[endPage] from
-  /// [pdfBytes] into a new PDF.
+  /// Copies the inclusive 1-based page range [startPage]..[endPage] of
+  /// [pdfBytes] into a new PDF, unchanged.
   static Future<Uint8List> extractRange(
     Uint8List pdfBytes, {
     required int startPage,
     required int endPage,
-  }) async {
-    final indices = [
-      for (var i = startPage - 1; i <= endPage - 1; i++) i,
-    ];
-    final images = await rasterPages(pdfBytes, pages: indices);
-    return PdfService.buildPdf(images);
+  }) {
+    return _withDocument(
+      pdfBytes,
+      (doc) => _encodePages(doc.pages.sublist(startPage - 1, endPage)),
+    );
   }
 
   /// Renders every page of [pdfBytes] and packs each one as a full-slide
@@ -103,11 +174,12 @@ class PdfToolsService {
     required int quality,
   }) async {
     final images = await rasterPages(pdfBytes, dpi: dpi);
+    final formats = await pageFormats(pdfBytes);
     final jpegs = await compute(_reencodeJpegBatchIsolate, {
       'images': images,
       'quality': quality,
     });
-    return PdfService.buildPdf(jpegs);
+    return PdfService.buildPdf(jpegs, pageFormats: formats);
   }
 
   /// Stamps [text] diagonally across every page (or just [pageIndices], if
@@ -122,6 +194,7 @@ class PdfToolsService {
     final images = await rasterPages(pdfBytes, dpi: 150);
     return compute(_buildWatermarkedPdfIsolate, {
       'images': images,
+      'formats': _formatsArg(await pageFormats(pdfBytes)),
       'text': text,
       'pageIndices': pageIndices,
       'opacity': opacity,
@@ -131,19 +204,28 @@ class PdfToolsService {
 
   /// Rotates [pageIndices] (0-based; all pages when omitted) of [pdfBytes]
   /// by [degrees] (90/180/270) clockwise; other pages are left untouched.
+  /// Only the pages' rotation setting changes - the content is not
+  /// re-rendered.
   static Future<Uint8List> rotatePages(
     Uint8List pdfBytes, {
     List<int>? pageIndices,
     required int degrees,
-  }) async {
-    final images = await rasterPages(pdfBytes, dpi: 150);
-    final rotated = await compute(_rotateBatchIsolate, {
-      'images': images,
-      'pageIndices': pageIndices,
-      'degrees': degrees,
+  }) {
+    return _withDocument(pdfBytes, (doc) {
+      final pages = doc.pages;
+      return _encodePages([
+        for (var i = 0; i < pages.length; i++)
+          _isSelected(pageIndices, i) ? _rotated(pages[i], degrees) : pages[i],
+      ]);
     });
-    return PdfService.buildPdf(rotated);
   }
+
+  static rx.PdfPage _rotated(rx.PdfPage page, int degrees) => switch (degrees % 360) {
+        90 => page.rotatedCW90(),
+        180 => page.rotated180(),
+        270 => page.rotatedCCW90(),
+        _ => page,
+      };
 
   /// Crops [pageIndices] (0-based; all pages when omitted) of [pdfBytes] to
   /// the rectangle described by [leftFrac]/[topFrac]/[rightFrac]/[bottomFrac]
@@ -158,6 +240,12 @@ class PdfToolsService {
     required double bottomFrac,
   }) async {
     final images = await rasterPages(pdfBytes, dpi: 150);
+    final formats = [
+      for (final (i, f) in (await pageFormats(pdfBytes)).indexed)
+        _isSelected(pageIndices, i)
+            ? PdfPageFormat(f.width * (rightFrac - leftFrac), f.height * (bottomFrac - topFrac))
+            : f,
+    ];
     final cropped = await compute(_cropBatchIsolate, {
       'images': images,
       'pageIndices': pageIndices,
@@ -166,7 +254,7 @@ class PdfToolsService {
       'right': rightFrac,
       'bottom': bottomFrac,
     });
-    return PdfService.buildPdf(cropped);
+    return PdfService.buildPdf(cropped, pageFormats: formats);
   }
 
   /// Downscales each image so its longer side is at most [maxSide] and
@@ -208,6 +296,7 @@ class PdfToolsService {
     final images = await rasterPages(pdfBytes, dpi: 150);
     return compute(_buildPageNumberedPdfIsolate, {
       'images': images,
+      'formats': _formatsArg(await pageFormats(pdfBytes)),
       'format': numberFormat?.index,
       'position': position.index,
       'startAt': startAt,
@@ -215,6 +304,17 @@ class PdfToolsService {
       'footer': footer,
     });
   }
+}
+
+/// Page sizes as plain numbers, to pass them into an isolate.
+List<List<double>> _formatsArg(List<PdfPageFormat> formats) =>
+    [for (final f in formats) [f.width, f.height]];
+
+PdfPageFormat _formatFromArg(Map<String, dynamic> args, int index) {
+  final formats = args['formats'] as List;
+  if (index >= formats.length) return PdfPageFormat.a4;
+  final size = formats[index] as List;
+  return PdfPageFormat(size[0] as double, size[1] as double);
 }
 
 Future<Uint8List> _buildPageNumberedPdfIsolate(Map<String, dynamic> args) async {
@@ -246,7 +346,7 @@ Future<Uint8List> _buildPageNumberedPdfIsolate(Map<String, dynamic> args) async 
     final image = pw.MemoryImage(images[i]);
     doc.addPage(
       pw.Page(
-        pageFormat: PdfPageFormat.a4,
+        pageFormat: _formatFromArg(args, i),
         margin: pw.EdgeInsets.zero,
         build: (context) => pw.Stack(
           children: [
@@ -297,21 +397,6 @@ List<Uint8List> _reencodeJpegBatchIsolate(Map<String, dynamic> args) {
 bool _isSelected(List<dynamic>? pageIndices, int index) {
   if (pageIndices == null || pageIndices.isEmpty) return true;
   return pageIndices.contains(index);
-}
-
-List<Uint8List> _rotateBatchIsolate(Map<String, dynamic> args) {
-  final images = (args['images'] as List).cast<Uint8List>();
-  final pageIndices = args['pageIndices'] as List?;
-  final degrees = args['degrees'] as int;
-  return [
-    for (var i = 0; i < images.length; i++)
-      if (_isSelected(pageIndices, i))
-        img.encodePng(
-          img.copyRotate(img.decodeImage(images[i])!, angle: degrees),
-        )
-      else
-        images[i],
-  ];
 }
 
 List<Uint8List> _cropBatchIsolate(Map<String, dynamic> args) {
@@ -376,7 +461,7 @@ Future<Uint8List> _buildWatermarkedPdfIsolate(Map<String, dynamic> args) async {
 
     doc.addPage(
       pw.Page(
-        pageFormat: PdfPageFormat.a4,
+        pageFormat: _formatFromArg(args, i),
         margin: pw.EdgeInsets.zero,
         build: (context) => pw.Stack(
           children: [

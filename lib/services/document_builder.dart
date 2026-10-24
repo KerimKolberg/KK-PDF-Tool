@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
+import 'package:pdf/pdf.dart';
 
 import '../models/ocr_result.dart';
 import '../models/scan_document.dart';
@@ -29,15 +30,18 @@ class BuiltDocument {
 /// layer, making it searchable. Any OCR problem falls back to a plain
 /// image PDF, so saving never fails because of text recognition.
 class DocumentBuilder {
+  /// [pageFormats]: the original page sizes when [pages] were rendered from
+  /// a PDF (A4 otherwise).
   static Future<BuiltDocument> build(
     List<Uint8List> pages, {
     bool? searchable,
+    List<PdfPageFormat>? pageFormats,
     void Function(int done, int total)? onProgress,
   }) async {
     final useOcr = OcrService.isOfflineAvailable &&
         (searchable ?? await SettingsService().getSearchablePdfEnabled());
     if (!useOcr) {
-      return BuiltDocument(pages: pages, pdfBytes: await PdfService.buildPdf(pages));
+      return BuiltDocument(pages: pages, pdfBytes: await PdfService.buildPdf(pages, pageFormats: pageFormats));
     }
 
     final normalized = <Uint8List>[];
@@ -56,13 +60,13 @@ class DocumentBuilder {
 
     final text = _joinText(results);
     if (results.every((r) => r == null)) {
-      return BuiltDocument(pages: normalized, pdfBytes: await PdfService.buildPdf(normalized));
+      return BuiltDocument(pages: normalized, pdfBytes: await PdfService.buildPdf(normalized, pageFormats: pageFormats));
     }
     Uint8List pdf;
     try {
-      pdf = await SearchablePdfService.build(normalized, results);
+      pdf = await SearchablePdfService.build(normalized, results, pageFormats: pageFormats);
     } catch (_) {
-      pdf = await PdfService.buildPdf(normalized);
+      pdf = await PdfService.buildPdf(normalized, pageFormats: pageFormats);
     }
     return BuiltDocument(pages: normalized, pdfBytes: pdf, text: text, ocr: results);
   }

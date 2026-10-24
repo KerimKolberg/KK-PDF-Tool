@@ -77,11 +77,17 @@ für Android (APK) und Windows (EXE).
     stillschweigend "gelöscht", sondern gemeldet, dass das Original nicht
     entfernt werden konnte.
 
-Die offline PDF-Werkzeuge rendern Seiten neu (Rasterung), da es keine reine
-Dart/Flutter-Bibliothek gibt, die Vektor-Seiten zwischen bestehenden PDFs
-kopieren kann. Ergebnis sieht optisch identisch aus, ist aber nicht mehr
-text-durchsuchbar. Komprimieren nutzt genau das als Vorteil: durch
-Neu-Rendern in niedrigerer Auflösung/JPEG-Qualität wird die Datei kleiner.
+**Zusammenfügen, Aufteilen und Drehen** kopieren die Originalseiten
+unverändert (über PDFium/`pdfrx`): Text bleibt Text und durchsuchbar, und
+die Dateien bleiben so klein wie das Original.
+
+**Wasserzeichen, Seitenzahlen, Zuschneiden, Ausfüllen/Markieren und
+Komprimieren** zeichnen auf die Seiten bzw. verkleinern sie und rendern sie
+dafür neu (Rasterung). Das Ergebnis sieht gleich aus, ist aber nicht mehr
+text-durchsuchbar und meist größer als ein reines Text-PDF. Jede Seite
+behält dabei ihr Originalformat (Folien bleiben Folien, kein A4-Rand).
+Komprimieren nutzt die Rasterung als Vorteil: durch Neu-Rendern in
+niedrigerer Auflösung/JPEG-Qualität werden große Scan-PDFs kleiner.
 
 ### Kein Passwortschutz (hinzufügen/entfernen)
 
@@ -91,8 +97,7 @@ Implementierung der PDF-Verschlüsselungsspezifikation (RC4/AES nach PDF-Norm)
 — dafür gibt es keine fertige, geprüfte Dart/Flutter-Bibliothek, und
 selbst geschriebene Kryptografie für ein Sicherheitsfeature ist ein zu
 großes Risiko für falsche Sicherheit. Passwort-Entfernen scheitert
-zusätzlich daran, dass die zum Rendern genutzte `printing`-Bibliothek keine
-passwortgeschützten PDFs öffnen kann. Der von dir vorgeschlagene Weg (PDF
+zusätzlich daran, dass die App passwortgeschützte PDFs nicht öffnen kann. Der von dir vorgeschlagene Weg (PDF
 mit Passwort in einem Viewer öffnen, dann "Drucken" → "Als PDF speichern"
 ohne Passwort) ist tatsächlich der richtige, verlässliche Workaround dafür.
 

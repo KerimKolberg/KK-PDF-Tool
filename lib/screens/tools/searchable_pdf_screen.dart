@@ -48,10 +48,12 @@ class _SearchablePdfScreenState extends State<SearchablePdfScreen> {
     setState(() => _busyLabel = 'Seiten werden geladen…');
     try {
       final rendered = await PdfToolsService.rasterPages(bytes, dpi: 200);
+      final formats = await PdfToolsService.pageFormats(bytes);
       final pages = await PdfToolsService.toJpegs(rendered, quality: 88);
       final built = await DocumentBuilder.build(
         pages,
         searchable: true,
+        pageFormats: formats,
         onProgress: (done, total) {
           if (mounted) {
             setState(() => _busyLabel = 'Texterkennung ${done < total ? done + 1 : total}/$total…');
