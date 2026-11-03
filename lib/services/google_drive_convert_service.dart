@@ -1,9 +1,11 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 
+import 'google_desktop_auth.dart';
 import 'settings_service.dart';
 
 /// Converts documents by round-tripping them through the user's own Google
@@ -34,7 +36,20 @@ class GoogleDriveConvertService {
     return instance;
   }
 
-  Future<GoogleSignInAccount> _signInAndAuthorize() async {
+  Future<void> _signInAndAuthorize() async {
+    if (Platform.isWindows) {
+      final clientId = AppPrefs.getString(SettingsService.googleDesktopClientIdKey);
+      final secret = AppPrefs.getString(SettingsService.googleDesktopClientSecretKey);
+      if (clientId == null || clientId.isEmpty || secret == null || secret.isEmpty) {
+        throw const GoogleDriveNotConfiguredException(windows: true);
+      }
+      _accessToken = await GoogleDesktopAuth.accessToken(
+        clientId: clientId,
+        clientSecret: secret,
+        scopes: _scopes,
+      );
+      return;
+    }
     final signIn = await _ensureSignIn();
     GoogleSignInAccount? account;
     try {
@@ -49,7 +64,6 @@ class GoogleDriveConvertService {
         await account.authorizationClient.authorizationForScopes(_scopes) ??
             await account.authorizationClient.authorizeScopes(_scopes);
     _accessToken = authorization.accessToken;
-    return account;
   }
 
   String? _accessToken;
@@ -87,6 +101,7 @@ class GoogleDriveConvertService {
       },
       body: body.toBytes(),
     );
+    if (response.statusCode == 401) GoogleDesktopAuth.invalidate();
     if (response.statusCode != 200) {
       throw GoogleDriveApiException(
         'Hochladen fehlgeschlagen (${response.statusCode}): ${response.body}',
@@ -201,16 +216,21 @@ class GoogleDriveConvertService {
   }
 
   Future<void> signOut() async {
+    if (Platform.isWindows) return GoogleDesktopAuth.signOut();
     await _signIn?.signOut();
   }
 }
 
 class GoogleDriveNotConfiguredException implements Exception {
-  const GoogleDriveNotConfiguredException();
+  final bool windows;
+  const GoogleDriveNotConfiguredException({this.windows = false});
   @override
-  String toString() =>
-      'Google-Verbindung ist nicht eingerichtet. Bitte in den Einstellungen die '
-      'Google-Client-ID hinterlegen.';
+  String toString() => windows
+      ? 'Google-Verbindung für Windows ist noch nicht eingerichtet. Bitte in den '
+          'Einstellungen Client-ID und Client-Secret der Desktop-App hinterlegen '
+          '(siehe README).'
+      : 'Google-Verbindung ist nicht eingerichtet. Bitte in den Einstellungen die '
+          'Google-Client-ID hinterlegen.';
 }
 
 class GoogleDriveApiException implements Exception {

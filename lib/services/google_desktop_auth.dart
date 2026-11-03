@@ -1,0 +1,185 @@
+import 'dart:convert';
+import 'dart:io';
+import 'dart:math';
+
+import 'package:crypto/crypto.dart';
+import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
+import 'package:window_manager/window_manager.dart';
+
+import 'settings_service.dart';
+
+/// Google sign-in for Windows, where google_sign_in has no implementation.
+///
+/// Uses Google's OAuth flow for desktop apps: the browser opens Google's
+/// sign-in page, and Google sends the result back to a short-lived web
+/// server on this PC (`http://127.0.0.1:<port>`). PKCE ties the returned code
+/// to this sign-in. The refresh token is kept, so later conversions don't
+/// open the browser again.
+class GoogleDesktopAuth {
+  static const _authUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
+  static const _tokenUrl = 'https://oauth2.googleapis.com/token';
+  static const _revokeUrl = 'https://oauth2.googleapis.com/revoke';
+  static const _refreshTokenKey = 'google.desktop.refreshToken';
+
+  static String? _accessToken;
+  static DateTime _expiry = DateTime.fromMillisecondsSinceEpoch(0);
+
+  /// A valid access token for [scopes]; signs in through the browser only
+  /// when there is no usable refresh token yet.
+  static Future<String> accessToken({
+    required String clientId,
+    required String clientSecret,
+    required List<String> scopes,
+  }) async {
+    final cached = _accessToken;
+    if (cached != null && DateTime.now().isBefore(_expiry)) return cached;
+
+    final refreshToken = AppPrefs.getString(_refreshTokenKey);
+    if (refreshToken != null) {
+      final response = await http.post(Uri.parse(_tokenUrl), body: {
+        'client_id': clientId,
+        'client_secret': clientSecret,
+        'refresh_token': refreshToken,
+        'grant_type': 'refresh_token',
+      });
+      if (response.statusCode == 200) return _store(response.body);
+      // Revoked or expired (Google expires them after 7 days while the
+      // Cloud project is in "Testing" mode): sign in again below.
+      AppPrefs.setString(_refreshTokenKey, null);
+    }
+    return _signIn(clientId: clientId, clientSecret: clientSecret, scopes: scopes);
+  }
+
+  /// Forgets the cached token, e.g. after Google rejected it.
+  static void invalidate() => _accessToken = null;
+
+  static Future<void> signOut() async {
+    final token = AppPrefs.getString(_refreshTokenKey) ?? _accessToken;
+    _accessToken = null;
+    AppPrefs.setString(_refreshTokenKey, null);
+    if (token != null) {
+      try {
+        await http.post(Uri.parse(_revokeUrl), body: {'token': token});
+      } catch (_) {
+        // Offline: the token is forgotten locally either way.
+      }
+    }
+  }
+
+  static bool get isSignedIn => AppPrefs.getString(_refreshTokenKey) != null;
+
+  static Future<String> _signIn({
+    required String clientId,
+    required String clientSecret,
+    required List<String> scopes,
+  }) async {
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    try {
+      final redirectUri = 'http://127.0.0.1:${server.port}';
+      final verifier = _randomString(64);
+      final challenge =
+          base64Url.encode(sha256.convert(ascii.encode(verifier)).bytes).replaceAll('=', '');
+      final state = _randomString(24);
+
+      final url = Uri.parse(_authUrl).replace(queryParameters: {
+        'client_id': clientId,
+        'redirect_uri': redirectUri,
+        'response_type': 'code',
+        'scope': scopes.join(' '),
+        'code_challenge': challenge,
+        'code_challenge_method': 'S256',
+        'state': state,
+        'access_type': 'offline',
+        'prompt': 'consent',
+      });
+      if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+        throw const GoogleDesktopAuthException('Browser konnte nicht geöffnet werden.');
+      }
+
+      final code = await _waitForCode(server, state).timeout(
+        const Duration(minutes: 5),
+        onTimeout: () => throw const GoogleDesktopAuthException(
+          'Anmeldung abgebrochen (keine Antwort von Google innerhalb von 5 Minuten).',
+        ),
+      );
+      _focusApp();
+
+      final response = await http.post(Uri.parse(_tokenUrl), body: {
+        'client_id': clientId,
+        'client_secret': clientSecret,
+        'code': code,
+        'code_verifier': verifier,
+        'redirect_uri': redirectUri,
+        'grant_type': 'authorization_code',
+      });
+      if (response.statusCode != 200) {
+        throw GoogleDesktopAuthException(
+          'Google-Anmeldung fehlgeschlagen (${response.statusCode}): ${response.body}',
+        );
+      }
+      return _store(response.body);
+    } finally {
+      await server.close(force: true);
+    }
+  }
+
+  /// Waits for Google's redirect to the local server and returns the code.
+  static Future<String> _waitForCode(HttpServer server, String state) async {
+    await for (final request in server) {
+      if (request.uri.path != '/') {
+        request.response.statusCode = HttpStatus.notFound;
+        await request.response.close();
+        continue;
+      }
+      final params = request.uri.queryParameters;
+      final ok = params['state'] == state && params['code'] != null;
+      request.response.headers.contentType = ContentType.html;
+      request.response.write(
+        '<!doctype html><meta charset="utf-8"><title>KK-PDF-Tool</title>'
+        '<body style="font-family:sans-serif;text-align:center;padding-top:15vh">'
+        '<h2>${ok ? 'Anmeldung abgeschlossen' : 'Anmeldung fehlgeschlagen'}</h2>'
+        '<p>Du kannst dieses Fenster schließen und zu KK-PDF-Tool zurückkehren.</p>',
+      );
+      await request.response.close();
+      if (ok) return params['code']!;
+      throw GoogleDesktopAuthException(
+        params['error'] == 'access_denied'
+            ? 'Anmeldung bei Google abgebrochen.'
+            : 'Google-Anmeldung fehlgeschlagen: ${params['error'] ?? 'ungültige Antwort'}',
+      );
+    }
+    throw const GoogleDesktopAuthException('Anmeldung abgebrochen.');
+  }
+
+  static String _store(String body) {
+    final json = jsonDecode(body) as Map<String, dynamic>;
+    final token = json['access_token'] as String;
+    final expiresIn = (json['expires_in'] as num?)?.toInt() ?? 3600;
+    _accessToken = token;
+    _expiry = DateTime.now().add(Duration(seconds: expiresIn - 60));
+    final refreshToken = json['refresh_token'] as String?;
+    if (refreshToken != null) AppPrefs.setString(_refreshTokenKey, refreshToken);
+    return token;
+  }
+
+  /// Brings the app back in front of the browser after signing in.
+  static void _focusApp() {
+    windowManager.focus().catchError((_) {});
+  }
+
+  static String _randomString(int length) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+    final random = Random.secure();
+    return String.fromCharCodes(
+      List.generate(length, (_) => chars.codeUnitAt(random.nextInt(chars.length))),
+    );
+  }
+}
+
+class GoogleDesktopAuthException implements Exception {
+  final String message;
+  const GoogleDesktopAuthException(this.message);
+  @override
+  String toString() => message;
+}

@@ -9,6 +9,7 @@ import '../services/backup_service.dart';
 import '../services/document_store.dart';
 import '../services/downloads_export_service.dart';
 import '../services/file_picker_service.dart';
+import '../services/google_desktop_auth.dart';
 import '../services/settings_service.dart';
 import '../services/windows_desktop_service.dart';
 import '../utils/formatting.dart';
@@ -23,6 +24,12 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   final _settings = SettingsService();
   final _clientIdController = TextEditingController();
+  final _desktopClientIdController = TextEditingController(
+    text: AppPrefs.getString(SettingsService.googleDesktopClientIdKey),
+  );
+  final _desktopSecretController = TextEditingController(
+    text: AppPrefs.getString(SettingsService.googleDesktopClientSecretKey),
+  );
   bool _cropEnabled = true;
   bool _searchablePdf = true;
   bool _autostart = false;
@@ -55,6 +62,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void dispose() {
     _clientIdController.dispose();
+    _desktopClientIdController.dispose();
+    _desktopSecretController.dispose();
     super.dispose();
   }
 
@@ -318,39 +327,88 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Die Werkzeuge mit Wolken-Symbol laufen über dein eigenes Google-Konto '
-                        '(kostenlos, braucht Internet). Die Client-ID ist bereits fest '
-                        'in der App hinterlegt — nur ändern, falls du ein eigenes '
-                        'Google-Cloud-Projekt verwenden möchtest (siehe README).',
+                        Platform.isWindows
+                            ? 'Die Werkzeuge mit Wolken-Symbol laufen über dein eigenes Google-Konto '
+                                '(kostenlos, braucht Internet). Unter Windows braucht die App dafür '
+                                'einmalig eine eigene Client-ID vom Typ "Desktop-App" aus deinem '
+                                'Google-Cloud-Projekt (siehe README). Beim ersten Umwandeln öffnet '
+                                'sich dann der Browser zum Anmelden.'
+                            : 'Die Werkzeuge mit Wolken-Symbol laufen über dein eigenes Google-Konto '
+                                '(kostenlos, braucht Internet). Die Client-ID ist bereits fest '
+                                'in der App hinterlegt — nur ändern, falls du ein eigenes '
+                                'Google-Cloud-Projekt verwenden möchtest (siehe README).',
                         style: TextStyle(
                           fontSize: 13,
                           color: Theme.of(context).colorScheme.outline,
                         ),
                       ),
                       const SizedBox(height: 12),
-                      TextField(
-                        controller: _clientIdController,
-                        decoration: const InputDecoration(
-                          labelText: 'Google Web-Client-ID',
-                          hintText: 'xxxxxxxxxxxx.apps.googleusercontent.com',
-                          border: OutlineInputBorder(),
+                      if (Platform.isWindows) ...[
+                        TextField(
+                          controller: _desktopClientIdController,
+                          decoration: const InputDecoration(
+                            labelText: 'Client-ID (Desktop-App)',
+                            hintText: 'xxxxxxxxxxxx.apps.googleusercontent.com',
+                            border: OutlineInputBorder(),
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _desktopSecretController,
+                          obscureText: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Client-Secret (Desktop-App)',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ] else
+                        TextField(
+                          controller: _clientIdController,
+                          decoration: const InputDecoration(
+                            labelText: 'Google Web-Client-ID',
+                            hintText: 'xxxxxxxxxxxx.apps.googleusercontent.com',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
                       const SizedBox(height: 8),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: FilledButton(
-                          onPressed: () async {
-                            await _settings.setGoogleWebClientId(
-                              _clientIdController.text,
-                            );
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Gespeichert')),
-                            );
-                          },
-                          child: const Text('Speichern'),
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          if (Platform.isWindows && GoogleDesktopAuth.isSignedIn)
+                            TextButton(
+                              onPressed: () async {
+                                await GoogleDesktopAuth.signOut();
+                                if (!context.mounted) return;
+                                setState(() {});
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Von Google abgemeldet')),
+                                );
+                              },
+                              child: const Text('Abmelden'),
+                            ),
+                          const SizedBox(width: 8),
+                          FilledButton(
+                            onPressed: () async {
+                              if (Platform.isWindows) {
+                                AppPrefs.setString(
+                                  SettingsService.googleDesktopClientIdKey,
+                                  _desktopClientIdController.text.trim(),
+                                );
+                                AppPrefs.setString(
+                                  SettingsService.googleDesktopClientSecretKey,
+                                  _desktopSecretController.text.trim(),
+                                );
+                              } else {
+                                await _settings.setGoogleWebClientId(_clientIdController.text);
+                              }
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Gespeichert')),
+                              );
+                            },
+                            child: const Text('Speichern'),
+                          ),
+                        ],
                       ),
                     ],
                   ),

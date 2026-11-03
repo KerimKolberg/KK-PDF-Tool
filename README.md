@@ -142,6 +142,22 @@ Build nötig), oder alternativ direkt in der App unter **Einstellungen** im
 Feld "Google Web-Client-ID" überschreiben (überschreibt nur lokal auf dem
 jeweiligen Gerät, ohne neuen Build).
 
+### 4. Windows: Desktop-Client anlegen (einmalig)
+
+Unter Windows gibt es kein Google-Sign-In-Plugin; die App meldet sich dort
+stattdessen über den Browser an (OAuth für Desktop-Apps). Dafür braucht sie
+einen eigenen Client im selben Google-Cloud-Projekt:
+
+1. **APIs & Services → Credentials → Create Credentials → OAuth client ID**
+2. Application type: **Desktop app**, Name z. B. "KK-PDF-Tool Windows"
+3. **Client-ID** und **Client-Secret** kopieren und in der Windows-App unter
+   **Einstellungen → Google-Verbindung** eintragen, dann **Speichern**.
+
+Beim ersten Umwandeln öffnet sich der Browser zum Anmelden; danach merkt
+sich die App die Anmeldung. Solange das Projekt im Modus "Testing" ist,
+läuft diese Anmeldung nach 7 Tagen ab — die App fragt dann einfach erneut.
+Bei Desktop-Apps gilt das Client-Secret laut Google nicht als geheim.
+
 ## Signierschlüssel (wichtig für Google Sign-In)
 
 Damit sich die App bei Google immer mit demselben SHA-1-Fingerabdruck

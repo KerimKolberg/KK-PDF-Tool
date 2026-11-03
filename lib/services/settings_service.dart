@@ -43,6 +43,10 @@ class AppPrefs {
 class SettingsService {
   static const _cropEnabledKey = 'crop_enabled_default';
   static const _googleWebClientIdKey = 'google_web_client_id';
+
+  /// [AppPrefs] keys of the "Desktop app" OAuth client used on Windows.
+  static const googleDesktopClientIdKey = 'google.desktopClientId';
+  static const googleDesktopClientSecretKey = 'google.desktopClientSecret';
   static const _searchablePdfKey = 'searchable_pdf_enabled';
   static const _themeModeKey = 'theme_mode';
 
