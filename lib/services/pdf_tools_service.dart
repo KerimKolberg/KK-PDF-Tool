@@ -8,31 +8,34 @@ import 'package:pdfrx/pdfrx.dart' as rx;
 
 import 'pdf_service.dart';
 import 'pptx_writer_service.dart';
+import '../l10n.dart';
 
 enum PageNumberFormat {
-  plain('1'),
-  seite('Seite 1'),
-  seiteVon('Seite 1 von 5'),
-  slash('1 / 5');
+  plain,
+  seite,
+  seiteVon,
+  slash;
 
-  final String example;
-  const PageNumberFormat(this.example);
+  String get example => format(1, 5);
 
   String format(int number, int total) => switch (this) {
         PageNumberFormat.plain => '$number',
-        PageNumberFormat.seite => 'Seite $number',
-        PageNumberFormat.seiteVon => 'Seite $number von $total',
+        PageNumberFormat.seite => tr('Seite $number', 'Page $number'),
+        PageNumberFormat.seiteVon => tr('Seite $number von $total', 'Page $number of $total'),
         PageNumberFormat.slash => '$number / $total',
       };
 }
 
 enum PageNumberPosition {
-  bottomCenter('Unten Mitte'),
-  bottomRight('Unten rechts'),
-  topRight('Oben rechts');
+  bottomCenter('Unten Mitte', 'Bottom center'),
+  bottomRight('Unten rechts', 'Bottom right'),
+  topRight('Oben rechts', 'Top right');
 
-  final String label;
-  const PageNumberPosition(this.label);
+  final String _de;
+  final String _en;
+  const PageNumberPosition(this._de, this._en);
+
+  String get label => tr(_de, _en);
 }
 
 /// PDF manipulation on top of PDFium (via pdfrx).
@@ -100,7 +103,7 @@ class PdfToolsService {
       backgroundColor: 0xffffffff,
     );
     if (raw == null) {
-      throw StateError('Seite ${page.pageNumber} konnte nicht gelesen werden');
+      throw StateError(tr('Seite ${page.pageNumber} konnte nicht gelesen werden', 'Could not read page ${page.pageNumber}'));
     }
     try {
       final image = await raw.createImage();
@@ -366,7 +369,7 @@ Future<Uint8List> _buildPageNumberedPdfIsolate(Map<String, dynamic> args) async 
 
 Uint8List _shrinkIsolate(Map<String, dynamic> args) {
   final decoded = img.decodeImage(args['bytes'] as Uint8List);
-  if (decoded == null) throw const FormatException('Bild konnte nicht gelesen werden');
+  if (decoded == null) throw FormatException(tr('Bild konnte nicht gelesen werden', 'Could not read image'));
   final image = img.bakeOrientation(decoded);
   final maxSide = args['maxSide'] as int;
   final longer = image.width > image.height ? image.width : image.height;

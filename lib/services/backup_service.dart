@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import '../models/scan_document.dart';
 import 'document_store.dart';
 import 'signature_service.dart';
+import '../l10n.dart';
 
 class BackupSummary {
   final File file;
@@ -58,7 +59,7 @@ class BackupService {
     String two(int n) => n.toString().padLeft(2, '0');
     final zipPath = p.join(
       outDir.path,
-      'KK-PDF-Tool-Sicherung_${now.year}-${two(now.month)}-${two(now.day)}_${two(now.hour)}-${two(now.minute)}.zip',
+      tr('KK-PDF-Tool-Sicherung_${now.year}-${two(now.month)}-${two(now.day)}_${two(now.hour)}-${two(now.minute)}.zip', 'KK-PDF-Tool-Backup_${now.year}-${two(now.month)}-${two(now.day)}_${two(now.hour)}-${two(now.minute)}.zip'),
     );
 
     final entries = <(File, String)>[];
@@ -119,20 +120,20 @@ class BackupService {
         try {
           archive = ZipDecoder().decodeStream(input);
         } catch (_) {
-          throw const FormatException('Die Datei ist keine gültige ZIP-Sicherung.');
+          throw FormatException(tr('Die Datei ist keine gültige ZIP-Sicherung.', 'The file is not a valid ZIP backup.'));
         }
         final manifestEntry = archive.find('manifest.json');
         final manifestBytes = manifestEntry?.readBytes();
         if (manifestBytes == null) {
-          throw const FormatException('Diese Datei ist keine KK-PDF-Tool-Sicherung.');
+          throw FormatException(tr('Diese Datei ist keine KK-PDF-Tool-Sicherung.', 'This file is not a KK-PDF-Tool backup.'));
         }
         final manifest = jsonDecode(utf8.decode(manifestBytes)) as Map<String, dynamic>;
         if (manifest['app'] != _app) {
-          throw const FormatException('Diese Datei ist keine KK-PDF-Tool-Sicherung.');
+          throw FormatException(tr('Diese Datei ist keine KK-PDF-Tool-Sicherung.', 'This file is not a KK-PDF-Tool backup.'));
         }
         if ((manifest['format'] as int? ?? 0) > _format) {
-          throw const FormatException(
-            'Diese Sicherung stammt aus einer neueren App-Version - bitte zuerst die App aktualisieren.',
+          throw FormatException(
+            tr('Diese Sicherung stammt aus einer neueren App-Version - bitte zuerst die App aktualisieren.', 'This backup comes from a newer app version - please update the app first.'),
           );
         }
         // Path traversal ("../") entries are skipped by extractArchiveToDisk.

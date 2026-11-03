@@ -11,6 +11,7 @@ import '../../services/pdf_tools_service.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_result.dart';
+import '../../l10n.dart';
 
 /// Packs every page of a picked PDF as a full-slide picture into a new
 /// .pptx file. This is a mechanical "one page per slide" export, not a real
@@ -52,11 +53,11 @@ class _PdfToPptxScreenState extends State<PdfToPptxScreen> {
     try {
       final pptx = await PdfToolsService.toPptx(bytes);
       final location = await _downloadsExport.export(pptx, '$name.pptx');
-      var message = 'Gespeichert unter $location';
+      var message = tr('Gespeichert unter $location', 'Saved to $location');
       if (_deleteOriginal) {
         final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
         if (notDeleted.isNotEmpty) {
-          message += ' · Original konnte nicht gelöscht werden';
+          message += tr(' · Original konnte nicht gelöscht werden', ' · Original could not be deleted');
         }
       }
       if (!mounted) return;
@@ -65,7 +66,7 @@ class _PdfToPptxScreenState extends State<PdfToPptxScreen> {
       if (!mounted) return;
       setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Umwandlung fehlgeschlagen: $e')),
+        SnackBar(content: Text(tr('Umwandlung fehlgeschlagen: $e', 'Conversion failed: $e'))),
       );
     }
   }
@@ -90,11 +91,14 @@ class _PdfToPptxScreenState extends State<PdfToPptxScreen> {
                       Icon(Icons.info_outline,
                           color: Theme.of(context).colorScheme.primary),
                       const SizedBox(width: 12),
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          'Jede PDF-Seite wird als Bild auf eine eigene Folie '
+                          tr('Jede PDF-Seite wird als Bild auf eine eigene Folie '
                           'gesetzt. Der Text ist danach nicht mehr bearbeitbar, '
                           'nur das Bild verschieb- und skalierbar.',
+                          'Every PDF page is placed as a picture on its own slide. '
+                          'The text is no longer editable afterwards, '
+                          'only the picture can be moved and resized.'),
                           style: TextStyle(fontSize: 13),
                         ),
                       ),
@@ -107,7 +111,7 @@ class _PdfToPptxScreenState extends State<PdfToPptxScreen> {
                 FilledButton.icon(
                   onPressed: _pickPdf,
                   icon: const Icon(Icons.picture_as_pdf_outlined),
-                  label: const Text('PDF wählen'),
+                  label: Text(tr('PDF wählen', 'Choose PDF')),
                 )
               else ...[
                 ListTile(
@@ -115,11 +119,11 @@ class _PdfToPptxScreenState extends State<PdfToPptxScreen> {
                   title: Text(_fileName!),
                   trailing: TextButton(
                     onPressed: _busy ? null : _pickPdf,
-                    child: const Text('Ändern'),
+                    child: Text(tr('Ändern', 'Change')),
                   ),
                 ),
                 DeleteOriginalsSwitch(
-                  label: 'Originaldatei danach löschen',
+                  label: tr('Originaldatei danach löschen', 'Delete original file afterwards'),
                   value: _deleteOriginal,
                   onChanged: (v) => setState(() => _deleteOriginal = v),
                 ),
@@ -134,7 +138,7 @@ class _PdfToPptxScreenState extends State<PdfToPptxScreen> {
                               strokeWidth: 2, color: Colors.white),
                         )
                       : const Icon(Icons.slideshow_outlined),
-                  label: Text(_busy ? 'Wandle um…' : 'Als PPTX speichern'),
+                  label: Text(_busy ? tr('Wandle um…', 'Converting…') : tr('Als PPTX speichern', 'Save as PPTX')),
                 ),
               ],
             ],

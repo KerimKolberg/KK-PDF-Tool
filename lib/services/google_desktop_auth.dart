@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'settings_service.dart';
+import '../l10n.dart';
 
 /// Google sign-in for Windows, where google_sign_in has no implementation.
 ///
@@ -94,13 +95,13 @@ class GoogleDesktopAuth {
         'prompt': 'consent',
       });
       if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-        throw const GoogleDesktopAuthException('Browser konnte nicht geöffnet werden.');
+        throw GoogleDesktopAuthException(tr('Browser konnte nicht geöffnet werden.', 'Could not open the browser.'));
       }
 
       final code = await _waitForCode(server, state).timeout(
         const Duration(minutes: 5),
-        onTimeout: () => throw const GoogleDesktopAuthException(
-          'Anmeldung abgebrochen (keine Antwort von Google innerhalb von 5 Minuten).',
+        onTimeout: () => throw GoogleDesktopAuthException(
+          tr('Anmeldung abgebrochen (keine Antwort von Google innerhalb von 5 Minuten).', 'Sign-in cancelled (no answer from Google within 5 minutes).'),
         ),
       );
       _focusApp();
@@ -115,7 +116,7 @@ class GoogleDesktopAuth {
       });
       if (response.statusCode != 200) {
         throw GoogleDesktopAuthException(
-          'Google-Anmeldung fehlgeschlagen (${response.statusCode}): ${response.body}',
+          tr('Google-Anmeldung fehlgeschlagen (${response.statusCode}): ${response.body}', 'Google sign-in failed (${response.statusCode}): ${response.body}'),
         );
       }
       return _store(response.body);
@@ -136,20 +137,24 @@ class GoogleDesktopAuth {
       final ok = params['state'] == state && params['code'] != null;
       request.response.headers.contentType = ContentType.html;
       request.response.write(
-        '<!doctype html><meta charset="utf-8"><title>KK-PDF-Tool</title>'
+        tr('<!doctype html><meta charset="utf-8"><title>KK-PDF-Tool</title>'
         '<body style="font-family:sans-serif;text-align:center;padding-top:15vh">'
         '<h2>${ok ? 'Anmeldung abgeschlossen' : 'Anmeldung fehlgeschlagen'}</h2>'
         '<p>Du kannst dieses Fenster schließen und zu KK-PDF-Tool zurückkehren.</p>',
+        '<!doctype html><meta charset="utf-8"><title>KK-PDF-Tool</title>'
+        '<body style="font-family:sans-serif;text-align:center;padding-top:15vh">'
+        '<h2>${ok ? 'Signed in' : 'Sign-in failed'}</h2>'
+        '<p>You can close this window and return to KK-PDF-Tool.</p>'),
       );
       await request.response.close();
       if (ok) return params['code']!;
       throw GoogleDesktopAuthException(
         params['error'] == 'access_denied'
-            ? 'Anmeldung bei Google abgebrochen.'
-            : 'Google-Anmeldung fehlgeschlagen: ${params['error'] ?? 'ungültige Antwort'}',
+            ? tr('Anmeldung bei Google abgebrochen.', 'Google sign-in cancelled.')
+            : tr('Google-Anmeldung fehlgeschlagen: ${params['error'] ?? 'ungültige Antwort'}', 'Google sign-in failed: ${params['error'] ?? 'invalid response'}'),
       );
     }
-    throw const GoogleDesktopAuthException('Anmeldung abgebrochen.');
+    throw GoogleDesktopAuthException(tr('Anmeldung abgebrochen.', 'Sign-in cancelled.'));
   }
 
   static String _store(String body) {

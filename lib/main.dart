@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'l10n.dart';
 import 'screens/home_shell.dart';
 import 'services/settings_service.dart';
 import 'services/windows_desktop_service.dart';
@@ -7,6 +8,7 @@ import 'services/windows_desktop_service.dart';
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppPrefs.init();
+  await L10n.init();
   await SettingsService.loadThemeMode();
   await WindowsDesktopService.instance.init(args);
   runApp(const DocScannerApp());
@@ -19,14 +21,16 @@ class DocScannerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<ThemeMode>(
-      valueListenable: SettingsService.themeMode,
-      builder: (context, mode, _) => MaterialApp(
+    return ListenableBuilder(
+      listenable: Listenable.merge([SettingsService.themeMode, L10n.language]),
+      builder: (context, _) => MaterialApp(
+        // A new key rebuilds every screen, so all texts switch language.
+        key: ValueKey(L10n.language.value),
         title: 'KK-PDF-Tool',
         debugShowCheckedModeBanner: false,
         theme: _buildTheme(Brightness.light),
         darkTheme: _buildTheme(Brightness.dark),
-        themeMode: mode,
+        themeMode: SettingsService.themeMode.value,
         home: const HomeShell(),
       ),
     );

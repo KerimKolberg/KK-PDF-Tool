@@ -5,6 +5,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
 import '../services/file_picker_service.dart';
+import '../l10n.dart';
 
 /// Windows: lets files be dragged from Explorer onto a tool. The dropped
 /// files are handed to [FilePickers], then the tool's own pick method runs
@@ -36,9 +37,9 @@ class _ToolDropZoneState extends State<ToolDropZone> {
         await widget.onDrop();
         if (FilePickers.clearDropped()) {
           messenger.showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text(
-                'Dateityp wird von diesem Werkzeug nicht unterstützt',
+                tr('Dateityp wird von diesem Werkzeug nicht unterstützt', 'This tool does not support this file type'),
               ),
             ),
           );
@@ -53,9 +54,9 @@ class _ToolDropZoneState extends State<ToolDropZone> {
                 child: ColoredBox(
                   color: Theme.of(context).colorScheme.primary
                       .withValues(alpha: 0.12),
-                  child: const Center(
+                  child: Center(
                     child: Text(
-                      'Datei hier ablegen',
+                      tr('Datei hier ablegen', 'Drop file here'),
                       style: TextStyle(fontSize: 20),
                     ),
                   ),

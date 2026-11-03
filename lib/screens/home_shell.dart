@@ -11,6 +11,7 @@ import 'import_shared_file_screen.dart';
 import 'library_screen.dart';
 import 'settings_screen.dart';
 import 'tools_screen.dart';
+import '../l10n.dart';
 
 /// Top-level navigation shell: Library and Tools tabs, with Settings
 /// reachable from either. Also watches for files the OS hands to the app
@@ -99,9 +100,9 @@ class _HomeShellState extends State<HomeShell> {
                               .colorScheme
                               .primary
                               .withValues(alpha: 0.12),
-                          child: const Center(
+                          child: Center(
                             child: Text(
-                              'PDF oder Bild hier ablegen',
+                              tr('PDF oder Bild hier ablegen', 'Drop PDF or image here'),
                               style: TextStyle(fontSize: 20),
                             ),
                           ),
@@ -115,16 +116,16 @@ class _HomeShellState extends State<HomeShell> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
-        destinations: const [
+        destinations: [
           NavigationDestination(
             icon: Icon(Icons.folder_outlined),
             selectedIcon: Icon(Icons.folder),
-            label: 'Bibliothek',
+            label: tr('Bibliothek', 'Library'),
           ),
           NavigationDestination(
             icon: Icon(Icons.build_outlined),
             selectedIcon: Icon(Icons.build),
-            label: 'Werkzeuge',
+            label: tr('Werkzeuge', 'Tools'),
           ),
         ],
       ),
@@ -141,7 +142,7 @@ class SettingsButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      tooltip: 'Einstellungen',
+      tooltip: tr('Einstellungen', 'Settings'),
       icon: const Icon(Icons.settings_outlined),
       onPressed: () => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const SettingsScreen()),

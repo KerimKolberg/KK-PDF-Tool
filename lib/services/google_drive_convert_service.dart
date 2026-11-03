@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 
 import 'google_desktop_auth.dart';
 import 'settings_service.dart';
+import '../l10n.dart';
 
 /// Converts documents by round-tripping them through the user's own Google
 /// Drive: Drive auto-converts recognised uploads into a native Google
@@ -104,7 +105,7 @@ class GoogleDriveConvertService {
     if (response.statusCode == 401) GoogleDesktopAuth.invalidate();
     if (response.statusCode != 200) {
       throw GoogleDriveApiException(
-        'Hochladen fehlgeschlagen (${response.statusCode}): ${response.body}',
+        tr('Hochladen fehlgeschlagen (${response.statusCode}): ${response.body}', 'Upload failed (${response.statusCode}): ${response.body}'),
       );
     }
     return (jsonDecode(response.body) as Map<String, dynamic>)['id'] as String;
@@ -118,7 +119,7 @@ class GoogleDriveConvertService {
       );
       if (response.statusCode != 200) {
         throw GoogleDriveApiException(
-          'Export fehlgeschlagen (${response.statusCode}): ${response.body}',
+          tr('Export fehlgeschlagen (${response.statusCode}): ${response.body}', 'Export failed (${response.statusCode}): ${response.body}'),
         );
       }
       return response.bodyBytes;
@@ -226,11 +227,16 @@ class GoogleDriveNotConfiguredException implements Exception {
   const GoogleDriveNotConfiguredException({this.windows = false});
   @override
   String toString() => windows
-      ? 'Google-Verbindung für Windows ist noch nicht eingerichtet. Bitte in den '
+      ? tr('Google-Verbindung für Windows ist noch nicht eingerichtet. Bitte in den '
           'Einstellungen Client-ID und Client-Secret der Desktop-App hinterlegen '
-          '(siehe README).'
-      : 'Google-Verbindung ist nicht eingerichtet. Bitte in den Einstellungen die '
-          'Google-Client-ID hinterlegen.';
+          '(siehe README).',
+          'The Google connection for Windows is not set up yet. Please enter the '
+          'client ID and client secret of the desktop app in Settings '
+          '(see README).')
+      : tr('Google-Verbindung ist nicht eingerichtet. Bitte in den Einstellungen die '
+          'Google-Client-ID hinterlegen.',
+          'The Google connection is not set up. Please enter the '
+          'Google client ID in Settings.');
 }
 
 class GoogleDriveApiException implements Exception {

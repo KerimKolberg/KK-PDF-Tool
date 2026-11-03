@@ -9,6 +9,7 @@ import 'package:image/image.dart' as img;
 import '../services/settings_service.dart';
 import '../services/signature_service.dart';
 import 'signature_pad_screen.dart';
+import '../l10n.dart';
 
 enum AnnotateMode { fill, draw }
 
@@ -277,7 +278,7 @@ class _AnnotatePagesScreenState extends State<AnnotatePagesScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Zeichnung konnte nicht übernommen werden: $e')),
+          SnackBar(content: Text(tr('Zeichnung konnte nicht übernommen werden: $e', 'Could not apply drawing: $e'))),
         );
       }
     } finally {
@@ -331,11 +332,11 @@ class _AnnotatePagesScreenState extends State<AnnotatePagesScreen> {
     final discard = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Änderungen verwerfen?'),
-        content: const Text('Text, Unterschriften und Zeichnungen gehen verloren.'),
+        title: Text(tr('Änderungen verwerfen?', 'Discard changes?')),
+        content: Text(tr('Text, Unterschriften und Zeichnungen gehen verloren.', 'Text, signatures and drawings will be lost.')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Abbrechen')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Verwerfen')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(tr('Abbrechen', 'Cancel'))),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(tr('Verwerfen', 'Discard'))),
         ],
       ),
     );
@@ -427,7 +428,7 @@ class _AnnotatePagesScreenState extends State<AnnotatePagesScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Einfügen fehlgeschlagen: $e')),
+          SnackBar(content: Text(tr('Einfügen fehlgeschlagen: $e', 'Insert failed: $e'))),
         );
       }
     } finally {
@@ -468,17 +469,17 @@ class _AnnotatePagesScreenState extends State<AnnotatePagesScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Ausfüllen & Zeichnen'),
+          title: Text(tr('Ausfüllen & Zeichnen', 'Fill in & draw')),
           actions: [
             IconButton(
-              tooltip: 'Rückgängig',
+              tooltip: tr('Rückgängig', 'Undo'),
               onPressed: _busy || _placing || (_strokes.isEmpty && _undo.isEmpty) ? null : _undoLast,
               icon: const Icon(Icons.undo),
             ),
             TextButton.icon(
               onPressed: _hasUnsaved && !_placing && !_busy ? _finish : null,
               icon: const Icon(Icons.check),
-              label: const Text('Fertig'),
+              label: Text(tr('Fertig', 'Done')),
             ),
           ],
         ),
@@ -537,7 +538,7 @@ class _AnnotatePagesScreenState extends State<AnnotatePagesScreen> {
                   onPressed: _index > 0 && !_placing && !_busy ? () => _goTo(_index - 1) : null,
                   icon: const Icon(Icons.chevron_left),
                 ),
-                Text('Seite ${_index + 1} von ${_pages.length}'),
+                Text(tr('Seite ${_index + 1} von ${_pages.length}', 'Page ${_index + 1} of ${_pages.length}')),
                 IconButton(
                   onPressed: _index < _pages.length - 1 && !_placing && !_busy ? () => _goTo(_index + 1) : null,
                   icon: const Icon(Icons.chevron_right),
@@ -546,7 +547,7 @@ class _AnnotatePagesScreenState extends State<AnnotatePagesScreen> {
             ),
           if (_placing) ...[
             Text(
-              'Verschieben, Ecke unten rechts zum Vergrößern ziehen',
+              tr('Verschieben, Ecke unten rechts zum Vergrößern ziehen', 'Drag to move, drag the bottom-right corner to resize'),
               style: TextStyle(fontSize: 12, color: outline),
             ),
             const SizedBox(height: 8),
@@ -555,7 +556,7 @@ class _AnnotatePagesScreenState extends State<AnnotatePagesScreen> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: _busy ? null : () => setState(() => _stamp = null),
-                    child: const Text('Abbrechen'),
+                    child: Text(tr('Abbrechen', 'Cancel')),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -563,16 +564,16 @@ class _AnnotatePagesScreenState extends State<AnnotatePagesScreen> {
                   child: FilledButton.icon(
                     onPressed: _busy ? null : _applyStamp,
                     icon: const Icon(Icons.check),
-                    label: const Text('Hier platzieren'),
+                    label: Text(tr('Hier platzieren', 'Place here')),
                   ),
                 ),
               ],
             ),
           ] else ...[
             SegmentedButton<AnnotateMode>(
-              segments: const [
-                ButtonSegment(value: AnnotateMode.fill, icon: Icon(Icons.edit_note), label: Text('Ausfüllen')),
-                ButtonSegment(value: AnnotateMode.draw, icon: Icon(Icons.brush_outlined), label: Text('Zeichnen')),
+              segments: [
+                ButtonSegment(value: AnnotateMode.fill, icon: Icon(Icons.edit_note), label: Text(tr('Ausfüllen', 'Fill in'))),
+                ButtonSegment(value: AnnotateMode.draw, icon: Icon(Icons.brush_outlined), label: Text(tr('Zeichnen', 'Draw'))),
               ],
               selected: {_mode},
               onSelectionChanged: _busy ? null : (v) => _setMode(v.first),
@@ -585,10 +586,10 @@ class _AnnotatePagesScreenState extends State<AnnotatePagesScreen> {
                 alignment: WrapAlignment.center,
                 children: [
                   ActionChip(avatar: const Icon(Icons.title, size: 18), label: const Text('Text'), onPressed: _busy ? null : _addText),
-                  ActionChip(avatar: const Icon(Icons.today_outlined, size: 18), label: const Text('Datum'), onPressed: _busy ? null : _addDate),
-                  ActionChip(avatar: const Icon(Icons.check, size: 18), label: const Text('Haken'), onPressed: _busy ? null : () => _addMark(check: true)),
-                  ActionChip(avatar: const Icon(Icons.close, size: 18), label: const Text('Kreuz'), onPressed: _busy ? null : () => _addMark(check: false)),
-                  ActionChip(avatar: const Icon(Icons.draw_outlined, size: 18), label: const Text('Unterschrift'), onPressed: _busy ? null : _addSignature),
+                  ActionChip(avatar: const Icon(Icons.today_outlined, size: 18), label: Text(tr('Datum', 'Date')), onPressed: _busy ? null : _addDate),
+                  ActionChip(avatar: const Icon(Icons.check, size: 18), label: Text(tr('Haken', 'Check mark')), onPressed: _busy ? null : () => _addMark(check: true)),
+                  ActionChip(avatar: const Icon(Icons.close, size: 18), label: Text(tr('Kreuz', 'Cross')), onPressed: _busy ? null : () => _addMark(check: false)),
+                  ActionChip(avatar: const Icon(Icons.draw_outlined, size: 18), label: Text(tr('Unterschrift', 'Signature')), onPressed: _busy ? null : _addSignature),
                 ],
               )
             else
@@ -600,7 +601,7 @@ class _AnnotatePagesScreenState extends State<AnnotatePagesScreen> {
                 children: [
                   ChoiceChip(
                     avatar: const Icon(Icons.edit, size: 18),
-                    label: const Text('Stift'),
+                    label: Text(tr('Stift', 'Pen')),
                     selected: !_marker,
                     onSelected: (_) {
                       setState(() => _marker = false);
@@ -638,7 +639,7 @@ class _AnnotatePagesScreenState extends State<AnnotatePagesScreen> {
                       ),
                     ),
                   IconButton(
-                    tooltip: 'Zeichnung auf dieser Seite löschen',
+                    tooltip: tr('Zeichnung auf dieser Seite löschen', 'Clear drawing on this page'),
                     onPressed: _strokes.isEmpty || _busy ? null : () => setState(_strokes.clear),
                     icon: const Icon(Icons.layers_clear_outlined),
                   ),
@@ -717,7 +718,7 @@ class _TextStampDialogState extends State<_TextStampDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Text einfügen'),
+      title: Text(tr('Text einfügen', 'Insert text')),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -728,15 +729,15 @@ class _TextStampDialogState extends State<_TextStampDialog> {
             minLines: 1,
             maxLines: 4,
             onChanged: (_) => setState(() {}),
-            decoration: const InputDecoration(
-              hintText: 'z. B. Name, Adresse, Betrag',
+            decoration: InputDecoration(
+              hintText: tr('z. B. Name, Adresse, Betrag', 'e.g. name, address, amount'),
               border: OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 12),
           Row(
             children: [
-              const Text('Farbe:'),
+              Text(tr('Farbe:', 'Color:')),
               const SizedBox(width: 8),
               for (var i = 0; i < _textColors.length; i++)
                 Padding(
@@ -756,12 +757,12 @@ class _TextStampDialogState extends State<_TextStampDialog> {
         ],
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Abbrechen')),
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('Abbrechen', 'Cancel'))),
         FilledButton(
           onPressed: _controller.text.trim().isEmpty
               ? null
               : () => Navigator.pop(context, (_controller.text.trim(), _color)),
-          child: const Text('Einfügen'),
+          child: Text(tr('Einfügen', 'Insert')),
         ),
       ],
     );
@@ -817,11 +818,11 @@ class _SignaturePickerSheetState extends State<_SignaturePickerSheet> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Text('Unterschrift wählen', style: Theme.of(context).textTheme.titleMedium),
+              child: Text(tr('Unterschrift wählen', 'Choose signature'), style: Theme.of(context).textTheme.titleMedium),
             ),
             ListTile(
               leading: const Icon(Icons.add),
-              title: const Text('Neue Unterschrift zeichnen'),
+              title: Text(tr('Neue Unterschrift zeichnen', 'Draw new signature')),
               onTap: _drawNew,
             ),
             if (files == null)
@@ -857,7 +858,7 @@ class _SignaturePickerSheetState extends State<_SignaturePickerSheet> {
                                     ),
                                   ),
                                   IconButton(
-                                    tooltip: 'Löschen',
+                                    tooltip: tr('Löschen', 'Delete'),
                                     color: Colors.black54,
                                     onPressed: () => _delete(file),
                                     icon: const Icon(Icons.delete_outline),

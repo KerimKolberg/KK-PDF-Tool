@@ -11,6 +11,7 @@ import '../../services/pdf_tools_service.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_result.dart';
+import '../../l10n.dart';
 
 /// Android only: OCRs every page of a scanned PDF offline and saves a copy
 /// with an invisible text layer, so it can be searched and text copied.
@@ -45,7 +46,7 @@ class _SearchablePdfScreenState extends State<SearchablePdfScreen> {
     final bytes = _pdfBytes;
     final name = _fileName;
     if (bytes == null || name == null || _busyLabel != null) return;
-    setState(() => _busyLabel = 'Seiten werden geladen…');
+    setState(() => _busyLabel = tr('Seiten werden geladen…', 'Loading pages…'));
     try {
       final rendered = await PdfToolsService.rasterPages(bytes, dpi: 200);
       final formats = await PdfToolsService.pageFormats(bytes);
@@ -56,24 +57,24 @@ class _SearchablePdfScreenState extends State<SearchablePdfScreen> {
         pageFormats: formats,
         onProgress: (done, total) {
           if (mounted) {
-            setState(() => _busyLabel = 'Texterkennung ${done < total ? done + 1 : total}/$total…');
+            setState(() => _busyLabel = tr('Texterkennung ${done < total ? done + 1 : total}/$total…', 'Text recognition ${done < total ? done + 1 : total}/$total…'));
           }
         },
       );
       final location = await _downloadsExport.export(built.pdfBytes, '${name}_durchsuchbar.pdf');
       var message = built.text == null
-          ? 'Kein Text erkannt · gespeichert unter $location'
-          : 'Gespeichert unter $location';
+          ? tr('Kein Text erkannt · gespeichert unter $location', 'No text recognized · saved to $location')
+          : tr('Gespeichert unter $location', 'Saved to $location');
       if (_deleteOriginal) {
         final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
-        if (notDeleted.isNotEmpty) message += ' · Original konnte nicht gelöscht werden';
+        if (notDeleted.isNotEmpty) message += tr(' · Original konnte nicht gelöscht werden', ' · Original could not be deleted');
       }
       if (!mounted) return;
       finishTool(context, widget, message);
     } catch (e) {
       if (!mounted) return;
       setState(() => _busyLabel = null);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Fehlgeschlagen: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Fehlgeschlagen: $e', 'Failed: $e'))));
     }
   }
 
@@ -83,7 +84,7 @@ class _SearchablePdfScreenState extends State<SearchablePdfScreen> {
     return ToolDropZone(
       onDrop: _pickPdf,
       child: Scaffold(
-        appBar: AppBar(title: const Text('PDF durchsuchbar machen')),
+        appBar: AppBar(title: Text(tr('PDF durchsuchbar machen', 'Make PDF searchable'))),
         body: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -91,9 +92,12 @@ class _SearchablePdfScreenState extends State<SearchablePdfScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Erkennt den Text jeder Seite offline und legt ihn unsichtbar hinter '
+                tr('Erkennt den Text jeder Seite offline und legt ihn unsichtbar hinter '
                 'das Bild. Die PDF sieht gleich aus, lässt sich aber durchsuchen '
                 '(Strg+F) und Text kopieren.',
+                'Recognizes the text of every page offline and lays it invisibly behind '
+                'the image. The PDF looks the same, but can be searched '
+                '(Ctrl+F) and text can be copied.'),
                 style: TextStyle(color: Theme.of(context).colorScheme.outline),
               ),
               const SizedBox(height: 24),
@@ -101,7 +105,7 @@ class _SearchablePdfScreenState extends State<SearchablePdfScreen> {
                 FilledButton.icon(
                   onPressed: _pickPdf,
                   icon: const Icon(Icons.picture_as_pdf_outlined),
-                  label: const Text('PDF wählen'),
+                  label: Text(tr('PDF wählen', 'Choose PDF')),
                 )
               else ...[
                 ListTile(
@@ -109,11 +113,11 @@ class _SearchablePdfScreenState extends State<SearchablePdfScreen> {
                   title: Text(_fileName!),
                   trailing: TextButton(
                     onPressed: busy ? null : _pickPdf,
-                    child: const Text('Ändern'),
+                    child: Text(tr('Ändern', 'Change')),
                   ),
                 ),
                 DeleteOriginalsSwitch(
-                  label: 'Originaldatei danach löschen',
+                  label: tr('Originaldatei danach löschen', 'Delete original file afterwards'),
                   value: _deleteOriginal,
                   onChanged: (v) => setState(() => _deleteOriginal = v),
                 ),
@@ -127,7 +131,7 @@ class _SearchablePdfScreenState extends State<SearchablePdfScreen> {
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                         )
                       : const Icon(Icons.manage_search),
-                  label: Text(_busyLabel ?? 'Durchsuchbar machen'),
+                  label: Text(_busyLabel ?? tr('Durchsuchbar machen', 'Make searchable')),
                 ),
               ],
             ],

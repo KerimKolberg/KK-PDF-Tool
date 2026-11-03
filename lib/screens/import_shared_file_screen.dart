@@ -9,6 +9,7 @@ import '../services/document_store.dart';
 import '../services/incoming_file_service.dart';
 import '../services/pdf_tools_service.dart';
 import 'document_viewer_screen.dart';
+import '../l10n.dart';
 
 /// Shown when the OS hands KK-PDF-Tool a PDF or image via "Open with" / the
 /// share sheet. Imports it into the local library so it shows up like any
@@ -90,7 +91,7 @@ class _ImportSharedFileScreenState extends State<ImportSharedFileScreen> {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _error = 'Import fehlgeschlagen: $e';
+        _error = tr('Import fehlgeschlagen: $e', 'Import failed: $e');
       });
     }
   }
@@ -98,7 +99,7 @@ class _ImportSharedFileScreenState extends State<ImportSharedFileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Datei importieren')),
+      appBar: AppBar(title: Text(tr('Datei importieren', 'Import file'))),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -112,14 +113,14 @@ class _ImportSharedFileScreenState extends State<ImportSharedFileScreen> {
                     : Icons.image_outlined,
               ),
               title: Text(widget.file.name),
-              subtitle: const Text('Wird zur Bibliothek hinzugefügt'),
+              subtitle: Text(tr('Wird zur Bibliothek hinzugefügt', 'Will be added to the library')),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _titleController,
               autofocus: true,
-              decoration: const InputDecoration(
-                labelText: 'Titel',
+              decoration: InputDecoration(
+                labelText: tr('Titel', 'Title'),
                 border: OutlineInputBorder(),
               ),
             ),
@@ -133,7 +134,7 @@ class _ImportSharedFileScreenState extends State<ImportSharedFileScreen> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: _busy ? null : () => Navigator.of(context).pop(),
-                    child: const Text('Abbrechen'),
+                    child: Text(tr('Abbrechen', 'Cancel')),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -148,7 +149,7 @@ class _ImportSharedFileScreenState extends State<ImportSharedFileScreen> {
                                 strokeWidth: 2, color: Colors.white),
                           )
                         : const Icon(Icons.download_outlined),
-                    label: Text(_busy ? 'Importiere…' : 'Importieren'),
+                    label: Text(_busy ? tr('Importiere…', 'Importing…') : tr('Importieren', 'Import')),
                   ),
                 ),
               ],

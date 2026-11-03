@@ -4,6 +4,7 @@ import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'settings_service.dart';
+import '../l10n.dart';
 
 /// Windows only: tray icon (click = open, right-click = menu), starting
 /// hidden in the tray, and "start with Windows" via the per-user Run key
@@ -35,9 +36,9 @@ class WindowsDesktopService with TrayListener {
     await trayManager.setIcon('assets/icon/app_icon.ico');
     await trayManager.setToolTip('KK-PDF-Tool');
     await trayManager.setContextMenu(Menu(items: [
-      MenuItem(key: 'show', label: 'Öffnen'),
+      MenuItem(key: 'show', label: tr('Öffnen', 'Open')),
       MenuItem.separator(),
-      MenuItem(key: 'quit', label: 'Beenden'),
+      MenuItem(key: 'quit', label: tr('Beenden', 'Quit')),
     ]));
     trayManager.addListener(this);
     // After an update/reinstall the exe may live elsewhere; refresh the

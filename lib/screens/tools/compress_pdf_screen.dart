@@ -13,14 +13,15 @@ import '../../utils/formatting.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_result.dart';
+import '../../l10n.dart';
 
 enum _CompressLevel { low, medium, high }
 
 extension on _CompressLevel {
   String get label => switch (this) {
-        _CompressLevel.low => 'Wenig (beste Qualität)',
-        _CompressLevel.medium => 'Mittel',
-        _CompressLevel.high => 'Stark (kleinste Datei)',
+        _CompressLevel.low => tr('Wenig (beste Qualität)', 'Low (best quality)'),
+        _CompressLevel.medium => tr('Mittel', 'Medium'),
+        _CompressLevel.high => tr('Stark (kleinste Datei)', 'Strong (smallest file)'),
       };
   double get dpi => switch (this) {
         _CompressLevel.low => 150,
@@ -81,11 +82,11 @@ class _CompressPdfScreenState extends State<CompressPdfScreen> {
           await _downloadsExport.export(compressed, '${name}_komprimiert.pdf');
       final before = formatFileSize(bytes.length);
       final after = formatFileSize(compressed.length);
-      var message = '$before → $after · gespeichert unter $location';
+      var message = tr('$before → $after · gespeichert unter $location', '$before → $after · saved to $location');
       if (_deleteOriginal) {
         final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
         if (notDeleted.isNotEmpty) {
-          message += ' · Original konnte nicht gelöscht werden';
+          message += tr(' · Original konnte nicht gelöscht werden', ' · Original could not be deleted');
         }
       }
       if (!mounted) return;
@@ -94,7 +95,7 @@ class _CompressPdfScreenState extends State<CompressPdfScreen> {
       if (!mounted) return;
       setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Komprimierung fehlgeschlagen: $e')),
+        SnackBar(content: Text(tr('Komprimierung fehlgeschlagen: $e', 'Compression failed: $e'))),
       );
     }
   }
@@ -104,7 +105,7 @@ class _CompressPdfScreenState extends State<CompressPdfScreen> {
     return ToolDropZone(
       onDrop: _pickPdf,
       child: Scaffold(
-        appBar: AppBar(title: const Text('PDF komprimieren')),
+        appBar: AppBar(title: Text(tr('PDF komprimieren', 'Compress PDF'))),
         body: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -115,7 +116,7 @@ class _CompressPdfScreenState extends State<CompressPdfScreen> {
                 FilledButton.icon(
                   onPressed: _pickPdf,
                   icon: const Icon(Icons.picture_as_pdf_outlined),
-                  label: const Text('PDF wählen'),
+                  label: Text(tr('PDF wählen', 'Choose PDF')),
                 )
               else ...[
                 ListTile(
@@ -124,11 +125,11 @@ class _CompressPdfScreenState extends State<CompressPdfScreen> {
                   subtitle: Text(formatFileSize(_pdfBytes!.length)),
                   trailing: TextButton(
                     onPressed: _busy ? null : _pickPdf,
-                    child: const Text('Ändern'),
+                    child: Text(tr('Ändern', 'Change')),
                   ),
                 ),
                 const SizedBox(height: 12),
-                Text('Kompressionsgrad', style: Theme.of(context).textTheme.titleSmall),
+                Text(tr('Kompressionsgrad', 'Compression level'), style: Theme.of(context).textTheme.titleSmall),
                 const SizedBox(height: 4),
                 RadioGroup<_CompressLevel>(
                   groupValue: _level,
@@ -150,7 +151,7 @@ class _CompressPdfScreenState extends State<CompressPdfScreen> {
                   ),
                 ),
                 DeleteOriginalsSwitch(
-                  label: 'Originaldatei danach löschen',
+                  label: tr('Originaldatei danach löschen', 'Delete original file afterwards'),
                   value: _deleteOriginal,
                   onChanged: (v) => setState(() => _deleteOriginal = v),
                 ),
@@ -165,7 +166,7 @@ class _CompressPdfScreenState extends State<CompressPdfScreen> {
                               strokeWidth: 2, color: Colors.white),
                         )
                       : const Icon(Icons.compress),
-                  label: Text(_busy ? 'Komprimiere…' : 'Komprimieren'),
+                  label: Text(_busy ? tr('Komprimiere…', 'Compressing…') : tr('Komprimieren', 'Compress')),
                 ),
               ],
             ],

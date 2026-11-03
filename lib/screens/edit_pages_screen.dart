@@ -5,6 +5,7 @@ import '../services/image_processing.dart';
 import '../services/settings_service.dart';
 import 'capture_screen.dart';
 import 'crop_screen.dart';
+import '../l10n.dart';
 
 class _Page {
   final int key;
@@ -81,11 +82,11 @@ class _EditPagesScreenState extends State<EditPagesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Seiten bearbeiten (${_pages.length})')),
+      appBar: AppBar(title: Text(tr('Seiten bearbeiten (${_pages.length})', 'Edit pages (${_pages.length})'))),
       body: _pages.isEmpty
           ? Center(
               child: Text(
-                'Keine Seiten mehr - füge mindestens eine hinzu.',
+                tr('Keine Seiten mehr - füge mindestens eine hinzu.', 'No pages left - add at least one.'),
                 style: TextStyle(color: Theme.of(context).colorScheme.outline),
               ),
             )
@@ -120,9 +121,9 @@ class _EditPagesScreenState extends State<EditPagesScreen> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Expanded(child: Text('Seite ${i + 1}')),
+                        Expanded(child: Text(tr('Seite ${i + 1}', 'Page ${i + 1}'))),
                         IconButton(
-                          tooltip: 'Drehen',
+                          tooltip: tr('Drehen', 'Rotate'),
                           onPressed: _rotating.contains(page.key) ? null : () => _rotate(page),
                           icon: _rotating.contains(page.key)
                               ? const SizedBox(
@@ -133,7 +134,7 @@ class _EditPagesScreenState extends State<EditPagesScreen> {
                               : const Icon(Icons.rotate_right),
                         ),
                         IconButton(
-                          tooltip: 'Löschen',
+                          tooltip: tr('Löschen', 'Delete'),
                           onPressed: () => _delete(i),
                           icon: const Icon(Icons.delete_outline),
                         ),
@@ -153,7 +154,7 @@ class _EditPagesScreenState extends State<EditPagesScreen> {
                 child: OutlinedButton.icon(
                   onPressed: _addPage,
                   icon: const Icon(Icons.add_a_photo_outlined),
-                  label: const Text('Seite hinzufügen'),
+                  label: Text(tr('Seite hinzufügen', 'Add page')),
                 ),
               ),
               const SizedBox(width: 12),
@@ -161,7 +162,7 @@ class _EditPagesScreenState extends State<EditPagesScreen> {
                 child: FilledButton.icon(
                   onPressed: _changed && _pages.isNotEmpty && _rotating.isEmpty ? _save : null,
                   icon: const Icon(Icons.save),
-                  label: const Text('Speichern'),
+                  label: Text(tr('Speichern', 'Save')),
                 ),
               ),
             ],

@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import '../l10n.dart';
 
 class PdfService {
   /// Builds a single PDF where every entry in [pageImages] becomes one
@@ -80,9 +81,9 @@ class PdfService {
         build: (context) => pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            side('Vorderseite', frontJpeg),
+            side(tr('Vorderseite', 'Front'), frontJpeg),
             pw.SizedBox(height: gap),
-            side('Rückseite', backJpeg),
+            side(tr('Rückseite', 'Back'), backJpeg),
           ],
         ),
       ),

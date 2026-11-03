@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import '../l10n.dart';
 
 /// Exports finished files (PDFs, images) into a public, user-visible
 /// "KK-PDF-Tool" folder inside the platform's normal Downloads location, so
@@ -28,7 +29,7 @@ class DownloadsExportService {
     while (safe.endsWith('.') || safe.endsWith(' ')) {
       safe = safe.substring(0, safe.length - 1);
     }
-    return safe.isEmpty ? 'Dokument' : safe;
+    return safe.isEmpty ? tr('Dokument', 'Document') : safe;
   }
 
   /// Like [export], but copies an existing (possibly very large) file without

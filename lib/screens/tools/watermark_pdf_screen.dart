@@ -12,6 +12,7 @@ import '../../services/settings_service.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_result.dart';
+import '../../l10n.dart';
 
 /// Stamps a diagonal text watermark across every page of a PDF.
 class WatermarkPdfScreen extends StatefulWidget {
@@ -24,7 +25,7 @@ class WatermarkPdfScreen extends StatefulWidget {
 class _WatermarkPdfScreenState extends State<WatermarkPdfScreen> {
   final _downloadsExport = DownloadsExportService();
   final _textController =
-      TextEditingController(text: AppPrefs.getString('watermark.text') ?? 'ENTWURF');
+      TextEditingController(text: AppPrefs.getString('watermark.text') ?? tr('ENTWURF', 'DRAFT'));
   String? _fileName;
   String? _sourcePath;
   Uint8List? _pdfBytes;
@@ -60,11 +61,11 @@ class _WatermarkPdfScreenState extends State<WatermarkPdfScreen> {
       );
       final location =
           await _downloadsExport.export(result, '${name}_wasserzeichen.pdf');
-      var message = 'Gespeichert unter $location';
+      var message = tr('Gespeichert unter $location', 'Saved to $location');
       if (_deleteOriginal) {
         final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
         if (notDeleted.isNotEmpty) {
-          message += ' · Original konnte nicht gelöscht werden';
+          message += tr(' · Original konnte nicht gelöscht werden', ' · Original could not be deleted');
         }
       }
       if (!mounted) return;
@@ -73,7 +74,7 @@ class _WatermarkPdfScreenState extends State<WatermarkPdfScreen> {
       if (!mounted) return;
       setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Fehlgeschlagen: $e')),
+        SnackBar(content: Text(tr('Fehlgeschlagen: $e', 'Failed: $e'))),
       );
     }
   }
@@ -89,7 +90,7 @@ class _WatermarkPdfScreenState extends State<WatermarkPdfScreen> {
     return ToolDropZone(
       onDrop: _pickPdf,
       child: Scaffold(
-        appBar: AppBar(title: const Text('Wasserzeichen')),
+        appBar: AppBar(title: Text(tr('Wasserzeichen', 'Watermark'))),
         body: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -100,7 +101,7 @@ class _WatermarkPdfScreenState extends State<WatermarkPdfScreen> {
                 FilledButton.icon(
                   onPressed: _pickPdf,
                   icon: const Icon(Icons.picture_as_pdf_outlined),
-                  label: const Text('PDF wählen'),
+                  label: Text(tr('PDF wählen', 'Choose PDF')),
                 )
               else ...[
                 ListTile(
@@ -108,7 +109,7 @@ class _WatermarkPdfScreenState extends State<WatermarkPdfScreen> {
                   title: Text(_fileName!),
                   trailing: TextButton(
                     onPressed: _busy ? null : _pickPdf,
-                    child: const Text('Ändern'),
+                    child: Text(tr('Ändern', 'Change')),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -120,7 +121,7 @@ class _WatermarkPdfScreenState extends State<WatermarkPdfScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Text('Deckkraft: ${(_opacity * 100).round()}%'),
+                Text(tr('Deckkraft: ${(_opacity * 100).round()}%', 'Opacity: ${(_opacity * 100).round()}%')),
                 Slider(
                   value: _opacity,
                   min: 0.1,
@@ -128,7 +129,7 @@ class _WatermarkPdfScreenState extends State<WatermarkPdfScreen> {
                   onChanged: _busy ? null : (v) => setState(() => _opacity = v),
                 ),
                 DeleteOriginalsSwitch(
-                  label: 'Originaldatei danach löschen',
+                  label: tr('Originaldatei danach löschen', 'Delete original file afterwards'),
                   value: _deleteOriginal,
                   onChanged: (v) => setState(() => _deleteOriginal = v),
                 ),
@@ -143,7 +144,7 @@ class _WatermarkPdfScreenState extends State<WatermarkPdfScreen> {
                               strokeWidth: 2, color: Colors.white),
                         )
                       : const Icon(Icons.water_drop_outlined),
-                  label: Text(_busy ? 'Wende an…' : 'Wasserzeichen einfügen'),
+                  label: Text(_busy ? tr('Wende an…', 'Applying…') : tr('Wasserzeichen einfügen', 'Add watermark')),
                 ),
               ],
             ],

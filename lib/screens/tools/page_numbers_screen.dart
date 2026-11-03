@@ -11,6 +11,7 @@ import '../../services/settings_service.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_result.dart';
+import '../../l10n.dart';
 
 /// Adds page numbers and/or a header/footer text to every page of a PDF.
 class PageNumbersScreen extends StatefulWidget {
@@ -89,17 +90,17 @@ class _PageNumbersScreenState extends State<PageNumbersScreen> {
         footer: _footerController.text,
       );
       final location = await _downloadsExport.export(result, '${name}_nummeriert.pdf');
-      var message = 'Gespeichert unter $location';
+      var message = tr('Gespeichert unter $location', 'Saved to $location');
       if (_deleteOriginal) {
         final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
-        if (notDeleted.isNotEmpty) message += ' · Original konnte nicht gelöscht werden';
+        if (notDeleted.isNotEmpty) message += tr(' · Original konnte nicht gelöscht werden', ' · Original could not be deleted');
       }
       if (!mounted) return;
       finishTool(context, widget, message);
     } catch (e) {
       if (!mounted) return;
       setState(() => _busy = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Fehlgeschlagen: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Fehlgeschlagen: $e', 'Failed: $e'))));
     }
   }
 
@@ -108,13 +109,13 @@ class _PageNumbersScreenState extends State<PageNumbersScreen> {
     return ToolDropZone(
       onDrop: _pickPdf,
       child: Scaffold(
-        appBar: AppBar(title: const Text('Seitenzahlen & Kopfzeile')),
+        appBar: AppBar(title: Text(tr('Seitenzahlen & Kopfzeile', 'Page numbers & header'))),
         body: _fileName == null
             ? Center(
                 child: FilledButton.icon(
                   onPressed: _pickPdf,
                   icon: const Icon(Icons.picture_as_pdf_outlined),
-                  label: const Text('PDF wählen'),
+                  label: Text(tr('PDF wählen', 'Choose PDF')),
                 ),
               )
             : ListView(
@@ -126,12 +127,12 @@ class _PageNumbersScreenState extends State<PageNumbersScreen> {
                     title: Text(_fileName!),
                     trailing: TextButton(
                       onPressed: _busy ? null : _pickPdf,
-                      child: const Text('Ändern'),
+                      child: Text(tr('Ändern', 'Change')),
                     ),
                   ),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('Seitenzahlen'),
+                    title: Text(tr('Seitenzahlen', 'Page numbers')),
                     value: _numbersEnabled,
                     onChanged: (v) => setState(() => _numbersEnabled = v),
                   ),
@@ -165,8 +166,8 @@ class _PageNumbersScreenState extends State<PageNumbersScreen> {
                     TextField(
                       controller: _startController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Beginnen bei',
+                      decoration: InputDecoration(
+                        labelText: tr('Beginnen bei', 'Start at'),
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -175,8 +176,8 @@ class _PageNumbersScreenState extends State<PageNumbersScreen> {
                   TextField(
                     controller: _headerController,
                     onChanged: (_) => setState(() {}),
-                    decoration: const InputDecoration(
-                      labelText: 'Kopfzeile (optional, oben Mitte)',
+                    decoration: InputDecoration(
+                      labelText: tr('Kopfzeile (optional, oben Mitte)', 'Header (optional, top center)'),
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -184,14 +185,14 @@ class _PageNumbersScreenState extends State<PageNumbersScreen> {
                   TextField(
                     controller: _footerController,
                     onChanged: (_) => setState(() {}),
-                    decoration: const InputDecoration(
-                      labelText: 'Fußzeile (optional, unten links)',
+                    decoration: InputDecoration(
+                      labelText: tr('Fußzeile (optional, unten links)', 'Footer (optional, bottom left)'),
                       border: OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 8),
                   DeleteOriginalsSwitch(
-                    label: 'Originaldatei danach löschen',
+                    label: tr('Originaldatei danach löschen', 'Delete original file afterwards'),
                     value: _deleteOriginal,
                     onChanged: (v) => setState(() => _deleteOriginal = v),
                   ),
@@ -211,7 +212,7 @@ class _PageNumbersScreenState extends State<PageNumbersScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                           )
                         : const Icon(Icons.format_list_numbered),
-                    label: Text(_busy ? 'Wird erstellt…' : 'Anwenden & speichern'),
+                    label: Text(_busy ? tr('Wird erstellt…', 'Creating…') : tr('Anwenden & speichern', 'Apply & save')),
                   ),
                 ),
               ),

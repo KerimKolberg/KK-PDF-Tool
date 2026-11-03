@@ -13,6 +13,7 @@ import '../../services/ocr_service.dart';
 import '../../services/original_files_cleanup_service.dart';
 import '../../services/settings_service.dart';
 import '../../widgets/delete_originals_switch.dart';
+import '../../l10n.dart';
 
 const _mimeByExtension = {
   'jpg': 'image/jpeg',
@@ -47,7 +48,7 @@ class _TextFromImageScreenState extends State<TextFromImageScreen> {
   bool _busy = false;
 
   Future<void> _pickFile() async {
-    const typeGroup = XTypeGroup(label: 'Bilder', extensions: ['jpg', 'jpeg', 'png', 'webp']);
+    final typeGroup = XTypeGroup(label: tr('Bilder', 'Images'), extensions: ['jpg', 'jpeg', 'png', 'webp']);
     final file = await FilePickers.openOne('text_from_image', [typeGroup]);
     if (file == null) return;
     final bytes = await file.readAsBytes();
@@ -93,7 +94,7 @@ class _TextFromImageScreenState extends State<TextFromImageScreen> {
       if (!mounted) return;
       setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Texterkennung fehlgeschlagen: $e')),
+        SnackBar(content: Text(tr('Texterkennung fehlgeschlagen: $e', 'Text recognition failed: $e'))),
       );
     }
   }
@@ -104,7 +105,7 @@ class _TextFromImageScreenState extends State<TextFromImageScreen> {
     await Clipboard.setData(ClipboardData(text: text));
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('In die Zwischenablage kopiert')),
+      SnackBar(content: Text(tr('In die Zwischenablage kopiert', 'Copied to clipboard'))),
     );
   }
 
@@ -119,12 +120,12 @@ class _TextFromImageScreenState extends State<TextFromImageScreen> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gespeichert unter $location')),
+        SnackBar(content: Text(tr('Gespeichert unter $location', 'Saved to $location'))),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Speichern fehlgeschlagen: $e')),
+        SnackBar(content: Text(tr('Speichern fehlgeschlagen: $e', 'Saving failed: $e'))),
       );
     }
   }
@@ -134,7 +135,7 @@ class _TextFromImageScreenState extends State<TextFromImageScreen> {
     return ToolDropZone(
       onDrop: _pickFile,
       child: Scaffold(
-        appBar: AppBar(title: const Text('Text aus Bild (OCR)')),
+        appBar: AppBar(title: Text(tr('Text aus Bild (OCR)', 'Text from image (OCR)'))),
         body: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -175,10 +176,14 @@ class _TextFromImageScreenState extends State<TextFromImageScreen> {
                       Expanded(
                         child: Text(
                           _offline
-                              ? 'Läuft direkt auf dem Gerät - ohne Internet und ohne '
-                                  'Google-Konto. Für Handschrift ist "Google" oft genauer.'
-                              : 'Läuft über dein Google-Konto (kostenlos) und braucht '
+                              ? tr('Läuft direkt auf dem Gerät - ohne Internet und ohne '
+                                  'Google-Konto. Für Handschrift ist "Google" oft genauer.',
+                                  'Runs right on the device - without internet and without a '
+                                  'Google account. For handwriting "Google" is often more accurate.')
+                              : tr('Läuft über dein Google-Konto (kostenlos) und braucht '
                                   'Internet - gleiche Texterkennung wie bei PDF → Word.',
+                                  'Runs through your Google account (free) and needs '
+                                  'internet - same text recognition as PDF → Word.'),
                           style: const TextStyle(fontSize: 13),
                         ),
                       ),
@@ -191,7 +196,7 @@ class _TextFromImageScreenState extends State<TextFromImageScreen> {
                 FilledButton.icon(
                   onPressed: _pickFile,
                   icon: const Icon(Icons.image_outlined),
-                  label: const Text('Bild wählen'),
+                  label: Text(tr('Bild wählen', 'Choose image')),
                 )
               else ...[
                 ListTile(
@@ -199,11 +204,11 @@ class _TextFromImageScreenState extends State<TextFromImageScreen> {
                   title: Text(_fileName!),
                   trailing: TextButton(
                     onPressed: _busy ? null : _pickFile,
-                    child: const Text('Ändern'),
+                    child: Text(tr('Ändern', 'Change')),
                   ),
                 ),
                 DeleteOriginalsSwitch(
-                  label: 'Originalbild danach löschen',
+                  label: tr('Originalbild danach löschen', 'Delete original image afterwards'),
                   value: _deleteOriginal,
                   onChanged: (v) => setState(() => _deleteOriginal = v),
                 ),
@@ -217,7 +222,7 @@ class _TextFromImageScreenState extends State<TextFromImageScreen> {
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                         )
                       : const Icon(Icons.text_snippet_outlined),
-                  label: Text(_busy ? 'Erkenne Text…' : 'Text erkennen'),
+                  label: Text(_busy ? tr('Erkenne Text…', 'Recognizing text…') : tr('Text erkennen', 'Recognize text')),
                 ),
                 if (_extractedText != null) ...[
                   const SizedBox(height: 16),
@@ -231,7 +236,7 @@ class _TextFromImageScreenState extends State<TextFromImageScreen> {
                       ),
                       child: SingleChildScrollView(
                         child: SelectableText(
-                          _extractedText!.isEmpty ? '(kein Text erkannt)' : _extractedText!,
+                          _extractedText!.isEmpty ? tr('(kein Text erkannt)', '(no text recognized)') : _extractedText!,
                         ),
                       ),
                     ),
@@ -243,7 +248,7 @@ class _TextFromImageScreenState extends State<TextFromImageScreen> {
                         child: OutlinedButton.icon(
                           onPressed: _copy,
                           icon: const Icon(Icons.copy_outlined),
-                          label: const Text('Kopieren'),
+                          label: Text(tr('Kopieren', 'Copy')),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -251,7 +256,7 @@ class _TextFromImageScreenState extends State<TextFromImageScreen> {
                         child: FilledButton.icon(
                           onPressed: _saveAsTxt,
                           icon: const Icon(Icons.save_outlined),
-                          label: const Text('Als .txt speichern'),
+                          label: Text(tr('Als .txt speichern', 'Save as .txt')),
                         ),
                       ),
                     ],

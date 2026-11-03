@@ -11,6 +11,7 @@ import '../../services/pdf_tools_service.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_result.dart';
+import '../../l10n.dart';
 
 class _PickedPdf {
   final String name;
@@ -57,13 +58,13 @@ class _MergePdfScreenState extends State<MergePdfScreen> {
         [for (final pdf in _pdfs) pdf.bytes],
       );
       final location = await _downloadsExport.export(merged, '$title.pdf');
-      var message = 'Zusammengeführt und gespeichert unter $location';
+      var message = tr('Zusammengeführt und gespeichert unter $location', 'Merged and saved to $location');
       if (_deleteOriginals) {
         final notDeleted = await OriginalFilesCleanupService.deleteAll(
           [for (final pdf in _pdfs) pdf.path],
         );
         if (notDeleted.isNotEmpty) {
-          message += ' · ${notDeleted.length} Original(e) konnten nicht gelöscht werden';
+          message += tr(' · ${notDeleted.length} Original(e) konnten nicht gelöscht werden', ' · ${notDeleted.length} original(s) could not be deleted');
         }
       }
       if (!mounted) return;
@@ -72,29 +73,29 @@ class _MergePdfScreenState extends State<MergePdfScreen> {
       if (!mounted) return;
       setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Zusammenführen fehlgeschlagen: $e')),
+        SnackBar(content: Text(tr('Zusammenführen fehlgeschlagen: $e', 'Merging failed: $e'))),
       );
     }
   }
 
   Future<String?> _askTitle() async {
-    final controller = TextEditingController(text: 'Zusammengeführt');
+    final controller = TextEditingController(text: tr('Zusammengeführt', 'Merged'));
     return showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('PDF-Name'),
+        title: Text(tr('PDF-Name', 'PDF name')),
         content: TextField(controller: controller, autofocus: true),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Abbrechen'),
+            child: Text(tr('Abbrechen', 'Cancel')),
           ),
           FilledButton(
             onPressed: () {
               final text = controller.text.trim();
-              Navigator.pop(context, text.isEmpty ? 'Zusammengeführt' : text);
+              Navigator.pop(context, text.isEmpty ? tr('Zusammengeführt', 'Merged') : text);
             },
-            child: const Text('Zusammenführen'),
+            child: Text(tr('Zusammenführen', 'Merge')),
           ),
         ],
       ),
@@ -106,13 +107,13 @@ class _MergePdfScreenState extends State<MergePdfScreen> {
     return ToolDropZone(
       onDrop: _addPdfs,
       child: Scaffold(
-        appBar: AppBar(title: const Text('PDFs zusammenführen')),
+        appBar: AppBar(title: Text(tr('PDFs zusammenführen', 'Merge PDFs'))),
         body: _pdfs.isEmpty
             ? Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24),
                   child: Text(
-                    'Füge mindestens zwei PDFs hinzu. Sie werden in dieser Reihenfolge zusammengeführt.',
+                    tr('Füge mindestens zwei PDFs hinzu. Sie werden in dieser Reihenfolge zusammengeführt.', 'Add at least two PDFs. They are merged in this order.'),
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Theme.of(context).colorScheme.outline),
                   ),
@@ -157,7 +158,7 @@ class _MergePdfScreenState extends State<MergePdfScreen> {
                       child: OutlinedButton.icon(
                         onPressed: _busy ? null : _addPdfs,
                         icon: const Icon(Icons.picture_as_pdf_outlined),
-                        label: const Text('PDFs hinzufügen'),
+                        label: Text(tr('PDFs hinzufügen', 'Add PDFs')),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -172,7 +173,7 @@ class _MergePdfScreenState extends State<MergePdfScreen> {
                                     strokeWidth: 2, color: Colors.white),
                               )
                             : const Icon(Icons.merge_type),
-                        label: Text(_busy ? 'Führe zusammen…' : 'Zusammenführen'),
+                        label: Text(_busy ? tr('Führe zusammen…', 'Merging…') : tr('Zusammenführen', 'Merge')),
                       ),
                     ),
                   ],

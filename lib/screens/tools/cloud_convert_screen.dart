@@ -11,6 +11,7 @@ import '../../services/original_files_cleanup_service.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_result.dart';
+import '../../l10n.dart';
 
 /// Generic "pick a file -> convert via Google Drive -> save" screen, shared
 /// by every cloud-based conversion tool so the flow and error handling stay
@@ -82,11 +83,11 @@ class _CloudConvertScreenState extends State<CloudConvertScreen> {
         result,
         '$name.${widget.outputExtension}',
       );
-      var message = 'Gespeichert unter $location';
+      var message = tr('Gespeichert unter $location', 'Saved to $location');
       if (_deleteOriginal) {
         final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
         if (notDeleted.isNotEmpty) {
-          message += ' · Original konnte nicht gelöscht werden';
+          message += tr(' · Original konnte nicht gelöscht werden', ' · Original could not be deleted');
         }
       }
       if (!mounted) return;
@@ -99,7 +100,7 @@ class _CloudConvertScreenState extends State<CloudConvertScreen> {
       if (!mounted) return;
       setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Umwandlung fehlgeschlagen: $e')),
+        SnackBar(content: Text(tr('Umwandlung fehlgeschlagen: $e', 'Conversion failed: $e'))),
       );
     }
   }
@@ -117,7 +118,7 @@ class _CloudConvertScreenState extends State<CloudConvertScreen> {
             children: [
               Card(
                 color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                child: const Padding(
+                child: Padding(
                   padding: EdgeInsets.all(16),
                   child: Row(
                     children: [
@@ -125,8 +126,10 @@ class _CloudConvertScreenState extends State<CloudConvertScreen> {
                       SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Läuft über dein Google-Konto (kostenlos) und braucht '
+                          tr('Läuft über dein Google-Konto (kostenlos) und braucht '
                           'Internet. Beim ersten Mal wirst du zum Anmelden aufgefordert.',
+                          'Runs through your Google account (free) and needs '
+                          'internet. The first time you will be asked to sign in.'),
                           style: TextStyle(fontSize: 13),
                         ),
                       ),
@@ -147,11 +150,11 @@ class _CloudConvertScreenState extends State<CloudConvertScreen> {
                   title: Text(_fileName!),
                   trailing: TextButton(
                     onPressed: _busy ? null : _pickFile,
-                    child: const Text('Ändern'),
+                    child: Text(tr('Ändern', 'Change')),
                   ),
                 ),
                 DeleteOriginalsSwitch(
-                  label: 'Originaldatei danach löschen',
+                  label: tr('Originaldatei danach löschen', 'Delete original file afterwards'),
                   value: _deleteOriginal,
                   onChanged: (v) => setState(() => _deleteOriginal = v),
                 ),
@@ -166,7 +169,7 @@ class _CloudConvertScreenState extends State<CloudConvertScreen> {
                               strokeWidth: 2, color: Colors.white),
                         )
                       : Icon(widget.convertIcon),
-                  label: Text(_busy ? 'Wandle um…' : widget.convertButtonLabel),
+                  label: Text(_busy ? tr('Wandle um…', 'Converting…') : widget.convertButtonLabel),
                 ),
               ],
             ],

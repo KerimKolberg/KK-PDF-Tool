@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../services/downloads_export_service.dart';
+import '../l10n.dart';
 
 /// Shows recognised text with copy and "save as .txt" actions.
 class TextResultScreen extends StatelessWidget {
@@ -15,7 +16,7 @@ class TextResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Text: $title')),
+      appBar: AppBar(title: Text(tr('Text: $title', 'Text: $title'))),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Container(
@@ -26,7 +27,7 @@ class TextResultScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
           ),
           child: SingleChildScrollView(
-            child: SelectableText(text.isEmpty ? '(kein Text erkannt)' : text),
+            child: SelectableText(text.isEmpty ? tr('(kein Text erkannt)', '(no text recognized)') : text),
           ),
         ),
       ),
@@ -41,11 +42,11 @@ class TextResultScreen extends StatelessWidget {
                     await Clipboard.setData(ClipboardData(text: text));
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('In die Zwischenablage kopiert')),
+                      SnackBar(content: Text(tr('In die Zwischenablage kopiert', 'Copied to clipboard'))),
                     );
                   },
                   icon: const Icon(Icons.copy_outlined),
-                  label: const Text('Kopieren'),
+                  label: Text(tr('Kopieren', 'Copy')),
                 ),
               ),
               const SizedBox(width: 12),
@@ -59,17 +60,17 @@ class TextResultScreen extends StatelessWidget {
                       );
                       if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Gespeichert unter $location')),
+                        SnackBar(content: Text(tr('Gespeichert unter $location', 'Saved to $location'))),
                       );
                     } catch (e) {
                       if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Speichern fehlgeschlagen: $e')),
+                        SnackBar(content: Text(tr('Speichern fehlgeschlagen: $e', 'Saving failed: $e'))),
                       );
                     }
                   },
                   icon: const Icon(Icons.save_outlined),
-                  label: const Text('Als .txt speichern'),
+                  label: Text(tr('Als .txt speichern', 'Save as .txt')),
                 ),
               ),
             ],

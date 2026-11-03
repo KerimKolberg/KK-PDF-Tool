@@ -21,6 +21,7 @@ import 'tools/split_pdf_screen.dart';
 import 'tools/text_from_image_screen.dart';
 import 'tools/watermark_pdf_screen.dart';
 import 'tools/word_to_pdf_screen.dart';
+import '../l10n.dart';
 
 class _ToolEntry {
   final String title;
@@ -49,126 +50,126 @@ class ToolsScreen extends StatelessWidget {
   const ToolsScreen({super.key});
 
   static final _sections = <_ToolSection>[
-    _ToolSection('Umwandeln', [
+    _ToolSection(tr('Umwandeln', 'Convert'), [
       _ToolEntry(
-        'Bilder → PDF',
-        'Mehrere Bilder zu einer PDF zusammenfassen',
+        tr('Bilder → PDF', 'Images → PDF'),
+        tr('Mehrere Bilder zu einer PDF zusammenfassen', 'Combine several images into one PDF'),
         Icons.image_outlined,
         (_) => const ImagesToPdfScreen(),
       ),
       _ToolEntry(
-        'PDF → Bilder',
-        'Jede Seite einer PDF als Bild exportieren',
+        tr('PDF → Bilder', 'PDF → images'),
+        tr('Jede Seite einer PDF als Bild exportieren', 'Export every page of a PDF as an image'),
         Icons.photo_library_outlined,
         (_) => const PdfToImagesScreen(),
       ),
       _ToolEntry(
         'PDF → PowerPoint',
-        'Jede Seite als Bild-Folie (offline, nicht text-editierbar)',
+        tr('Jede Seite als Bild-Folie (offline, nicht text-editierbar)', 'Every page as a picture slide (offline, text not editable)'),
         Icons.slideshow_outlined,
         (_) => const PdfToPptxScreen(),
       ),
       _ToolEntry(
         'PowerPoint → PDF',
-        'Echte Konvertierung über dein Google-Konto',
+        tr('Echte Konvertierung über dein Google-Konto', 'Real conversion through your Google account'),
         Icons.picture_as_pdf_outlined,
         (_) => const PptxToPdfScreen(),
         needsInternet: true,
       ),
       _ToolEntry(
         'Word → PDF',
-        'Echte Konvertierung über dein Google-Konto',
+        tr('Echte Konvertierung über dein Google-Konto', 'Real conversion through your Google account'),
         Icons.picture_as_pdf_outlined,
         (_) => const WordToPdfScreen(),
         needsInternet: true,
       ),
       _ToolEntry(
         'PDF → Word',
-        'Editierbar, mit Texterkennung über dein Google-Konto',
+        tr('Editierbar, mit Texterkennung über dein Google-Konto', 'Editable, with text recognition through your Google account'),
         Icons.description_outlined,
         (_) => const PdfToWordScreen(),
         needsInternet: true,
       ),
       _ToolEntry(
         'HTML → PDF',
-        'Über dein Google-Konto',
+        tr('Über dein Google-Konto', 'Through your Google account'),
         Icons.code,
         (_) => const HtmlToPdfScreen(),
         needsInternet: true,
       ),
       _ToolEntry(
         'Markdown → PDF',
-        'Formatierter Text aus .md-Dateien (offline)',
+        tr('Formatierter Text aus .md-Dateien (offline)', 'Formatted text from .md files (offline)'),
         Icons.article_outlined,
         (_) => const MarkdownToPdfScreen(),
       ),
       _ToolEntry(
-        'Text aus Bild (OCR)',
-        'Text aus einem Foto erkennen, kopieren oder als .txt speichern',
+        tr('Text aus Bild (OCR)', 'Text from image (OCR)'),
+        tr('Text aus einem Foto erkennen, kopieren oder als .txt speichern', 'Recognize text in a photo, copy it or save it as .txt'),
         Icons.text_snippet_outlined,
         (_) => const TextFromImageScreen(),
         needsInternet: !Platform.isAndroid,
       ),
       _ToolEntry(
-        'PDF durchsuchbar machen',
-        'Gescannte PDF mit unsichtbarer Textebene (offline)',
+        tr('PDF durchsuchbar machen', 'Make PDF searchable'),
+        tr('Gescannte PDF mit unsichtbarer Textebene (offline)', 'Scanned PDF with an invisible text layer (offline)'),
         Icons.manage_search,
         (_) => const SearchablePdfScreen(),
         androidOnly: true,
       ),
     ]),
-    _ToolSection('Bearbeiten', [
+    _ToolSection(tr('Bearbeiten', 'Edit'), [
       _ToolEntry(
-        'PDF ausfüllen & unterschreiben',
-        'Text, Datum, Haken und Unterschrift einfügen',
+        tr('PDF ausfüllen & unterschreiben', 'Fill in & sign PDF'),
+        tr('Text, Datum, Haken und Unterschrift einfügen', 'Insert text, date, check marks and signature'),
         Icons.edit_note,
         (_) => const AnnotatePdfScreen(mode: AnnotateMode.fill),
       ),
       _ToolEntry(
-        'PDF markieren & zeichnen',
-        'Mit Stift und Textmarker auf Seiten zeichnen',
+        tr('PDF markieren & zeichnen', 'Highlight & draw on PDF'),
+        tr('Mit Stift und Textmarker auf Seiten zeichnen', 'Draw on pages with pen and highlighter'),
         Icons.brush_outlined,
         (_) => const AnnotatePdfScreen(mode: AnnotateMode.draw),
       ),
       _ToolEntry(
-        'Seitenzahlen & Kopfzeile',
-        'Seitenzahlen, Kopf- und Fußzeile hinzufügen',
+        tr('Seitenzahlen & Kopfzeile', 'Page numbers & header'),
+        tr('Seitenzahlen, Kopf- und Fußzeile hinzufügen', 'Add page numbers, header and footer'),
         Icons.format_list_numbered,
         (_) => const PageNumbersScreen(),
       ),
       _ToolEntry(
-        'PDFs zusammenführen',
-        'Mehrere PDFs in einer Reihenfolge verbinden',
+        tr('PDFs zusammenführen', 'Merge PDFs'),
+        tr('Mehrere PDFs in einer Reihenfolge verbinden', 'Join several PDFs in a chosen order'),
         Icons.merge_type,
         (_) => const MergePdfScreen(),
       ),
       _ToolEntry(
-        'PDF aufteilen',
-        'Nach Seitenbereich in mehrere PDFs aufteilen',
+        tr('PDF aufteilen', 'Split PDF'),
+        tr('Nach Seitenbereich in mehrere PDFs aufteilen', 'Split into several PDFs by page range'),
         Icons.content_cut,
         (_) => const SplitPdfScreen(),
       ),
       _ToolEntry(
-        'PDF drehen',
-        'Ganze Datei(en) oder einzelne Seiten',
+        tr('PDF drehen', 'Rotate PDF'),
+        tr('Ganze Datei(en) oder einzelne Seiten', 'Whole file(s) or single pages'),
         Icons.rotate_right,
         (_) => const RotatePdfScreen(),
       ),
       _ToolEntry(
-        'PDF zuschneiden',
-        'Ränder auf allen oder gewählten Seiten entfernen',
+        tr('PDF zuschneiden', 'Crop PDF'),
+        tr('Ränder auf allen oder gewählten Seiten entfernen', 'Remove margins on all or chosen pages'),
         Icons.crop,
         (_) => const CropPdfScreen(),
       ),
       _ToolEntry(
-        'Wasserzeichen',
-        'Text diagonal über jede Seite legen',
+        tr('Wasserzeichen', 'Watermark'),
+        tr('Text diagonal über jede Seite legen', 'Lay text diagonally across every page'),
         Icons.water_drop_outlined,
         (_) => const WatermarkPdfScreen(),
       ),
       _ToolEntry(
-        'PDF komprimieren',
-        'Dateigröße durch geringere Qualität verkleinern',
+        tr('PDF komprimieren', 'Compress PDF'),
+        tr('Dateigröße durch geringere Qualität verkleinern', 'Reduce file size by lowering quality'),
         Icons.compress,
         (_) => const CompressPdfScreen(),
       ),
@@ -178,7 +179,7 @@ class ToolsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Werkzeuge')),
+      appBar: AppBar(title: Text(tr('Werkzeuge', 'Tools'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

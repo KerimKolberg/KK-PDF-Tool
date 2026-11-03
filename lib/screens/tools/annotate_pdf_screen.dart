@@ -12,6 +12,7 @@ import '../../widgets/delete_originals_switch.dart';
 import '../annotate_pages_screen.dart';
 import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_result.dart';
+import '../../l10n.dart';
 
 /// Picks a PDF, opens it in the fill-in/drawing editor and saves the edited
 /// copy to Downloads.
@@ -50,7 +51,7 @@ class _AnnotatePdfScreenState extends State<AnnotatePdfScreen> {
     final bytes = _pdfBytes;
     final name = _fileName;
     if (bytes == null || name == null || _busyLabel != null) return;
-    setState(() => _busyLabel = 'Seiten werden geladen…');
+    setState(() => _busyLabel = tr('Seiten werden geladen…', 'Loading pages…'));
     try {
       final rendered = await PdfToolsService.rasterPages(bytes, dpi: 170);
       final formats = await PdfToolsService.pageFormats(bytes);
@@ -65,14 +66,14 @@ class _AnnotatePdfScreenState extends State<AnnotatePdfScreen> {
       );
       if (edited == null || !mounted) return;
 
-      setState(() => _busyLabel = 'Speichere…');
+      setState(() => _busyLabel = tr('Speichere…', 'Saving…'));
       final pdf = await PdfService.buildPdf(edited, pageFormats: formats);
       final suffix = _fill ? '_ausgefuellt' : '_markiert';
       final location = await _downloadsExport.export(pdf, '$name$suffix.pdf');
-      var message = 'Gespeichert unter $location';
+      var message = tr('Gespeichert unter $location', 'Saved to $location');
       if (_deleteOriginal) {
         final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
-        if (notDeleted.isNotEmpty) message += ' · Original konnte nicht gelöscht werden';
+        if (notDeleted.isNotEmpty) message += tr(' · Original konnte nicht gelöscht werden', ' · Original could not be deleted');
       }
       if (!mounted) return;
       finishTool(context, widget, message);
@@ -80,7 +81,7 @@ class _AnnotatePdfScreenState extends State<AnnotatePdfScreen> {
       if (!mounted) return;
       setState(() => _busyLabel = null);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Bearbeiten fehlgeschlagen: $e')),
+        SnackBar(content: Text(tr('Bearbeiten fehlgeschlagen: $e', 'Editing failed: $e'))),
       );
     }
   }
@@ -91,7 +92,7 @@ class _AnnotatePdfScreenState extends State<AnnotatePdfScreen> {
     return ToolDropZone(
       onDrop: _pickPdf,
       child: Scaffold(
-        appBar: AppBar(title: Text(_fill ? 'PDF ausfüllen & unterschreiben' : 'PDF markieren & zeichnen')),
+        appBar: AppBar(title: Text(_fill ? tr('PDF ausfüllen & unterschreiben', 'Fill in & sign PDF') : tr('PDF markieren & zeichnen', 'Highlight & draw on PDF'))),
         body: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -100,10 +101,14 @@ class _AnnotatePdfScreenState extends State<AnnotatePdfScreen> {
             children: [
               Text(
                 _fill
-                    ? 'Text, Datum, Haken/Kreuze und Unterschriften auf beliebigen Seiten '
-                        'platzieren - z. B. um Formulare auszufüllen. Läuft komplett offline.'
-                    : 'Mit Stift und Textmarker direkt auf die Seiten zeichnen. Läuft '
+                    ? tr('Text, Datum, Haken/Kreuze und Unterschriften auf beliebigen Seiten '
+                        'platzieren - z. B. um Formulare auszufüllen. Läuft komplett offline.',
+                        'Place text, date, check marks/crosses and signatures on any pages '
+                        '- e.g. to fill in forms. Runs completely offline.')
+                    : tr('Mit Stift und Textmarker direkt auf die Seiten zeichnen. Läuft '
                         'komplett offline.',
+                        'Draw directly on the pages with pen and highlighter. Runs '
+                        'completely offline.'),
                 style: TextStyle(color: Theme.of(context).colorScheme.outline),
               ),
               const SizedBox(height: 24),
@@ -111,7 +116,7 @@ class _AnnotatePdfScreenState extends State<AnnotatePdfScreen> {
                 FilledButton.icon(
                   onPressed: _pickPdf,
                   icon: const Icon(Icons.picture_as_pdf_outlined),
-                  label: const Text('PDF wählen'),
+                  label: Text(tr('PDF wählen', 'Choose PDF')),
                 )
               else ...[
                 ListTile(
@@ -119,11 +124,11 @@ class _AnnotatePdfScreenState extends State<AnnotatePdfScreen> {
                   title: Text(_fileName!),
                   trailing: TextButton(
                     onPressed: busy ? null : _pickPdf,
-                    child: const Text('Ändern'),
+                    child: Text(tr('Ändern', 'Change')),
                   ),
                 ),
                 DeleteOriginalsSwitch(
-                  label: 'Originaldatei danach löschen',
+                  label: tr('Originaldatei danach löschen', 'Delete original file afterwards'),
                   value: _deleteOriginal,
                   onChanged: (v) => setState(() => _deleteOriginal = v),
                 ),
@@ -137,7 +142,7 @@ class _AnnotatePdfScreenState extends State<AnnotatePdfScreen> {
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                         )
                       : Icon(_fill ? Icons.edit_note : Icons.brush_outlined),
-                  label: Text(_busyLabel ?? (_fill ? 'Ausfüllen' : 'Zeichnen')),
+                  label: Text(_busyLabel ?? (_fill ? tr('Ausfüllen', 'Fill in') : tr('Zeichnen', 'Draw'))),
                 ),
               ],
             ],

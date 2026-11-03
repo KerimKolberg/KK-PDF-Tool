@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:markdown/markdown.dart' as md;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import '../l10n.dart';
 
 /// Renders Markdown source straight into a styled PDF, fully offline - no
 /// HTML/cloud round-trip needed. Headings, emphasis, links, lists,
@@ -302,7 +303,7 @@ class MarkdownPdfService {
           spans.add(pw.TextSpan(text: '\n', style: style));
           break;
         case 'img':
-          final alt = node.attributes['alt'] ?? 'Bild';
+          final alt = node.attributes['alt'] ?? tr('Bild', 'Image');
           spans.add(pw.TextSpan(
             text: '[$alt]',
             style: style.copyWith(fontStyle: pw.FontStyle.italic, color: PdfColors.grey600),

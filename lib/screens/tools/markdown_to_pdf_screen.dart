@@ -11,6 +11,7 @@ import '../../services/original_files_cleanup_service.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_result.dart';
+import '../../l10n.dart';
 
 /// Converts Markdown (.md) source into a styled PDF - fully offline, no
 /// Google account needed.
@@ -49,11 +50,11 @@ class _MarkdownToPdfScreenState extends State<MarkdownToPdfScreen> {
     try {
       final pdfBytes = await MarkdownPdfService.convert(source);
       final location = await _downloadsExport.export(pdfBytes, '$name.pdf');
-      var message = 'PDF gespeichert unter $location';
+      var message = tr('PDF gespeichert unter $location', 'PDF saved to $location');
       if (_deleteOriginal) {
         final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
         if (notDeleted.isNotEmpty) {
-          message += ' · Original konnte nicht gelöscht werden';
+          message += tr(' · Original konnte nicht gelöscht werden', ' · Original could not be deleted');
         }
       }
       if (!mounted) return;
@@ -62,7 +63,7 @@ class _MarkdownToPdfScreenState extends State<MarkdownToPdfScreen> {
       if (!mounted) return;
       setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Umwandlung fehlgeschlagen: $e')),
+        SnackBar(content: Text(tr('Umwandlung fehlgeschlagen: $e', 'Conversion failed: $e'))),
       );
     }
   }
@@ -80,7 +81,7 @@ class _MarkdownToPdfScreenState extends State<MarkdownToPdfScreen> {
             children: [
               Card(
                 color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                child: const Padding(
+                child: Padding(
                   padding: EdgeInsets.all(16),
                   child: Row(
                     children: [
@@ -88,7 +89,7 @@ class _MarkdownToPdfScreenState extends State<MarkdownToPdfScreen> {
                       SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Läuft komplett offline, ohne Internet oder Google-Konto.',
+                          tr('Läuft komplett offline, ohne Internet oder Google-Konto.', 'Runs completely offline, without internet or a Google account.'),
                           style: TextStyle(fontSize: 13),
                         ),
                       ),
@@ -101,7 +102,7 @@ class _MarkdownToPdfScreenState extends State<MarkdownToPdfScreen> {
                 FilledButton.icon(
                   onPressed: _pickFile,
                   icon: const Icon(Icons.article_outlined),
-                  label: const Text('Markdown-Datei wählen'),
+                  label: Text(tr('Markdown-Datei wählen', 'Choose Markdown file')),
                 )
               else ...[
                 ListTile(
@@ -109,11 +110,11 @@ class _MarkdownToPdfScreenState extends State<MarkdownToPdfScreen> {
                   title: Text(_fileName!),
                   trailing: TextButton(
                     onPressed: _busy ? null : _pickFile,
-                    child: const Text('Ändern'),
+                    child: Text(tr('Ändern', 'Change')),
                   ),
                 ),
                 DeleteOriginalsSwitch(
-                  label: 'Originaldatei danach löschen',
+                  label: tr('Originaldatei danach löschen', 'Delete original file afterwards'),
                   value: _deleteOriginal,
                   onChanged: (v) => setState(() => _deleteOriginal = v),
                 ),
@@ -127,7 +128,7 @@ class _MarkdownToPdfScreenState extends State<MarkdownToPdfScreen> {
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                         )
                       : const Icon(Icons.picture_as_pdf_outlined),
-                  label: Text(_busy ? 'Wandle um…' : 'In PDF umwandeln'),
+                  label: Text(_busy ? tr('Wandle um…', 'Converting…') : tr('In PDF umwandeln', 'Convert to PDF')),
                 ),
               ],
             ],

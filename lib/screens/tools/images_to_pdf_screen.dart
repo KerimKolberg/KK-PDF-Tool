@@ -10,6 +10,7 @@ import '../../services/pdf_service.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_result.dart';
+import '../../l10n.dart';
 
 class _PickedImage {
   final String? path;
@@ -32,8 +33,8 @@ class _ImagesToPdfScreenState extends State<ImagesToPdfScreen> {
   bool _busy = false;
 
   Future<void> _addImages() async {
-    const typeGroup = XTypeGroup(
-      label: 'Bilder',
+    final typeGroup = XTypeGroup(
+      label: tr('Bilder', 'Images'),
       extensions: ['jpg', 'jpeg', 'png', 'webp'],
     );
     final files = await FilePickers.openMany('images_to_pdf', [typeGroup]);
@@ -57,13 +58,13 @@ class _ImagesToPdfScreenState extends State<ImagesToPdfScreen> {
         [for (final image in _images) image.bytes],
       );
       final location = await _downloadsExport.export(pdfBytes, '$title.pdf');
-      var message = 'PDF gespeichert unter $location';
+      var message = tr('PDF gespeichert unter $location', 'PDF saved to $location');
       if (_deleteOriginals) {
         final notDeleted = await OriginalFilesCleanupService.deleteAll(
           [for (final image in _images) image.path],
         );
         if (notDeleted.isNotEmpty) {
-          message += ' · ${notDeleted.length} Original(e) konnten nicht gelöscht werden';
+          message += tr(' · ${notDeleted.length} Original(e) konnten nicht gelöscht werden', ' · ${notDeleted.length} original(s) could not be deleted');
         }
       }
       if (!mounted) return;
@@ -72,29 +73,29 @@ class _ImagesToPdfScreenState extends State<ImagesToPdfScreen> {
       if (!mounted) return;
       setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Fehlgeschlagen: $e')),
+        SnackBar(content: Text(tr('Fehlgeschlagen: $e', 'Failed: $e'))),
       );
     }
   }
 
   Future<String?> _askTitle() async {
-    final controller = TextEditingController(text: 'Bilder');
+    final controller = TextEditingController(text: tr('Bilder', 'Images'));
     return showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('PDF-Name'),
+        title: Text(tr('PDF-Name', 'PDF name')),
         content: TextField(controller: controller, autofocus: true),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Abbrechen'),
+            child: Text(tr('Abbrechen', 'Cancel')),
           ),
           FilledButton(
             onPressed: () {
               final text = controller.text.trim();
-              Navigator.pop(context, text.isEmpty ? 'Bilder' : text);
+              Navigator.pop(context, text.isEmpty ? tr('Bilder', 'Images') : text);
             },
-            child: const Text('Erstellen'),
+            child: Text(tr('Erstellen', 'Create')),
           ),
         ],
       ),
@@ -106,13 +107,13 @@ class _ImagesToPdfScreenState extends State<ImagesToPdfScreen> {
     return ToolDropZone(
       onDrop: _addImages,
       child: Scaffold(
-        appBar: AppBar(title: const Text('Bilder → PDF')),
+        appBar: AppBar(title: Text(tr('Bilder → PDF', 'Images → PDF'))),
         body: _images.isEmpty
             ? Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24),
                   child: Text(
-                    'Füge Bilder hinzu, die zu einer PDF zusammengefasst werden sollen.',
+                    tr('Füge Bilder hinzu, die zu einer PDF zusammengefasst werden sollen.', 'Add images to combine into one PDF.'),
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Theme.of(context).colorScheme.outline),
                   ),
@@ -136,7 +137,7 @@ class _ImagesToPdfScreenState extends State<ImagesToPdfScreen> {
                       child: Image.memory(_images[i].bytes,
                           width: 48, height: 48, fit: BoxFit.cover),
                     ),
-                    title: Text('Seite ${i + 1}'),
+                    title: Text(tr('Seite ${i + 1}', 'Page ${i + 1}')),
                     trailing: IconButton(
                       icon: const Icon(Icons.delete_outline),
                       onPressed: () => _remove(i),
@@ -161,7 +162,7 @@ class _ImagesToPdfScreenState extends State<ImagesToPdfScreen> {
                       child: OutlinedButton.icon(
                         onPressed: _busy ? null : _addImages,
                         icon: const Icon(Icons.add_photo_alternate_outlined),
-                        label: const Text('Bilder hinzufügen'),
+                        label: Text(tr('Bilder hinzufügen', 'Add images')),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -176,7 +177,7 @@ class _ImagesToPdfScreenState extends State<ImagesToPdfScreen> {
                                     strokeWidth: 2, color: Colors.white),
                               )
                             : const Icon(Icons.picture_as_pdf_outlined),
-                        label: Text(_busy ? 'Erstelle…' : 'PDF erstellen'),
+                        label: Text(_busy ? tr('Erstelle…', 'Creating…') : tr('PDF erstellen', 'Create PDF')),
                       ),
                     ),
                   ],

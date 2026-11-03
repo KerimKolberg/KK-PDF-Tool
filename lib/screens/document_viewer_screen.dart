@@ -14,6 +14,7 @@ import '../widgets/share_sheet.dart';
 import 'annotate_pages_screen.dart';
 import 'edit_pages_screen.dart';
 import 'text_result_screen.dart';
+import '../l10n.dart';
 
 class DocumentViewerScreen extends StatefulWidget {
   final DocumentStore store;
@@ -61,7 +62,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
     final ok = await launchUrl(uri);
     if (!ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('PDF konnte nicht geöffnet werden.')),
+        SnackBar(content: Text(tr('PDF konnte nicht geöffnet werden.', 'Could not open PDF.'))),
       );
     }
   }
@@ -73,16 +74,16 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
     final newTitle = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Umbenennen'),
+        title: Text(tr('Umbenennen', 'Rename')),
         content: TextField(controller: controller, autofocus: true),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Abbrechen'),
+            child: Text(tr('Abbrechen', 'Cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, controller.text.trim()),
-            child: const Text('Speichern'),
+            child: Text(tr('Speichern', 'Save')),
           ),
         ],
       ),
@@ -97,16 +98,16 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Dokument löschen?'),
-        content: Text('"${_doc.title}" wird unwiderruflich gelöscht.'),
+        title: Text(tr('Dokument löschen?', 'Delete document?')),
+        content: Text(tr('"${_doc.title}" wird unwiderruflich gelöscht.', '"${_doc.title}" will be deleted permanently.')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Abbrechen'),
+            child: Text(tr('Abbrechen', 'Cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Löschen'),
+            child: Text(tr('Löschen', 'Delete')),
           ),
         ],
       ),
@@ -126,7 +127,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Fehlgeschlagen: $e')),
+          SnackBar(content: Text(tr('Fehlgeschlagen: $e', 'Failed: $e'))),
         );
       }
       return null;
@@ -141,7 +142,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
 
   Future<void> _editPages() async {
     final pages = await _withBusy(
-      'Seiten werden geladen…',
+      tr('Seiten werden geladen…', 'Loading pages…'),
       () => DocumentBuilder.loadEditablePages(widget.store, _doc),
     );
     if (pages == null || !mounted) return;
@@ -154,7 +155,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
 
   Future<void> _annotate(AnnotateMode mode) async {
     final pages = await _withBusy(
-      'Seiten werden geladen…',
+      tr('Seiten werden geladen…', 'Loading pages…'),
       () => DocumentBuilder.loadEditablePages(widget.store, _doc),
     );
     if (pages == null || !mounted) return;
@@ -166,10 +167,10 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
   }
 
   Future<void> _replacePages(List<Uint8List> pages) async {
-    final updated = await _withBusy('Speichere…', () async {
+    final updated = await _withBusy(tr('Speichere…', 'Saving…'), () async {
       final built = await DocumentBuilder.build(
         pages,
-        onProgress: (done, total) => _progress('Texterkennung', done, total),
+        onProgress: (done, total) => _progress(tr('Texterkennung', 'Text recognition'), done, total),
       );
       final previousText = built.text == null ? await widget.store.readText(_doc.id) : null;
       return widget.store.replaceContent(
@@ -195,13 +196,13 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
   Future<void> _recognizeText() async {
     var text = await widget.store.readText(_doc.id);
     if (text == null) {
-      text = await _withBusy('Texterkennung…', () async {
+      text = await _withBusy(tr('Texterkennung…', 'Text recognition…'), () async {
         String? result;
         if (OcrService.isOfflineAvailable) {
           final pages = await DocumentBuilder.loadEditablePages(widget.store, _doc);
           result = await DocumentBuilder.recognizeText(
             pages,
-            onProgress: (done, total) => _progress('Texterkennung', done, total),
+            onProgress: (done, total) => _progress(tr('Texterkennung', 'Text recognition'), done, total),
           );
         } else {
           final pdf = await File(_pdfPath!).readAsBytes();
@@ -227,8 +228,8 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(choice.folder == null
-            ? 'Aus dem Ordner entfernt'
-            : 'Verschoben nach "${choice.folder}"'),
+            ? tr('Aus dem Ordner entfernt', 'Removed from folder')
+            : tr('Verschoben nach "${choice.folder}"', 'Moved to "${choice.folder}"')),
       ),
     );
   }
@@ -246,51 +247,51 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
             itemBuilder: (context) => [
               PopupMenuItem(
                 value: _editPages,
-                child: const ListTile(
+                child: ListTile(
                   leading: Icon(Icons.view_agenda_outlined),
-                  title: Text('Seiten bearbeiten'),
+                  title: Text(tr('Seiten bearbeiten', 'Edit pages')),
                 ),
               ),
               PopupMenuItem(
                 value: () => _annotate(AnnotateMode.fill),
-                child: const ListTile(
+                child: ListTile(
                   leading: Icon(Icons.edit_note),
-                  title: Text('Ausfüllen & unterschreiben'),
+                  title: Text(tr('Ausfüllen & unterschreiben', 'Fill in & sign')),
                 ),
               ),
               PopupMenuItem(
                 value: () => _annotate(AnnotateMode.draw),
-                child: const ListTile(
+                child: ListTile(
                   leading: Icon(Icons.brush_outlined),
-                  title: Text('Zeichnen & markieren'),
+                  title: Text(tr('Zeichnen & markieren', 'Draw & highlight')),
                 ),
               ),
               PopupMenuItem(
                 value: _recognizeText,
-                child: const ListTile(
+                child: ListTile(
                   leading: Icon(Icons.text_snippet_outlined),
-                  title: Text('Text erkennen'),
+                  title: Text(tr('Text erkennen', 'Recognize text')),
                 ),
               ),
               PopupMenuItem(
                 value: _moveToFolder,
-                child: const ListTile(
+                child: ListTile(
                   leading: Icon(Icons.drive_file_move_outlined),
-                  title: Text('In Ordner verschieben'),
+                  title: Text(tr('In Ordner verschieben', 'Move to folder')),
                 ),
               ),
               PopupMenuItem(
                 value: _rename,
-                child: const ListTile(
+                child: ListTile(
                   leading: Icon(Icons.edit_outlined),
-                  title: Text('Umbenennen'),
+                  title: Text(tr('Umbenennen', 'Rename')),
                 ),
               ),
               PopupMenuItem(
                 value: _delete,
-                child: const ListTile(
+                child: ListTile(
                   leading: Icon(Icons.delete_outline),
-                  title: Text('Löschen'),
+                  title: Text(tr('Löschen', 'Delete')),
                 ),
               ),
             ],
@@ -337,7 +338,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
                 child: OutlinedButton.icon(
                   onPressed: _loading || busy ? null : _share,
                   icon: const Icon(Icons.ios_share),
-                  label: const Text('Teilen'),
+                  label: Text(tr('Teilen', 'Share')),
                 ),
               ),
               const SizedBox(width: 12),
@@ -345,7 +346,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
                 child: FilledButton.icon(
                   onPressed: _loading || busy ? null : _openPdf,
                   icon: const Icon(Icons.picture_as_pdf),
-                  label: const Text('PDF öffnen'),
+                  label: Text(tr('PDF öffnen', 'Open PDF')),
                 ),
               ),
             ],

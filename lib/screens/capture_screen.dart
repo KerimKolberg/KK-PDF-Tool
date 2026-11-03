@@ -5,6 +5,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
 import '../services/file_picker_service.dart';
+import '../l10n.dart';
 
 /// Lets the user take a photo of a document page, or import an existing
 /// image file (useful on desktop machines without a usable camera).
@@ -31,7 +32,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
     try {
       final cameras = await availableCameras();
       if (cameras.isEmpty) {
-        setState(() => _error = 'Keine Kamera gefunden.');
+        setState(() => _error = tr('Keine Kamera gefunden.', 'No camera found.'));
         return;
       }
       final chosen = cameras.firstWhere(
@@ -51,7 +52,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
       setState(() => _controller = controller);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = 'Kamera nicht verfügbar:\n$e');
+      setState(() => _error = tr('Kamera nicht verfügbar:\n$e', 'Camera not available:\n$e'));
     }
   }
 
@@ -73,15 +74,15 @@ class _CaptureScreenState extends State<CaptureScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Aufnahme fehlgeschlagen: $e')),
+        SnackBar(content: Text(tr('Aufnahme fehlgeschlagen: $e', 'Capture failed: $e'))),
       );
       setState(() => _capturing = false);
     }
   }
 
   Future<void> _importFromFile() async {
-    const typeGroup = XTypeGroup(
-      label: 'Bilder',
+    final typeGroup = XTypeGroup(
+      label: tr('Bilder', 'Images'),
       extensions: ['jpg', 'jpeg', 'png', 'webp'],
     );
     final file = await FilePickers.openOne('capture', [typeGroup]);
@@ -95,7 +96,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(title: const Text('Dokument aufnehmen')),
+      appBar: AppBar(title: Text(tr('Dokument aufnehmen', 'Capture document'))),
       body: SafeArea(child: _buildBody()),
     );
   }
@@ -117,7 +118,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
               FilledButton.icon(
                 onPressed: _importFromFile,
                 icon: const Icon(Icons.folder_open),
-                label: const Text('Bild aus Datei wählen'),
+                label: Text(tr('Bild aus Datei wählen', 'Choose image from file')),
               ),
             ],
           ),
@@ -145,7 +146,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
                 onPressed: _importFromFile,
                 icon: const Icon(Icons.folder_open,
                     color: Colors.white, size: 32),
-                tooltip: 'Aus Datei importieren',
+                tooltip: tr('Aus Datei importieren', 'Import from file'),
               ),
               GestureDetector(
                 onTap: _capturing ? null : _capture,

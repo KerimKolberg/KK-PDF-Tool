@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../l10n.dart';
 
 class _Stroke {
   final List<Offset> points;
@@ -103,15 +104,15 @@ class _SignaturePadScreenState extends State<SignaturePadScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Unterschrift zeichnen'),
+        title: Text(tr('Unterschrift zeichnen', 'Draw signature')),
         actions: [
           IconButton(
-            tooltip: 'Rückgängig',
+            tooltip: tr('Rückgängig', 'Undo'),
             onPressed: _strokes.isEmpty ? null : () => setState(_strokes.removeLast),
             icon: const Icon(Icons.undo),
           ),
           IconButton(
-            tooltip: 'Leeren',
+            tooltip: tr('Leeren', 'Clear'),
             onPressed: _strokes.isEmpty ? null : () => setState(_strokes.clear),
             icon: const Icon(Icons.delete_sweep_outlined),
           ),
@@ -138,8 +139,8 @@ class _SignaturePadScreenState extends State<SignaturePadScreen> {
                       child: Container(height: 1, color: Colors.black26),
                     ),
                     if (_strokes.isEmpty)
-                      const Center(
-                        child: Text('Hier unterschreiben', style: TextStyle(color: Colors.black38)),
+                      Center(
+                        child: Text(tr('Hier unterschreiben', 'Sign here'), style: TextStyle(color: Colors.black38)),
                       ),
                     Positioned.fill(
                       child: GestureDetector(
@@ -155,7 +156,7 @@ class _SignaturePadScreenState extends State<SignaturePadScreen> {
             const SizedBox(height: 12),
             Row(
               children: [
-                const Text('Farbe:'),
+                Text(tr('Farbe:', 'Color:')),
                 const SizedBox(width: 8),
                 for (final c in _inkColors)
                   Padding(
@@ -183,7 +184,7 @@ class _SignaturePadScreenState extends State<SignaturePadScreen> {
           child: FilledButton.icon(
             onPressed: _strokes.isEmpty || _saving ? null : _save,
             icon: const Icon(Icons.check),
-            label: const Text('Unterschrift speichern'),
+            label: Text(tr('Unterschrift speichern', 'Save signature')),
           ),
         ),
       ),

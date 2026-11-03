@@ -12,6 +12,7 @@ import '../services/pdf_tools_service.dart';
 import '../services/settings_service.dart';
 import 'capture_screen.dart';
 import 'crop_screen.dart';
+import '../l10n.dart';
 
 /// Captures the front and back of an ID card/document and combines both
 /// into a single one-page PDF, matching the "copy of both sides on one
@@ -99,7 +100,7 @@ class _IdScanScreenState extends State<IdScanScreen> {
       if (!mounted) return;
       if (location != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gespeichert unter $location')),
+          SnackBar(content: Text(tr('Gespeichert unter $location', 'Saved to $location'))),
         );
       }
       Navigator.of(context).pop<ScanDocument>(doc);
@@ -107,33 +108,33 @@ class _IdScanScreenState extends State<IdScanScreen> {
       if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Speichern fehlgeschlagen: $e')),
+        SnackBar(content: Text(tr('Speichern fehlgeschlagen: $e', 'Saving failed: $e'))),
       );
     }
   }
 
   Future<String?> _askTitle() async {
-    final controller = TextEditingController(text: 'Ausweis');
+    final controller = TextEditingController(text: tr('Ausweis', 'ID card'));
     return showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Dokument speichern'),
+        title: Text(tr('Dokument speichern', 'Save document')),
         content: TextField(
           controller: controller,
           autofocus: true,
-          decoration: const InputDecoration(labelText: 'Titel'),
+          decoration: InputDecoration(labelText: tr('Titel', 'Title')),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Abbrechen'),
+            child: Text(tr('Abbrechen', 'Cancel')),
           ),
           FilledButton(
             onPressed: () {
               final text = controller.text.trim();
-              Navigator.pop(context, text.isEmpty ? 'Ausweis' : text);
+              Navigator.pop(context, text.isEmpty ? tr('Ausweis', 'ID card') : text);
             },
-            child: const Text('Speichern'),
+            child: Text(tr('Speichern', 'Save')),
           ),
         ],
       ),
@@ -186,23 +187,23 @@ class _IdScanScreenState extends State<IdScanScreen> {
   Widget build(BuildContext context) {
     final ready = _front != null && _back != null;
     return Scaffold(
-      appBar: AppBar(title: const Text('Ausweis scannen')),
+      appBar: AppBar(title: Text(tr('Ausweis scannen', 'Scan ID card'))),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Vorder- und Rückseite werden zusammen auf eine PDF-Seite gesetzt.',
+              tr('Vorder- und Rückseite werden zusammen auf eine PDF-Seite gesetzt.', 'Front and back are placed together on one PDF page.'),
               style: TextStyle(color: Theme.of(context).colorScheme.outline),
             ),
             const SizedBox(height: 20),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _side(label: 'Vorderseite', front: true),
+                _side(label: tr('Vorderseite', 'Front'), front: true),
                 const SizedBox(width: 16),
-                _side(label: 'Rückseite', front: false),
+                _side(label: tr('Rückseite', 'Back'), front: false),
               ],
             ),
           ],
@@ -220,7 +221,7 @@ class _IdScanScreenState extends State<IdScanScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                   )
                 : const Icon(Icons.save),
-            label: Text(_saving ? 'Speichere…' : 'Speichern'),
+            label: Text(_saving ? tr('Speichere…', 'Saving…') : tr('Speichern', 'Save')),
           ),
         ),
       ),

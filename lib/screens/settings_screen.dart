@@ -13,6 +13,7 @@ import '../services/google_desktop_auth.dart';
 import '../services/settings_service.dart';
 import '../services/windows_desktop_service.dart';
 import '../utils/formatting.dart';
+import '../l10n.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -100,7 +101,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     BackupSummary? summary;
     String? location;
     Object? error;
-    await _withProgress('Sicherung wird erstellt…', (onProgress) async {
+    await _withProgress(tr('Sicherung wird erstellt…', 'Creating backup…'), (onProgress) async {
       try {
         summary = await BackupService(DocumentStore()).create(onProgress: onProgress);
         location = await DownloadsExportService().exportFile(
@@ -116,19 +117,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final done = summary;
     if (done == null || error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Sicherung fehlgeschlagen: $error')),
+        SnackBar(content: Text(tr('Sicherung fehlgeschlagen: $error', 'Backup failed: $error'))),
       );
       return;
     }
     await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Sicherung erstellt'),
+        title: Text(tr('Sicherung erstellt', 'Backup created')),
         content: Text(
-          '${done.documents} ${done.documents == 1 ? 'Dokument' : 'Dokumente'} '
+          tr('${done.documents} ${done.documents == 1 ? 'Dokument' : 'Dokumente'} '
           '(${formatFileSize(done.bytes)})\n\nGespeichert unter:\n$location\n\n'
           'Tipp: Lege die Datei zusätzlich woanders ab (z. B. Google Drive), '
           'damit sie auch bei Verlust des Geräts erhalten bleibt.',
+          '${done.documents} ${done.documents == 1 ? 'document' : 'documents'} '
+          '(${formatFileSize(done.bytes)})\n\nSaved to:\n$location\n\n'
+          'Tip: also keep a copy somewhere else (e.g. Google Drive), '
+          'so it survives losing the device.'),
         ),
         actions: [
           TextButton.icon(
@@ -136,7 +141,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ShareParams(files: [XFile(done.file.path, mimeType: 'application/zip')]),
             ),
             icon: const Icon(Icons.ios_share),
-            label: const Text('Teilen…'),
+            label: Text(tr('Teilen…', 'Share…')),
           ),
           FilledButton(onPressed: () => Navigator.pop(context), child: const Text('OK')),
         ],
@@ -145,8 +150,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _restoreBackup() async {
-    const typeGroup = XTypeGroup(
-      label: 'Sicherung (ZIP)',
+    final typeGroup = XTypeGroup(
+      label: tr('Sicherung (ZIP)', 'Backup (ZIP)'),
       extensions: ['zip'],
       mimeTypes: ['application/zip', 'application/x-zip-compressed'],
     );
@@ -154,7 +159,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (file == null || !mounted) return;
     RestoreSummary? summary;
     Object? error;
-    await _withProgress('Sicherung wird wiederhergestellt…', (_) async {
+    await _withProgress(tr('Sicherung wird wiederhergestellt…', 'Restoring backup…'), (_) async {
       try {
         summary = await BackupService(DocumentStore()).restore(File(file.path));
       } catch (e) {
@@ -166,20 +171,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (done == null) {
       final message = error is FormatException
           ? (error as FormatException).message
-          : 'Wiederherstellen fehlgeschlagen: $error';
+          : tr('Wiederherstellen fehlgeschlagen: $error', 'Restore failed: $error');
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
       return;
     }
     await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Wiederhergestellt'),
+        title: Text(tr('Wiederhergestellt', 'Restored')),
         content: Text([
-          '${done.added} ${done.added == 1 ? 'Dokument' : 'Dokumente'} hinzugefügt',
-          if (done.skipped > 0) '${done.skipped} waren schon vorhanden (unverändert)',
-          if (done.folders > 0) '${done.folders} Ordner hinzugefügt',
+          tr('${done.added} ${done.added == 1 ? 'Dokument' : 'Dokumente'} hinzugefügt', '${done.added} ${done.added == 1 ? 'document' : 'documents'} added'),
+          if (done.skipped > 0) tr('${done.skipped} waren schon vorhanden (unverändert)', '${done.skipped} already existed (unchanged)'),
+          if (done.folders > 0) tr('${done.folders} Ordner hinzugefügt', '${done.folders} folder(s) added'),
           if (done.signatures > 0)
-            '${done.signatures} ${done.signatures == 1 ? 'Unterschrift' : 'Unterschriften'} hinzugefügt',
+            tr('${done.signatures} ${done.signatures == 1 ? 'Unterschrift' : 'Unterschriften'} hinzugefügt', '${done.signatures} ${done.signatures == 1 ? 'signature' : 'signatures'} added'),
         ].join('\n')),
         actions: [
           FilledButton(onPressed: () => Navigator.pop(context), child: const Text('OK')),
@@ -191,7 +196,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Einstellungen')),
+      appBar: AppBar(title: Text(tr('Einstellungen', 'Settings'))),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
@@ -201,12 +206,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Darstellung', style: Theme.of(context).textTheme.titleSmall),
+                      Text(tr('Darstellung', 'Appearance'), style: Theme.of(context).textTheme.titleSmall),
                       const SizedBox(height: 8),
                       ValueListenableBuilder<ThemeMode>(
                         valueListenable: SettingsService.themeMode,
                         builder: (context, mode, _) => SegmentedButton<ThemeMode>(
-                          segments: const [
+                          segments: [
                             ButtonSegment(
                               value: ThemeMode.system,
                               icon: Icon(Icons.brightness_auto_outlined),
@@ -215,12 +220,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ButtonSegment(
                               value: ThemeMode.light,
                               icon: Icon(Icons.light_mode_outlined),
-                              label: Text('Hell'),
+                              label: Text(tr('Hell', 'Light')),
                             ),
                             ButtonSegment(
                               value: ThemeMode.dark,
                               icon: Icon(Icons.dark_mode_outlined),
-                              label: Text('Dunkel'),
+                              label: Text(tr('Dunkel', 'Dark')),
                             ),
                           ],
                           selected: {mode},
@@ -231,11 +236,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 const Divider(height: 1),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Always bilingual, so it can be found in either language.
+                      Text('Sprache / Language', style: Theme.of(context).textTheme.titleSmall),
+                      const SizedBox(height: 8),
+                      SegmentedButton<AppLanguage>(
+                        segments: [
+                          ButtonSegment(
+                            value: AppLanguage.automatic,
+                            icon: const Icon(Icons.language),
+                            label: Text(tr('Automatisch', 'Automatic')),
+                          ),
+                          const ButtonSegment(value: AppLanguage.de, label: Text('Deutsch')),
+                          const ButtonSegment(value: AppLanguage.en, label: Text('English')),
+                        ],
+                        selected: {L10n.choice},
+                        onSelectionChanged: (v) => L10n.setChoice(v.first),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        Platform.isWindows
+                            ? tr('Automatisch: wie bei der Installation gewählt',
+                                'Automatic: as chosen during installation')
+                            : tr('Automatisch: wie die Gerätesprache',
+                                'Automatic: same as the device language'),
+                        style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.outline),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
                 if (WindowsDesktopService.supported) ...[
                   SwitchListTile(
                     secondary: const Icon(Icons.power_settings_new),
-                    title: const Text('Mit Windows starten'),
-                    subtitle: const Text('KK-PDF-Tool startet automatisch beim Anmelden'),
+                    title: Text(tr('Mit Windows starten', 'Start with Windows')),
+                    subtitle: Text(tr('KK-PDF-Tool startet automatisch beim Anmelden', 'KK-PDF-Tool starts automatically when you sign in')),
                     value: _autostart,
                     onChanged: (value) async {
                       setState(() => _autostart = value);
@@ -244,9 +283,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   SwitchListTile(
                     secondary: const Icon(Icons.minimize),
-                    title: const Text('Dabei nur im Infobereich starten'),
-                    subtitle: const Text(
-                      'Startet unsichtbar mit Symbol unten rechts neben der Uhr - Klick darauf öffnet die App',
+                    title: Text(tr('Dabei nur im Infobereich starten', 'Start only in the notification area')),
+                    subtitle: Text(
+                      tr('Startet unsichtbar mit Symbol unten rechts neben der Uhr - Klick darauf öffnet die App', 'Starts hidden with an icon at the bottom right next to the clock - click it to open the app'),
                     ),
                     value: _startMinimized,
                     onChanged: !_autostart
@@ -260,10 +299,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
                 if (Platform.isAndroid) ...[
                   SwitchListTile(
-                    title: const Text('Durchsuchbare PDFs'),
-                    subtitle: const Text(
-                      'Text wird beim Speichern offline erkannt und unsichtbar in die '
+                    title: Text(tr('Durchsuchbare PDFs', 'Searchable PDFs')),
+                    subtitle: Text(
+                      tr('Text wird beim Speichern offline erkannt und unsichtbar in die '
                       'PDF gelegt - so kannst du darin suchen und Text kopieren.',
+                      'Text is recognized offline when saving and laid invisibly into the '
+                      'PDF - so you can search it and copy text.'),
                     ),
                     value: _searchablePdf,
                     onChanged: (value) async {
@@ -274,9 +315,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const Divider(height: 1),
                 ],
                 SwitchListTile(
-                  title: const Text('Zuschnitt standardmäßig aktiv'),
-                  subtitle: const Text(
-                    'Bei jedem neuen Scan lässt sich das trotzdem einzeln umschalten.',
+                  title: Text(tr('Zuschnitt standardmäßig aktiv', 'Crop on by default')),
+                  subtitle: Text(
+                    tr('Bei jedem neuen Scan lässt sich das trotzdem einzeln umschalten.', 'You can still switch it for each new scan.'),
                   ),
                   value: _cropEnabled,
                   onChanged: (value) async {
@@ -287,31 +328,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.folder_outlined),
-                  title: const Text('Speicherort'),
+                  title: Text(tr('Speicherort', 'Storage location')),
                   subtitle: Text(
                     Platform.isAndroid
-                        ? 'Fertige PDFs landen zusätzlich in Downloads/KK-PDF-Tool'
-                        : 'Fertige PDFs landen zusätzlich im Downloads-Ordner, Unterordner "KK-PDF-Tool"',
+                        ? tr('Fertige PDFs landen zusätzlich in Downloads/KK-PDF-Tool', 'Finished PDFs are also saved to Downloads/KK-PDF-Tool')
+                        : tr('Fertige PDFs landen zusätzlich im Downloads-Ordner, Unterordner "KK-PDF-Tool"', 'Finished PDFs are also saved to the Downloads folder, subfolder "KK-PDF-Tool"'),
                   ),
                 ),
                 const Divider(height: 1),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                  child: Text('Datensicherung', style: Theme.of(context).textTheme.titleSmall),
+                  child: Text(tr('Datensicherung', 'Backup'), style: Theme.of(context).textTheme.titleSmall),
                 ),
                 ListTile(
                   leading: const Icon(Icons.backup_outlined),
-                  title: const Text('Sicherung erstellen'),
-                  subtitle: const Text(
-                    'Alle Scans, Ordner und Unterschriften als eine ZIP-Datei in Downloads/KK-PDF-Tool',
+                  title: Text(tr('Sicherung erstellen', 'Create backup')),
+                  subtitle: Text(
+                    tr('Alle Scans, Ordner und Unterschriften als eine ZIP-Datei in Downloads/KK-PDF-Tool', 'All scans, folders and signatures as one ZIP file in Downloads/KK-PDF-Tool'),
                   ),
                   onTap: _createBackup,
                 ),
                 ListTile(
                   leading: const Icon(Icons.settings_backup_restore),
-                  title: const Text('Sicherung wiederherstellen'),
-                  subtitle: const Text(
-                    'Fügt die Dokumente einer Sicherung hinzu - vorhandene bleiben unverändert',
+                  title: Text(tr('Sicherung wiederherstellen', 'Restore backup')),
+                  subtitle: Text(
+                    tr('Fügt die Dokumente einer Sicherung hinzu - vorhandene bleiben unverändert', 'Adds the documents of a backup - existing ones stay unchanged'),
                   ),
                   onTap: _restoreBackup,
                 ),
@@ -322,21 +363,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Google-Verbindung (für Online-Umwandlungen und Texterkennung unter Windows)',
+                        tr('Google-Verbindung (für Online-Umwandlungen und Texterkennung unter Windows)', 'Google connection (for online conversions and text recognition on Windows)'),
                         style: Theme.of(context).textTheme.titleSmall,
                       ),
                       const SizedBox(height: 4),
                       Text(
                         Platform.isWindows
-                            ? 'Die Werkzeuge mit Wolken-Symbol laufen über dein eigenes Google-Konto '
+                            ? tr('Die Werkzeuge mit Wolken-Symbol laufen über dein eigenes Google-Konto '
                                 '(kostenlos, braucht Internet). Unter Windows braucht die App dafür '
                                 'einmalig eine eigene Client-ID vom Typ "Desktop-App" aus deinem '
                                 'Google-Cloud-Projekt (siehe README). Beim ersten Umwandeln öffnet '
-                                'sich dann der Browser zum Anmelden.'
-                            : 'Die Werkzeuge mit Wolken-Symbol laufen über dein eigenes Google-Konto '
+                                'sich dann der Browser zum Anmelden.',
+                                'The tools with a cloud icon run through your own Google account '
+                                '(free, needs internet). On Windows the app needs its own '
+                                'client ID of type "Desktop app" from your Google Cloud '
+                                'project once (see README). The first conversion then opens '
+                                'the browser to sign in.')
+                            : tr('Die Werkzeuge mit Wolken-Symbol laufen über dein eigenes Google-Konto '
                                 '(kostenlos, braucht Internet). Die Client-ID ist bereits fest '
                                 'in der App hinterlegt — nur ändern, falls du ein eigenes '
                                 'Google-Cloud-Projekt verwenden möchtest (siehe README).',
+                                'The tools with a cloud icon run through your own Google account '
+                                '(free, needs internet). The client ID is already built '
+                                'into the app - only change it if you want to use your own '
+                                'Google Cloud project (see README).'),
                         style: TextStyle(
                           fontSize: 13,
                           color: Theme.of(context).colorScheme.outline,
@@ -346,8 +396,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       if (Platform.isWindows) ...[
                         TextField(
                           controller: _desktopClientIdController,
-                          decoration: const InputDecoration(
-                            labelText: 'Client-ID (Desktop-App)',
+                          decoration: InputDecoration(
+                            labelText: tr('Client-ID (Desktop-App)', 'Client ID (desktop app)'),
                             hintText: 'xxxxxxxxxxxx.apps.googleusercontent.com',
                             border: OutlineInputBorder(),
                           ),
@@ -356,16 +406,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         TextField(
                           controller: _desktopSecretController,
                           obscureText: true,
-                          decoration: const InputDecoration(
-                            labelText: 'Client-Secret (Desktop-App)',
+                          decoration: InputDecoration(
+                            labelText: tr('Client-Secret (Desktop-App)', 'Client secret (desktop app)'),
                             border: OutlineInputBorder(),
                           ),
                         ),
                       ] else
                         TextField(
                           controller: _clientIdController,
-                          decoration: const InputDecoration(
-                            labelText: 'Google Web-Client-ID',
+                          decoration: InputDecoration(
+                            labelText: tr('Google Web-Client-ID', 'Google web client ID'),
                             hintText: 'xxxxxxxxxxxx.apps.googleusercontent.com',
                             border: OutlineInputBorder(),
                           ),
@@ -381,10 +431,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 if (!context.mounted) return;
                                 setState(() {});
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Von Google abgemeldet')),
+                                  SnackBar(content: Text(tr('Von Google abgemeldet', 'Signed out of Google'))),
                                 );
                               },
-                              child: const Text('Abmelden'),
+                              child: Text(tr('Abmelden', 'Sign out')),
                             ),
                           const SizedBox(width: 8),
                           FilledButton(
@@ -403,10 +453,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               }
                               if (!context.mounted) return;
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Gespeichert')),
+                                SnackBar(content: Text(tr('Gespeichert', 'Saved'))),
                               );
                             },
-                            child: const Text('Speichern'),
+                            child: Text(tr('Speichern', 'Save')),
                           ),
                         ],
                       ),

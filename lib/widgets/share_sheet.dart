@@ -7,6 +7,7 @@ import '../models/scan_document.dart';
 import '../services/document_share_service.dart';
 import '../services/document_store.dart';
 import '../utils/formatting.dart';
+import '../l10n.dart';
 
 /// Asks how to share [doc] (original PDF, smaller PDF or JPG images),
 /// prepares the files with a progress indicator and opens the system share
@@ -29,24 +30,24 @@ Future<void> showShareSheet(
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text('"${doc.title}" teilen als …', style: Theme.of(sheetContext).textTheme.titleMedium),
+            child: Text(tr('"${doc.title}" teilen als …', 'Share "${doc.title}" as …'), style: Theme.of(sheetContext).textTheme.titleMedium),
           ),
           ListTile(
             leading: const Icon(Icons.picture_as_pdf_outlined),
-            title: const Text('PDF (Original)'),
+            title: Text(tr('PDF (Original)', 'PDF (original)')),
             subtitle: Text(formatFileSize(size)),
             onTap: () => Navigator.pop(sheetContext, ShareFormat.originalPdf),
           ),
           ListTile(
             leading: const Icon(Icons.compress),
-            title: const Text('PDF verkleinert'),
-            subtitle: const Text('Ideal für E-Mail und WhatsApp'),
+            title: Text(tr('PDF verkleinert', 'Smaller PDF')),
+            subtitle: Text(tr('Ideal für E-Mail und WhatsApp', 'Ideal for email and WhatsApp')),
             onTap: () => Navigator.pop(sheetContext, ShareFormat.smallPdf),
           ),
           ListTile(
             leading: const Icon(Icons.image_outlined),
-            title: const Text('Bilder (JPG)'),
-            subtitle: Text(doc.pageCount == 1 ? '1 Bild' : '${doc.pageCount} Bilder, eins pro Seite'),
+            title: Text(tr('Bilder (JPG)', 'Images (JPG)')),
+            subtitle: Text(doc.pageCount == 1 ? tr('1 Bild', '1 image') : tr('${doc.pageCount} Bilder, eins pro Seite', '${doc.pageCount} images, one per page')),
             onTap: () => Navigator.pop(sheetContext, ShareFormat.images),
           ),
         ],
@@ -59,14 +60,14 @@ Future<void> showShareSheet(
   showDialog<void>(
     context: context,
     barrierDismissible: false,
-    builder: (_) => const PopScope(
+    builder: (_) => PopScope(
       canPop: false,
       child: AlertDialog(
         content: Row(
           children: [
             SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5)),
             SizedBox(width: 16),
-            Text('Wird vorbereitet…'),
+            Text(tr('Wird vorbereitet…', 'Preparing…')),
           ],
         ),
       ),
@@ -84,7 +85,7 @@ Future<void> showShareSheet(
   if (!context.mounted) return;
   if (prepared == null) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Teilen fehlgeschlagen: $error')),
+      SnackBar(content: Text(tr('Teilen fehlgeschlagen: $error', 'Sharing failed: $error'))),
     );
     return;
   }

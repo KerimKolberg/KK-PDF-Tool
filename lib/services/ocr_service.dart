@@ -6,6 +6,7 @@ import 'package:pdf/pdf.dart';
 
 import '../models/ocr_result.dart';
 import 'image_processing.dart';
+import '../l10n.dart';
 
 /// Offline text recognition via ML Kit (Android only, see MainActivity.kt).
 /// Windows has no comparable offline engine, so callers fall back to the
@@ -22,7 +23,7 @@ class OcrService {
       'recognize',
       {'bytes': imageBytes},
     );
-    if (map == null) throw const FormatException('Keine Antwort von der Texterkennung');
+    if (map == null) throw FormatException(tr('Keine Antwort von der Texterkennung', 'No answer from text recognition'));
     return OcrResult.fromMap(map);
   }
 

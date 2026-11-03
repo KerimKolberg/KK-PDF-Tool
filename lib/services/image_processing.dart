@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:image/image.dart' as img;
+import '../l10n.dart';
 
 /// Enum order is persisted (remembered filter), so new values go at the end;
 /// [scanFilterOrder] controls how they're shown.
@@ -22,13 +23,13 @@ extension ScanFilterLabel on ScanFilter {
       case ScanFilter.original:
         return 'Original';
       case ScanFilter.document:
-        return 'Dokument';
+        return tr('Dokument', 'Document');
       case ScanFilter.enhanced:
-        return 'Farbe+';
+        return tr('Farbe+', 'Color+');
       case ScanFilter.grayscale:
-        return 'Graustufen';
+        return tr('Graustufen', 'Grayscale');
       case ScanFilter.blackAndWhite:
-        return 'Schwarz/Weiß';
+        return tr('Schwarz/Weiß', 'Black/white');
     }
   }
 
@@ -291,7 +292,7 @@ class ImageProcessing {
 Uint8List bakeOrientationJpegIsolate(Uint8List bytes) {
   final decoded = img.decodeImage(bytes);
   if (decoded == null) {
-    throw const FormatException('Bild konnte nicht gelesen werden');
+    throw FormatException(tr('Bild konnte nicht gelesen werden', 'Could not read image'));
   }
   final baked = img.bakeOrientation(decoded);
   return img.encodeJpg(baked, quality: 95);
@@ -301,7 +302,7 @@ Uint8List bakeOrientationJpegIsolate(Uint8List bytes) {
 Uint8List rotateJpeg90Isolate(Uint8List bytes) {
   final decoded = img.decodeImage(bytes);
   if (decoded == null) {
-    throw const FormatException('Bild konnte nicht gelesen werden');
+    throw FormatException(tr('Bild konnte nicht gelesen werden', 'Could not read image'));
   }
   final rotated = img.copyRotate(decoded, angle: 90);
   return img.encodeJpg(rotated, quality: 95);
@@ -312,7 +313,7 @@ Uint8List rotateJpeg90Isolate(Uint8List bytes) {
 Uint8List downscaleJpegIsolate(Map<String, dynamic> args) {
   final decoded = img.decodeImage(args['bytes'] as Uint8List);
   if (decoded == null) {
-    throw const FormatException('Bild konnte nicht gelesen werden');
+    throw FormatException(tr('Bild konnte nicht gelesen werden', 'Could not read image'));
   }
   final maxSide = args['maxSide'] as int;
   final longer = math.max(decoded.width, decoded.height);
@@ -332,7 +333,7 @@ Uint8List downscaleJpegIsolate(Map<String, dynamic> args) {
 Uint8List previewFilterIsolate(Map<String, dynamic> args) {
   final decoded = img.decodeImage(args['bytes'] as Uint8List);
   if (decoded == null) {
-    throw const FormatException('Bild konnte nicht gelesen werden');
+    throw FormatException(tr('Bild konnte nicht gelesen werden', 'Could not read image'));
   }
   final filtered = ImageProcessing.applyFilter(
     decoded,
@@ -357,7 +358,7 @@ Uint8List processPageIsolate(Map<String, dynamic> args) {
 
   var image = img.decodeImage(bytes);
   if (image == null) {
-    throw const FormatException('Bild konnte nicht gelesen werden');
+    throw FormatException(tr('Bild konnte nicht gelesen werden', 'Could not read image'));
   }
 
   final corners = <img.Point>[

@@ -5,6 +5,10 @@ für Android (APK) und Windows (EXE).
 
 ## Funktionen
 
+- **Deutsch und Englisch:** Einstellungen → "Sprache / Language". "Automatisch"
+  folgt unter Windows der beim Installieren gewählten Sprache, unter Android
+  der Gerätesprache. Texte stehen im Code direkt als `tr('Deutsch', 'English')`
+  (siehe `lib/l10n.dart`).
 - **Automatisch scannen (nur Android):** Google ML Kit erkennt das Dokument
   direkt in der Kamera-Vorschau und schneidet es automatisch zu, ganz wie bei
   CamScanner — läuft komplett offline auf dem Gerät.

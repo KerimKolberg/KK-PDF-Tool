@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../services/image_processing.dart';
 import '../services/settings_service.dart';
 import '../widgets/corner_crop_overlay.dart';
+import '../l10n.dart';
 
 /// Lets the user fine-tune the four document corners on a captured photo,
 /// optionally rotate it, and pick a filter, before it is flattened into a
@@ -66,7 +67,7 @@ class _CropScreenState extends State<CropScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = 'Bild konnte nicht geladen werden: $e';
+        _error = tr('Bild konnte nicht geladen werden: $e', 'Could not load image: $e');
         _loading = false;
       });
     }
@@ -172,7 +173,7 @@ class _CropScreenState extends State<CropScreen> {
       if (!mounted) return;
       setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Drehen fehlgeschlagen: $e')),
+        SnackBar(content: Text(tr('Drehen fehlgeschlagen: $e', 'Rotating failed: $e'))),
       );
     }
   }
@@ -208,7 +209,7 @@ class _CropScreenState extends State<CropScreen> {
       if (!mounted) return;
       setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Verarbeitung fehlgeschlagen: $e')),
+        SnackBar(content: Text(tr('Verarbeitung fehlgeschlagen: $e', 'Processing failed: $e'))),
       );
     }
   }
@@ -218,17 +219,17 @@ class _CropScreenState extends State<CropScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text(_cropEnabled ? 'Zuschneiden' : 'Filter & Drehen'),
+        title: Text(_cropEnabled ? tr('Zuschneiden', 'Crop') : tr('Filter & Drehen', 'Filter & rotate')),
         actions: [
           IconButton(
             onPressed: _busy ? null : () => setState(() => _cropEnabled = !_cropEnabled),
             icon: Icon(_cropEnabled ? Icons.crop : Icons.crop_free),
-            tooltip: _cropEnabled ? 'Zuschnitt aus' : 'Zuschnitt an',
+            tooltip: _cropEnabled ? tr('Zuschnitt aus', 'Crop off') : tr('Zuschnitt an', 'Crop on'),
           ),
           IconButton(
             onPressed: _busy ? null : _rotate,
             icon: const Icon(Icons.rotate_right),
-            tooltip: 'Drehen',
+            tooltip: tr('Drehen', 'Rotate'),
           ),
         ],
       ),
@@ -258,9 +259,9 @@ class _CropScreenState extends State<CropScreen> {
                             ),
                           FilterChip(
                             avatar: const Icon(Icons.wb_shade, size: 18),
-                            label: const Text('Schatten entfernen'),
+                            label: Text(tr('Schatten entfernen', 'Remove shadows')),
                             tooltip: _filter.includesShadowRemoval
-                                ? 'Bei diesem Filter schon enthalten'
+                                ? tr('Bei diesem Filter schon enthalten', 'Already included in this filter')
                                 : null,
                             selected: _removeShadows || _filter.includesShadowRemoval,
                             onSelected: _busy || _filter.includesShadowRemoval
@@ -282,7 +283,7 @@ class _CropScreenState extends State<CropScreen> {
                                 child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                               )
                             : const Icon(Icons.check),
-                        label: Text(_busy ? 'Verarbeite…' : 'Übernehmen'),
+                        label: Text(_busy ? tr('Verarbeite…', 'Processing…') : tr('Übernehmen', 'Apply')),
                       ),
                     ),
                   ],

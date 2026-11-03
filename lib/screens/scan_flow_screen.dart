@@ -11,6 +11,7 @@ import '../services/downloads_export_service.dart';
 import '../services/settings_service.dart';
 import 'capture_screen.dart';
 import 'crop_screen.dart';
+import '../l10n.dart';
 
 /// Orchestrates a scanning session: capture/crop one or more pages, then
 /// save them as a new [ScanDocument] with a generated PDF.
@@ -103,7 +104,7 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
       if (!mounted) return;
       setState(() => _autoScanning = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Automatischer Scan fehlgeschlagen: $e')),
+        SnackBar(content: Text(tr('Automatischer Scan fehlgeschlagen: $e', 'Automatic scan failed: $e'))),
       );
     }
   }
@@ -131,16 +132,16 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Scan verwerfen?'),
-        content: Text('${_pages.length} erfasste Seite(n) gehen verloren.'),
+        title: Text(tr('Scan verwerfen?', 'Discard scan?')),
+        content: Text(tr('${_pages.length} erfasste Seite(n) gehen verloren.', '${_pages.length} captured page(s) will be lost.')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Abbrechen'),
+            child: Text(tr('Abbrechen', 'Cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Verwerfen'),
+            child: Text(tr('Verwerfen', 'Discard')),
           ),
         ],
       ),
@@ -162,7 +163,7 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
           if (mounted) {
             setState(
               () => _savingLabel =
-                  'Text ${done < total ? done + 1 : total}/$total…',
+                  tr('Text ${done < total ? done + 1 : total}/$total…', 'Text ${done < total ? done + 1 : total}/$total…'),
             );
           }
         },
@@ -188,7 +189,7 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
       if (location != null) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Gespeichert unter $location')));
+        ).showSnackBar(SnackBar(content: Text(tr('Gespeichert unter $location', 'Saved to $location'))));
       }
       Navigator.of(context).pop<ScanDocument>(doc);
     } catch (e) {
@@ -196,7 +197,7 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
       setState(() => _saving = false);
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Speichern fehlgeschlagen: $e')));
+      ).showSnackBar(SnackBar(content: Text(tr('Speichern fehlgeschlagen: $e', 'Saving failed: $e'))));
     }
   }
 
@@ -234,8 +235,10 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '$total Dokumente gespeichert'
+            tr('$total Dokumente gespeichert'
             '${widget.folder != null ? ' in "${widget.folder}"' : ''}',
+            '$total documents saved'
+            '${widget.folder != null ? ' in "${widget.folder}"' : ''}'),
           ),
         ),
       );
@@ -248,7 +251,7 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
         _savingLabel = null;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Fehler nach $saved von $total Dokumenten: $e')),
+        SnackBar(content: Text(tr('Fehler nach $saved von $total Dokumenten: $e', 'Error after $saved of $total documents: $e'))),
       );
     }
   }
@@ -256,35 +259,35 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
   Future<String?> _askTitle({bool batch = false}) async {
     final now = DateTime.now();
     final defaultTitle =
-        'Scan ${now.day}.${now.month}.${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+        tr('Scan ${now.day}.${now.month}.${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}', 'Scan ${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}');
     final controller = TextEditingController(text: defaultTitle);
     return showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-          batch ? '${_pages.length} Dokumente speichern' : 'Dokument speichern',
+          batch ? tr('${_pages.length} Dokumente speichern', 'Save ${_pages.length} documents') : tr('Dokument speichern', 'Save document'),
         ),
         content: TextField(
           controller: controller,
           autofocus: true,
           decoration: InputDecoration(
-            labelText: 'Titel',
+            labelText: tr('Titel', 'Title'),
             helperText: batch
-                ? 'Wird nummeriert: "Titel 1", "Titel 2", …'
+                ? tr('Wird nummeriert: "Titel 1", "Titel 2", …', 'Numbered as "Title 1", "Title 2", …')
                 : null,
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Abbrechen'),
+            child: Text(tr('Abbrechen', 'Cancel')),
           ),
           FilledButton(
             onPressed: () {
               final text = controller.text.trim();
               Navigator.pop(context, text.isEmpty ? defaultTitle : text);
             },
-            child: const Text('Speichern'),
+            child: Text(tr('Speichern', 'Save')),
           ),
         ],
       ),
@@ -305,13 +308,13 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Neuer Scan (${_pages.length} Seite(n))'),
+          title: Text(tr('Neuer Scan (${_pages.length} Seite(n))', 'New scan (${_pages.length} page(s))')),
           actions: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Row(
                 children: [
-                  const Text('Zuschnitt', style: TextStyle(fontSize: 13)),
+                  Text(tr('Zuschnitt', 'Crop'), style: TextStyle(fontSize: 13)),
                   Switch(
                     value: _cropEnabled,
                     onChanged: (v) => setState(() => _cropEnabled = v),
@@ -328,9 +331,9 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
               child: SwitchListTile(
                 dense: true,
                 secondary: const Icon(Icons.burst_mode_outlined),
-                title: const Text('Stapel-Modus'),
-                subtitle: const Text(
-                  'Jede Seite als eigenes Dokument speichern (z. B. Belege)',
+                title: Text(tr('Stapel-Modus', 'Batch mode')),
+                subtitle: Text(
+                  tr('Jede Seite als eigenes Dokument speichern (z. B. Belege)', 'Save each page as its own document (e.g. receipts)'),
                 ),
                 value: _batch,
                 onChanged: _saving
@@ -363,7 +366,7 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
                   child: OutlinedButton.icon(
                     onPressed: _saving ? null : _addPage,
                     icon: const Icon(Icons.add_a_photo),
-                    label: Text(_hasAutoScan ? 'Manuell' : 'Seite hinzufügen'),
+                    label: Text(_hasAutoScan ? tr('Manuell', 'Manual') : tr('Seite hinzufügen', 'Add page')),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -381,7 +384,7 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
                           )
                         : const Icon(Icons.save),
                     label: Text(
-                      _saving ? (_savingLabel ?? 'Speichere…') : 'Speichern',
+                      _saving ? (_savingLabel ?? tr('Speichere…', 'Saving…')) : tr('Speichern', 'Save'),
                     ),
                   ),
                 ),
@@ -403,8 +406,8 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
                 children: [
                   Text(
                     _hasAutoScan
-                        ? 'Automatisch scannen erkennt das Dokument\nund den Zuschnitt direkt beim Fotografieren.'
-                        : 'Noch keine Seite erfasst.',
+                        ? tr('Automatisch scannen erkennt das Dokument\nund den Zuschnitt direkt beim Fotografieren.', 'Automatic scanning detects the document\nand the crop right while taking the photo.')
+                        : tr('Noch keine Seite erfasst.', 'No page captured yet.'),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.outline,
@@ -425,14 +428,14 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
                             )
                           : const Icon(Icons.document_scanner),
                       label: Text(
-                        _autoScanning ? 'Scanne…' : 'Automatisch scannen',
+                        _autoScanning ? tr('Scanne…', 'Scanning…') : tr('Automatisch scannen', 'Scan automatically'),
                       ),
                     ),
                     const SizedBox(height: 10),
                     OutlinedButton.icon(
                       onPressed: _addPage,
                       icon: const Icon(Icons.add_a_photo),
-                      label: const Text('Manuell aufnehmen'),
+                      label: Text(tr('Manuell aufnehmen', 'Capture manually')),
                     ),
                   ],
                 ],

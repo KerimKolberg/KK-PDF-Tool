@@ -13,6 +13,7 @@ import '../../utils/formatting.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_result.dart';
+import '../../l10n.dart';
 
 class _PickedPdf {
   final String name;
@@ -69,13 +70,13 @@ class _RotatePdfScreenState extends State<RotatePdfScreen> {
         );
       }
       var message =
-          '${_pdfs.length} Datei(en) gedreht${lastLocation != null ? ' → ${folderOf(lastLocation)}' : ''}';
+          tr('${_pdfs.length} Datei(en) gedreht${lastLocation != null ? ' → ${folderOf(lastLocation)}' : ''}', '${_pdfs.length} file(s) rotated${lastLocation != null ? ' → ${folderOf(lastLocation)}' : ''}');
       if (_deleteOriginals) {
         final notDeleted = await OriginalFilesCleanupService.deleteAll(
           [for (final pdf in _pdfs) pdf.path],
         );
         if (notDeleted.isNotEmpty) {
-          message += ' · ${notDeleted.length} Original(e) konnten nicht gelöscht werden';
+          message += tr(' · ${notDeleted.length} Original(e) konnten nicht gelöscht werden', ' · ${notDeleted.length} original(s) could not be deleted');
         }
       }
       if (!mounted) return;
@@ -84,7 +85,7 @@ class _RotatePdfScreenState extends State<RotatePdfScreen> {
       if (!mounted) return;
       setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Drehen fehlgeschlagen: $e')),
+        SnackBar(content: Text(tr('Drehen fehlgeschlagen: $e', 'Rotating failed: $e'))),
       );
     }
   }
@@ -100,13 +101,13 @@ class _RotatePdfScreenState extends State<RotatePdfScreen> {
     return ToolDropZone(
       onDrop: _addPdfs,
       child: Scaffold(
-        appBar: AppBar(title: const Text('PDF drehen')),
+        appBar: AppBar(title: Text(tr('PDF drehen', 'Rotate PDF'))),
         body: _pdfs.isEmpty
             ? Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24),
                   child: Text(
-                    'Füge eine oder mehrere PDF-Dateien hinzu.',
+                    tr('Füge eine oder mehrere PDF-Dateien hinzu.', 'Add one or more PDF files.'),
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Theme.of(context).colorScheme.outline),
                   ),
@@ -128,7 +129,7 @@ class _RotatePdfScreenState extends State<RotatePdfScreen> {
                       ),
                     ),
                   const SizedBox(height: 8),
-                  Text('Winkel', style: Theme.of(context).textTheme.titleSmall),
+                  Text(tr('Winkel', 'Angle'), style: Theme.of(context).textTheme.titleSmall),
                   const SizedBox(height: 4),
                   SegmentedButton<int>(
                     segments: const [
@@ -145,12 +146,12 @@ class _RotatePdfScreenState extends State<RotatePdfScreen> {
                           },
                   ),
                   const SizedBox(height: 16),
-                  Text('Seiten (optional)', style: Theme.of(context).textTheme.titleSmall),
+                  Text(tr('Seiten (optional)', 'Pages (optional)'), style: Theme.of(context).textTheme.titleSmall),
                   const SizedBox(height: 4),
                   TextField(
                     controller: _pageSpecController,
-                    decoration: const InputDecoration(
-                      hintText: 'z. B. 1-3,5 · leer lassen für alle Seiten',
+                    decoration: InputDecoration(
+                      hintText: tr('z. B. 1-3,5 · leer lassen für alle Seiten', 'e.g. 1-3,5 · leave empty for all pages'),
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -173,7 +174,7 @@ class _RotatePdfScreenState extends State<RotatePdfScreen> {
                       child: OutlinedButton.icon(
                         onPressed: _busy ? null : _addPdfs,
                         icon: const Icon(Icons.picture_as_pdf_outlined),
-                        label: const Text('PDFs hinzufügen'),
+                        label: Text(tr('PDFs hinzufügen', 'Add PDFs')),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -188,7 +189,7 @@ class _RotatePdfScreenState extends State<RotatePdfScreen> {
                                     strokeWidth: 2, color: Colors.white),
                               )
                             : const Icon(Icons.rotate_right),
-                        label: Text(_busy ? 'Drehe…' : 'Drehen & speichern'),
+                        label: Text(_busy ? tr('Drehe…', 'Rotating…') : tr('Drehen & speichern', 'Rotate & save')),
                       ),
                     ),
                   ],

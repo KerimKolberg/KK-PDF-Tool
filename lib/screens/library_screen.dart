@@ -14,15 +14,19 @@ import 'document_viewer_screen.dart';
 import 'home_shell.dart';
 import 'id_scan_screen.dart';
 import 'scan_flow_screen.dart';
+import '../l10n.dart';
 
 enum LibrarySort {
-  newest('Neueste zuerst'),
-  oldest('Älteste zuerst'),
-  name('Name (A-Z)'),
-  size('Größte zuerst');
+  newest('Neueste zuerst', 'Newest first'),
+  oldest('Älteste zuerst', 'Oldest first'),
+  name('Name (A-Z)', 'Name (A-Z)'),
+  size('Größte zuerst', 'Largest first');
 
-  final String label;
-  const LibrarySort(this.label);
+  final String _de;
+  final String _en;
+  const LibrarySort(this._de, this._en);
+
+  String get label => tr(_de, _en);
 }
 
 class LibraryScreen extends StatefulWidget {
@@ -127,14 +131,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.add_a_photo_outlined),
-              title: const Text('Neuer Scan'),
-              subtitle: const Text('Ein oder mehrere Seiten, auch als Stapel'),
+              title: Text(tr('Neuer Scan', 'New scan')),
+              subtitle: Text(tr('Ein oder mehrere Seiten, auch als Stapel', 'One or more pages, also as a batch')),
               onTap: () => Navigator.pop(context, _newScan),
             ),
             ListTile(
               leading: const Icon(Icons.badge_outlined),
-              title: const Text('Ausweis scannen'),
-              subtitle: const Text('Vorder- und Rückseite auf einer Seite'),
+              title: Text(tr('Ausweis scannen', 'Scan ID card')),
+              subtitle: Text(tr('Vorder- und Rückseite auf einer Seite', 'Front and back on one page')),
               onTap: () => Navigator.pop(context, _newIdScan),
             ),
           ],
@@ -167,22 +171,22 @@ class _LibraryScreenState extends State<LibraryScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.ios_share),
-              title: const Text('Teilen…'),
+              title: Text(tr('Teilen…', 'Share…')),
               onTap: () => Navigator.pop(context, 'share'),
             ),
             ListTile(
               leading: const Icon(Icons.drive_file_move_outlined),
-              title: const Text('In Ordner verschieben'),
+              title: Text(tr('In Ordner verschieben', 'Move to folder')),
               onTap: () => Navigator.pop(context, 'move'),
             ),
             ListTile(
               leading: const Icon(Icons.edit_outlined),
-              title: const Text('Umbenennen'),
+              title: Text(tr('Umbenennen', 'Rename')),
               onTap: () => Navigator.pop(context, 'rename'),
             ),
             ListTile(
               leading: const Icon(Icons.delete_outline),
-              title: const Text('Löschen'),
+              title: Text(tr('Löschen', 'Delete')),
               onTap: () => Navigator.pop(context, 'delete'),
             ),
           ],
@@ -203,13 +207,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
         final name = await showDialog<String>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Umbenennen'),
+            title: Text(tr('Umbenennen', 'Rename')),
             content: TextField(controller: controller, autofocus: true),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Abbrechen')),
+              TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('Abbrechen', 'Cancel'))),
               FilledButton(
                 onPressed: () => Navigator.pop(context, controller.text.trim()),
-                child: const Text('Speichern'),
+                child: Text(tr('Speichern', 'Save')),
               ),
             ],
           ),
@@ -221,11 +225,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
         final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Dokument löschen?'),
-            content: Text('"${doc.title}" wird unwiderruflich gelöscht.'),
+            title: Text(tr('Dokument löschen?', 'Delete document?')),
+            content: Text(tr('"${doc.title}" wird unwiderruflich gelöscht.', '"${doc.title}" will be deleted permanently.')),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Abbrechen')),
-              FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Löschen')),
+              TextButton(onPressed: () => Navigator.pop(context, false), child: Text(tr('Abbrechen', 'Cancel'))),
+              FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(tr('Löschen', 'Delete'))),
             ],
           ),
         );
@@ -252,13 +256,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.edit_outlined),
-              title: Text('"$folder" umbenennen'),
+              title: Text(tr('"$folder" umbenennen', 'Rename "$folder"')),
               onTap: () => Navigator.pop(context, 'rename'),
             ),
             ListTile(
               leading: const Icon(Icons.folder_delete_outlined),
-              title: Text('"$folder" löschen'),
-              subtitle: const Text('Die Dokumente bleiben erhalten'),
+              title: Text(tr('"$folder" löschen', 'Delete "$folder"')),
+              subtitle: Text(tr('Die Dokumente bleiben erhalten', 'The documents are kept')),
               onTap: () => Navigator.pop(context, 'delete'),
             ),
           ],
@@ -267,7 +271,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
     if (!mounted) return;
     if (action == 'rename') {
-      final name = await promptFolderName(context, title: 'Ordner umbenennen', initial: folder);
+      final name = await promptFolderName(context, title: tr('Ordner umbenennen', 'Rename folder'), initial: folder);
       if (name == null || name == folder) return;
       await _store.renameFolder(folder, name);
       if (_folder == folder) _openFolder(name);
@@ -327,12 +331,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   String _formatDate(DateTime dt) {
     String two(int n) => n.toString().padLeft(2, '0');
-    return '${two(dt.day)}.${two(dt.month)}.${dt.year} ${two(dt.hour)}:${two(dt.minute)}';
+    return tr('${two(dt.day)}.${two(dt.month)}.${dt.year} ${two(dt.hour)}:${two(dt.minute)}', '${dt.year}-${two(dt.month)}-${two(dt.day)} ${two(dt.hour)}:${two(dt.minute)}');
   }
 
   String _meta(ScanDocument doc, {bool withFolder = true}) => [
         _formatDate(doc.createdAt),
-        '${doc.pageCount} ${doc.pageCount == 1 ? 'Seite' : 'Seiten'}',
+        tr('${doc.pageCount} ${doc.pageCount == 1 ? 'Seite' : 'Seiten'}', '${doc.pageCount} ${doc.pageCount == 1 ? 'page' : 'pages'}'),
         if ((_sizes[doc.id] ?? 0) > 0) formatFileSize(_sizes[doc.id]!),
         if (withFolder && _folder == null && doc.folder != null) doc.folder!,
       ].join(' · ');
@@ -341,15 +345,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
     if (_searching) {
       return AppBar(
         leading: IconButton(
-          tooltip: 'Suche schließen',
+          tooltip: tr('Suche schließen', 'Close search'),
           icon: const Icon(Icons.arrow_back),
           onPressed: () => _setSearching(false),
         ),
         title: TextField(
           controller: _searchController,
           autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'Titel oder Text suchen…',
+          decoration: InputDecoration(
+            hintText: tr('Titel oder Text suchen…', 'Search titles or text…'),
             border: InputBorder.none,
           ),
           onChanged: (v) => setState(() => _query = v),
@@ -357,7 +361,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
         actions: [
           if (_query.isNotEmpty)
             IconButton(
-              tooltip: 'Leeren',
+              tooltip: tr('Leeren', 'Clear'),
               icon: const Icon(Icons.close),
               onPressed: () => setState(() {
                 _query = '';
@@ -368,15 +372,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
       );
     }
     return AppBar(
-      title: Text(_folder ?? 'Meine Scans'),
+      title: Text(_folder ?? tr('Meine Scans', 'My scans')),
       actions: [
         IconButton(
-          tooltip: 'Suchen',
+          tooltip: tr('Suchen', 'Search'),
           icon: const Icon(Icons.search),
           onPressed: () => _setSearching(true),
         ),
         PopupMenuButton<LibrarySort>(
-          tooltip: 'Sortieren',
+          tooltip: tr('Sortieren', 'Sort'),
           icon: const Icon(Icons.sort),
           initialValue: _sort,
           onSelected: (sort) {
@@ -389,7 +393,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           ],
         ),
         IconButton(
-          tooltip: _grid ? 'Listenansicht' : 'Rasteransicht',
+          tooltip: _grid ? tr('Listenansicht', 'List view') : tr('Rasteransicht', 'Grid view'),
           icon: Icon(_grid ? Icons.view_list_outlined : Icons.grid_view_outlined),
           onPressed: () {
             setState(() => _grid = !_grid);
@@ -411,7 +415,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: ChoiceChip(
-              label: const Text('Alle'),
+              label: Text(tr('Alle', 'All')),
               selected: _folder == null,
               onSelected: (_) => setState(() => _openFolder(null)),
             ),
@@ -431,7 +435,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
             ),
           ActionChip(
             avatar: const Icon(Icons.create_new_folder_outlined, size: 18),
-            label: const Text('Ordner'),
+            label: Text(tr('Ordner', 'Folder')),
             onPressed: _createFolder,
           ),
         ],
@@ -484,10 +488,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
             const SizedBox(height: 12),
             Text(
               _query.isNotEmpty
-                  ? 'Keine Treffer für "$_query".'
+                  ? tr('Keine Treffer für "$_query".', 'No results for "$_query".')
                   : noDocsAtAll
-                      ? 'Noch keine Scans vorhanden.\nTippe unten auf "Neuer Scan".'
-                      : 'Dieser Ordner ist leer.\nNeue Scans landen automatisch hier.',
+                      ? tr('Noch keine Scans vorhanden.\nTippe unten auf "Neuer Scan".', 'No scans yet.\nTap "New scan" below.')
+                      : tr('Dieser Ordner ist leer.\nNeue Scans landen automatisch hier.', 'This folder is empty.\nNew scans land here automatically.'),
               textAlign: TextAlign.center,
             ),
           ],
@@ -613,7 +617,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showScanOptions,
         icon: const Icon(Icons.add_a_photo),
-        label: const Text('Neuer Scan'),
+        label: Text(tr('Neuer Scan', 'New scan')),
       ),
     );
   }

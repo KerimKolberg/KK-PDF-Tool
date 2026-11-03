@@ -41,6 +41,14 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
+[INI]
+; The app shows its texts in the language chosen for setup ("Automatic"
+; language setting in the app).
+Filename: "{app}\language.ini"; Section: "App"; Key: "Language"; String: "{language}"
+
+[UninstallDelete]
+Type: files; Name: "{app}\language.ini"
+
 [Icons]
 Name: "{group}\KK-PDF-Tool"; Filename: "{app}\KK-PDF-Tool.exe"
 Name: "{autodesktop}\KK-PDF-Tool"; Filename: "{app}\KK-PDF-Tool.exe"; Tasks: desktopicon

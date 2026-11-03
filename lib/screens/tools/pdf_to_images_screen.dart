@@ -12,6 +12,7 @@ import '../../utils/formatting.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_result.dart';
+import '../../l10n.dart';
 
 /// Rasterizes every page of a picked PDF into a JPEG image and exports
 /// them all into a per-document subfolder under Downloads/KK-PDF-Tool.
@@ -60,7 +61,7 @@ class _PdfToImagesScreenState extends State<PdfToImagesScreen> {
       if (!mounted) return;
       setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Konnte PDF nicht lesen: $e')),
+        SnackBar(content: Text(tr('Konnte PDF nicht lesen: $e', 'Could not read PDF: $e'))),
       );
     }
   }
@@ -75,15 +76,15 @@ class _PdfToImagesScreenState extends State<PdfToImagesScreen> {
       for (var i = 0; i < images.length; i++) {
         lastLocation = await _downloadsExport.export(
           images[i],
-          '${name}_seite_${(i + 1).toString().padLeft(2, '0')}.png',
+          tr('${name}_seite_${(i + 1).toString().padLeft(2, '0')}.png', '${name}_page_${(i + 1).toString().padLeft(2, '0')}.png'),
         );
       }
       var message =
-          '${images.length} Bild(er) gespeichert${lastLocation != null ? ' in ${folderOf(lastLocation)}' : ''}';
+          tr('${images.length} Bild(er) gespeichert${lastLocation != null ? ' in ${folderOf(lastLocation)}' : ''}', '${images.length} image(s) saved${lastLocation != null ? ' in ${folderOf(lastLocation)}' : ''}');
       if (_deleteOriginal) {
         final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
         if (notDeleted.isNotEmpty) {
-          message += ' · Original konnte nicht gelöscht werden';
+          message += tr(' · Original konnte nicht gelöscht werden', ' · Original could not be deleted');
         }
       }
       if (!mounted) return;
@@ -92,7 +93,7 @@ class _PdfToImagesScreenState extends State<PdfToImagesScreen> {
       if (!mounted) return;
       setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Export fehlgeschlagen: $e')),
+        SnackBar(content: Text(tr('Export fehlgeschlagen: $e', 'Export failed: $e'))),
       );
     }
   }
@@ -102,7 +103,7 @@ class _PdfToImagesScreenState extends State<PdfToImagesScreen> {
     return ToolDropZone(
       onDrop: _pickPdf,
       child: Scaffold(
-        appBar: AppBar(title: const Text('PDF → Bilder')),
+        appBar: AppBar(title: Text(tr('PDF → Bilder', 'PDF → images'))),
         body: _pdfBytes == null
             ? Center(
                 child: Padding(
@@ -111,7 +112,7 @@ class _PdfToImagesScreenState extends State<PdfToImagesScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Wähle eine PDF-Datei, deren Seiten als Bilder exportiert werden sollen.',
+                        tr('Wähle eine PDF-Datei, deren Seiten als Bilder exportiert werden sollen.', 'Choose a PDF file whose pages should be exported as images.'),
                         textAlign: TextAlign.center,
                         style:
                             TextStyle(color: Theme.of(context).colorScheme.outline),
@@ -120,7 +121,7 @@ class _PdfToImagesScreenState extends State<PdfToImagesScreen> {
                       FilledButton.icon(
                         onPressed: _pickPdf,
                         icon: const Icon(Icons.picture_as_pdf_outlined),
-                        label: const Text('PDF wählen'),
+                        label: Text(tr('PDF wählen', 'Choose PDF')),
                       ),
                     ],
                   ),
@@ -151,7 +152,7 @@ class _PdfToImagesScreenState extends State<PdfToImagesScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       DeleteOriginalsSwitch(
-                        label: 'Originaldatei danach löschen',
+                        label: tr('Originaldatei danach löschen', 'Delete original file afterwards'),
                         value: _deleteOriginal,
                         onChanged: (v) => setState(() => _deleteOriginal = v),
                       ),
@@ -167,8 +168,8 @@ class _PdfToImagesScreenState extends State<PdfToImagesScreen> {
                             : const Icon(Icons.download_outlined),
                         label: Text(
                           _busy
-                              ? 'Exportiere…'
-                              : '${_previewImages!.length} Bild(er) speichern',
+                              ? tr('Exportiere…', 'Exporting…')
+                              : tr('${_previewImages!.length} Bild(er) speichern', 'Save ${_previewImages!.length} image(s)'),
                         ),
                       ),
                     ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n.dart';
 
 /// Opt-in checkbox offered on "pick file(s) -> convert" screens to delete
 /// the picked source file(s) once the result has been saved. Off by
@@ -6,13 +7,13 @@ import 'package:flutter/material.dart';
 class DeleteOriginalsSwitch extends StatelessWidget {
   final bool value;
   final ValueChanged<bool> onChanged;
-  final String label;
+  final String? label;
 
   const DeleteOriginalsSwitch({
     super.key,
     required this.value,
     required this.onChanged,
-    this.label = 'Originaldatei(en) danach löschen',
+    this.label,
   });
 
   @override
@@ -23,8 +24,8 @@ class DeleteOriginalsSwitch extends StatelessWidget {
       controlAffinity: ListTileControlAffinity.leading,
       contentPadding: EdgeInsets.zero,
       dense: true,
-      title: Text(label),
-      subtitle: const Text('Kann nicht rückgängig gemacht werden'),
+      title: Text(label ?? tr('Originaldatei(en) danach löschen', 'Delete original file(s) afterwards')),
+      subtitle: Text(tr('Kann nicht rückgängig gemacht werden', 'Cannot be undone')),
     );
   }
 }

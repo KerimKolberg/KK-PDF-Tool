@@ -12,6 +12,7 @@ import '../../utils/formatting.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_result.dart';
+import '../../l10n.dart';
 
 class _PageRange {
   final TextEditingController from;
@@ -68,7 +69,7 @@ class _SplitPdfScreenState extends State<SplitPdfScreen> {
       if (!mounted) return;
       setState(() => _counting = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Konnte PDF nicht lesen: $e')),
+        SnackBar(content: Text(tr('Konnte PDF nicht lesen: $e', 'Could not read PDF: $e'))),
       );
     }
   }
@@ -96,7 +97,7 @@ class _SplitPdfScreenState extends State<SplitPdfScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Ungültiger Seitenbereich (gültig: 1–$pageCount).',
+              tr('Ungültiger Seitenbereich (gültig: 1–$pageCount).', 'Invalid page range (valid: 1–$pageCount).'),
             ),
           ),
         );
@@ -115,18 +116,18 @@ class _SplitPdfScreenState extends State<SplitPdfScreen> {
           startPage: start,
           endPage: end,
         );
-        final suffix = parsedRanges.length > 1 ? '_teil_${i + 1}' : '_teil';
+        final suffix = parsedRanges.length > 1 ? tr('_teil_${i + 1}', '_part_${i + 1}') : '_teil';
         lastLocation = await _downloadsExport.export(
           part,
           '$name${suffix}_s$start-$end.pdf',
         );
       }
       var message =
-          '${parsedRanges.length} Datei(en) gespeichert${lastLocation != null ? ' in ${folderOf(lastLocation)}' : ''}';
+          tr('${parsedRanges.length} Datei(en) gespeichert${lastLocation != null ? ' in ${folderOf(lastLocation)}' : ''}', '${parsedRanges.length} file(s) saved${lastLocation != null ? ' in ${folderOf(lastLocation)}' : ''}');
       if (_deleteOriginal) {
         final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
         if (notDeleted.isNotEmpty) {
-          message += ' · Original konnte nicht gelöscht werden';
+          message += tr(' · Original konnte nicht gelöscht werden', ' · Original could not be deleted');
         }
       }
       if (!mounted) return;
@@ -135,7 +136,7 @@ class _SplitPdfScreenState extends State<SplitPdfScreen> {
       if (!mounted) return;
       setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Aufteilen fehlgeschlagen: $e')),
+        SnackBar(content: Text(tr('Aufteilen fehlgeschlagen: $e', 'Splitting failed: $e'))),
       );
     }
   }
@@ -145,7 +146,7 @@ class _SplitPdfScreenState extends State<SplitPdfScreen> {
     return ToolDropZone(
       onDrop: _pickPdf,
       child: Scaffold(
-        appBar: AppBar(title: const Text('PDF aufteilen')),
+        appBar: AppBar(title: Text(tr('PDF aufteilen', 'Split PDF'))),
         body: _pdfBytes == null
             ? Center(
                 child: Padding(
@@ -154,7 +155,7 @@ class _SplitPdfScreenState extends State<SplitPdfScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Wähle eine PDF-Datei, die in mehrere Dateien aufgeteilt werden soll.',
+                        tr('Wähle eine PDF-Datei, die in mehrere Dateien aufgeteilt werden soll.', 'Choose a PDF file to split into several files.'),
                         textAlign: TextAlign.center,
                         style:
                             TextStyle(color: Theme.of(context).colorScheme.outline),
@@ -163,7 +164,7 @@ class _SplitPdfScreenState extends State<SplitPdfScreen> {
                       FilledButton.icon(
                         onPressed: _pickPdf,
                         icon: const Icon(Icons.picture_as_pdf_outlined),
-                        label: const Text('PDF wählen'),
+                        label: Text(tr('PDF wählen', 'Choose PDF')),
                       ),
                     ],
                   ),
@@ -175,7 +176,7 @@ class _SplitPdfScreenState extends State<SplitPdfScreen> {
                     padding: const EdgeInsets.all(16),
                     children: [
                       Text(
-                        '$_fileName · $_pageCount Seiten',
+                        tr('$_fileName · $_pageCount Seiten', '$_fileName · $_pageCount pages'),
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 16),
@@ -186,14 +187,14 @@ class _SplitPdfScreenState extends State<SplitPdfScreen> {
                             padding: const EdgeInsets.all(12),
                             child: Row(
                               children: [
-                                Text('Teil ${i + 1}:'),
+                                Text(tr('Teil ${i + 1}:', 'Part ${i + 1}:')),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: TextField(
                                     controller: _ranges[i].from,
                                     keyboardType: TextInputType.number,
                                     decoration:
-                                        const InputDecoration(labelText: 'von Seite'),
+                                        InputDecoration(labelText: tr('von Seite', 'from page')),
                                   ),
                                 ),
                                 const SizedBox(width: 8),
@@ -202,7 +203,7 @@ class _SplitPdfScreenState extends State<SplitPdfScreen> {
                                     controller: _ranges[i].to,
                                     keyboardType: TextInputType.number,
                                     decoration:
-                                        const InputDecoration(labelText: 'bis Seite'),
+                                        InputDecoration(labelText: tr('bis Seite', 'to page')),
                                   ),
                                 ),
                                 IconButton(
@@ -218,7 +219,7 @@ class _SplitPdfScreenState extends State<SplitPdfScreen> {
                       OutlinedButton.icon(
                         onPressed: _addRange,
                         icon: const Icon(Icons.add),
-                        label: const Text('Weiteren Bereich hinzufügen'),
+                        label: Text(tr('Weiteren Bereich hinzufügen', 'Add another range')),
                       ),
                     ],
                   ),
@@ -231,7 +232,7 @@ class _SplitPdfScreenState extends State<SplitPdfScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       DeleteOriginalsSwitch(
-                        label: 'Originaldatei danach löschen',
+                        label: tr('Originaldatei danach löschen', 'Delete original file afterwards'),
                         value: _deleteOriginal,
                         onChanged: (v) => setState(() => _deleteOriginal = v),
                       ),
@@ -245,7 +246,7 @@ class _SplitPdfScreenState extends State<SplitPdfScreen> {
                                     strokeWidth: 2, color: Colors.white),
                               )
                             : const Icon(Icons.content_cut),
-                        label: Text(_busy ? 'Teile auf…' : 'Aufteilen & speichern'),
+                        label: Text(_busy ? tr('Teile auf…', 'Splitting…') : tr('Aufteilen & speichern', 'Split & save')),
                       ),
                     ],
                   ),

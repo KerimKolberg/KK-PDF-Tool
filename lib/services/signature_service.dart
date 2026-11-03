@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as p;
 import 'app_paths.dart';
+import '../l10n.dart';
 
 /// Saved signatures (transparent PNGs) in `<app documents>/signatures/`,
 /// plus stamping one onto a page image.
@@ -79,7 +80,7 @@ Uint8List _stampIsolate(Map<String, dynamic> args) {
   final decodedPage = img.decodeImage(args['page'] as Uint8List);
   final decodedSig = img.decodeImage(args['signature'] as Uint8List);
   if (decodedPage == null || decodedSig == null) {
-    throw const FormatException('Bild konnte nicht gelesen werden');
+    throw FormatException(tr('Bild konnte nicht gelesen werden', 'Could not read image'));
   }
   // JPEG pages decode to 3 channels; blending a transparent PNG needs the
   // destination to be a regular RGB image, which this guarantees.

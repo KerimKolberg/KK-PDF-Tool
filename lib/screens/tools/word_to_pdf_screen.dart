@@ -2,6 +2,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
 import 'cloud_convert_screen.dart';
+import '../../l10n.dart';
 
 /// Converts a .docx to PDF by round-tripping it through the user's own
 /// Google Drive (Docs).
@@ -12,9 +13,9 @@ class WordToPdfScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return CloudConvertScreen(
       title: 'Word → PDF',
-      pickButtonLabel: 'Word-Datei wählen',
+      pickButtonLabel: tr('Word-Datei wählen', 'Choose Word file'),
       pickIcon: Icons.description_outlined,
-      convertButtonLabel: 'In PDF umwandeln',
+      convertButtonLabel: tr('In PDF umwandeln', 'Convert to PDF'),
       convertIcon: Icons.picture_as_pdf_outlined,
       typeGroup: const XTypeGroup(label: 'Word', extensions: ['docx']),
       sourceExtension: 'docx',
