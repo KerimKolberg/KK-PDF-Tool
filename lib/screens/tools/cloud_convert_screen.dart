@@ -10,6 +10,7 @@ import '../../services/google_drive_convert_service.dart';
 import '../../services/original_files_cleanup_service.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/tool_drop_zone.dart';
+import '../../widgets/tool_layout.dart';
 import '../../widgets/tool_result.dart';
 import '../../l10n.dart';
 
@@ -109,7 +110,7 @@ class _CloudConvertScreenState extends State<CloudConvertScreen> {
   Widget build(BuildContext context) {
     return ToolDropZone(
       onDrop: _pickFile,
-      child: Scaffold(
+      child: ToolScaffold(
         appBar: AppBar(title: Text(widget.title)),
         body: Padding(
           padding: const EdgeInsets.all(24),
@@ -139,7 +140,7 @@ class _CloudConvertScreenState extends State<CloudConvertScreen> {
               ),
               const SizedBox(height: 24),
               if (_fileName == null)
-                FilledButton.icon(
+                FilePickPanel(
                   onPressed: _pickFile,
                   icon: Icon(widget.pickIcon),
                   label: Text(widget.pickButtonLabel),

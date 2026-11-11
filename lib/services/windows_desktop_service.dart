@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:tray_manager/tray_manager.dart';
+import 'package:flutter/widgets.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'settings_service.dart';
@@ -25,7 +26,13 @@ class WindowsDesktopService with TrayListener {
     if (!supported) return;
     await windowManager.ensureInitialized();
     final startHidden = args.contains(minimizedArg);
-    await windowManager.waitUntilReadyToShow(null, () async {
+    const options = WindowOptions(
+      size: Size(1280, 820),
+      minimumSize: Size(760, 560),
+      center: true,
+      title: 'KK-PDF-Tool',
+    );
+    await windowManager.waitUntilReadyToShow(options, () async {
       if (startHidden) {
         await windowManager.hide();
       } else {

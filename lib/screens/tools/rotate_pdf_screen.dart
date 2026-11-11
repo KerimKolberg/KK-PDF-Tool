@@ -12,6 +12,7 @@ import '../../services/settings_service.dart';
 import '../../utils/formatting.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/tool_drop_zone.dart';
+import '../../widgets/tool_layout.dart';
 import '../../widgets/tool_result.dart';
 import '../../l10n.dart';
 
@@ -100,17 +101,17 @@ class _RotatePdfScreenState extends State<RotatePdfScreen> {
   Widget build(BuildContext context) {
     return ToolDropZone(
       onDrop: _addPdfs,
-      child: Scaffold(
+      child: ToolScaffold(
         appBar: AppBar(title: Text(tr('PDF drehen', 'Rotate PDF'))),
         body: _pdfs.isEmpty
-            ? Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text(
-                    tr('Füge eine oder mehrere PDF-Dateien hinzu.', 'Add one or more PDF files.'),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Theme.of(context).colorScheme.outline),
-                  ),
+            ? Padding(
+                padding: const EdgeInsets.all(24),
+                child: FilePickPanel(
+                  multiple: true,
+                  hint: tr('Füge eine oder mehrere PDF-Dateien hinzu.', 'Add one or more PDF files.'),
+                  onPressed: _addPdfs,
+                  icon: const Icon(Icons.picture_as_pdf_outlined),
+                  label: Text(tr('PDFs hinzufügen', 'Add PDFs')),
                 ),
               )
             : ListView(

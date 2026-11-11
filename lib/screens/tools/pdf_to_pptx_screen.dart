@@ -10,6 +10,7 @@ import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/tool_drop_zone.dart';
+import '../../widgets/tool_layout.dart';
 import '../../widgets/tool_result.dart';
 import '../../l10n.dart';
 
@@ -75,7 +76,7 @@ class _PdfToPptxScreenState extends State<PdfToPptxScreen> {
   Widget build(BuildContext context) {
     return ToolDropZone(
       onDrop: _pickPdf,
-      child: Scaffold(
+      child: ToolScaffold(
         appBar: AppBar(title: const Text('PDF → PowerPoint')),
         body: Padding(
           padding: const EdgeInsets.all(24),
@@ -108,7 +109,7 @@ class _PdfToPptxScreenState extends State<PdfToPptxScreen> {
               ),
               const SizedBox(height: 24),
               if (_fileName == null)
-                FilledButton.icon(
+                FilePickPanel(
                   onPressed: _pickPdf,
                   icon: const Icon(Icons.picture_as_pdf_outlined),
                   label: Text(tr('PDF wählen', 'Choose PDF')),

@@ -12,6 +12,7 @@ import '../../services/settings_service.dart';
 import '../../utils/formatting.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/tool_drop_zone.dart';
+import '../../widgets/tool_layout.dart';
 import '../../widgets/tool_result.dart';
 import '../../l10n.dart';
 
@@ -104,7 +105,7 @@ class _CompressPdfScreenState extends State<CompressPdfScreen> {
   Widget build(BuildContext context) {
     return ToolDropZone(
       onDrop: _pickPdf,
-      child: Scaffold(
+      child: ToolScaffold(
         appBar: AppBar(title: Text(tr('PDF komprimieren', 'Compress PDF'))),
         body: Padding(
           padding: const EdgeInsets.all(24),
@@ -113,7 +114,7 @@ class _CompressPdfScreenState extends State<CompressPdfScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (_fileName == null)
-                FilledButton.icon(
+                FilePickPanel(
                   onPressed: _pickPdf,
                   icon: const Icon(Icons.picture_as_pdf_outlined),
                   label: Text(tr('PDF wählen', 'Choose PDF')),

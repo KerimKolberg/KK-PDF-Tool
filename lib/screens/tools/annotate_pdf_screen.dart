@@ -11,6 +11,7 @@ import '../../services/pdf_tools_service.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../annotate_pages_screen.dart';
 import '../../widgets/tool_drop_zone.dart';
+import '../../widgets/tool_layout.dart';
 import '../../widgets/tool_result.dart';
 import '../../l10n.dart';
 
@@ -91,7 +92,7 @@ class _AnnotatePdfScreenState extends State<AnnotatePdfScreen> {
     final busy = _busyLabel != null;
     return ToolDropZone(
       onDrop: _pickPdf,
-      child: Scaffold(
+      child: ToolScaffold(
         appBar: AppBar(title: Text(_fill ? tr('PDF ausfüllen & unterschreiben', 'Fill in & sign PDF') : tr('PDF markieren & zeichnen', 'Highlight & draw on PDF'))),
         body: Padding(
           padding: const EdgeInsets.all(24),
@@ -113,7 +114,7 @@ class _AnnotatePdfScreenState extends State<AnnotatePdfScreen> {
               ),
               const SizedBox(height: 24),
               if (_fileName == null)
-                FilledButton.icon(
+                FilePickPanel(
                   onPressed: _pickPdf,
                   icon: const Icon(Icons.picture_as_pdf_outlined),
                   label: Text(tr('PDF wählen', 'Choose PDF')),

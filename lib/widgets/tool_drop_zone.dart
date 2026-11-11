@@ -1,10 +1,10 @@
-import 'dart:io';
-
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
 import '../services/file_picker_service.dart';
+import '../utils/layout.dart';
+import 'drop_visuals.dart';
 import '../l10n.dart';
 
 /// Windows: lets files be dragged from Explorer onto a tool. The dropped
@@ -26,7 +26,7 @@ class _ToolDropZoneState extends State<ToolDropZone> {
 
   @override
   Widget build(BuildContext context) {
-    if (!Platform.isWindows) return widget.child;
+    if (!AppPlatform.isWindows) return widget.child;
     return DropTarget(
       onDragEntered: (_) => setState(() => _dragging = true),
       onDragExited: (_) => setState(() => _dragging = false),
@@ -50,18 +50,7 @@ class _ToolDropZoneState extends State<ToolDropZone> {
           widget.child,
           if (_dragging)
             Positioned.fill(
-              child: IgnorePointer(
-                child: ColoredBox(
-                  color: Theme.of(context).colorScheme.primary
-                      .withValues(alpha: 0.12),
-                  child: Center(
-                    child: Text(
-                      tr('Datei hier ablegen', 'Drop file here'),
-                      style: TextStyle(fontSize: 20),
-                    ),
-                  ),
-                ),
-              ),
+              child: DropOverlay(message: tr('Datei hier ablegen', 'Drop file here')),
             ),
         ],
       ),

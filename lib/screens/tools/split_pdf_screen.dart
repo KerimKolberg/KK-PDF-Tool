@@ -11,6 +11,7 @@ import '../../services/pdf_tools_service.dart';
 import '../../utils/formatting.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/tool_drop_zone.dart';
+import '../../widgets/tool_layout.dart';
 import '../../widgets/tool_result.dart';
 import '../../l10n.dart';
 
@@ -145,29 +146,16 @@ class _SplitPdfScreenState extends State<SplitPdfScreen> {
   Widget build(BuildContext context) {
     return ToolDropZone(
       onDrop: _pickPdf,
-      child: Scaffold(
+      child: ToolScaffold(
         appBar: AppBar(title: Text(tr('PDF aufteilen', 'Split PDF'))),
         body: _pdfBytes == null
-            ? Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        tr('Wähle eine PDF-Datei, die in mehrere Dateien aufgeteilt werden soll.', 'Choose a PDF file to split into several files.'),
-                        textAlign: TextAlign.center,
-                        style:
-                            TextStyle(color: Theme.of(context).colorScheme.outline),
-                      ),
-                      const SizedBox(height: 16),
-                      FilledButton.icon(
-                        onPressed: _pickPdf,
-                        icon: const Icon(Icons.picture_as_pdf_outlined),
-                        label: Text(tr('PDF wählen', 'Choose PDF')),
-                      ),
-                    ],
-                  ),
+            ? Padding(
+                padding: const EdgeInsets.all(24),
+                child: FilePickPanel(
+                  hint: tr('Wähle eine PDF-Datei, die in mehrere Dateien aufgeteilt werden soll.', 'Choose a PDF file to split into several files.'),
+                  onPressed: _pickPdf,
+                  icon: const Icon(Icons.picture_as_pdf_outlined),
+                  label: Text(tr('PDF wählen', 'Choose PDF')),
                 ),
               )
             : _counting

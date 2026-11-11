@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 import 'annotate_pages_screen.dart';
@@ -22,6 +20,8 @@ import 'tools/text_from_image_screen.dart';
 import 'tools/watermark_pdf_screen.dart';
 import 'tools/word_to_pdf_screen.dart';
 import '../l10n.dart';
+import '../utils/layout.dart';
+import 'home_shell.dart';
 
 class _ToolEntry {
   final String title;
@@ -49,7 +49,8 @@ class _ToolSection {
 class ToolsScreen extends StatelessWidget {
   const ToolsScreen({super.key});
 
-  static final _sections = <_ToolSection>[
+  // A getter, not a cached field, so the texts follow the current language.
+  static List<_ToolSection> get _sections => [
     _ToolSection(tr('Umwandeln', 'Convert'), [
       _ToolEntry(
         tr('Bilder → PDF', 'Images → PDF'),
@@ -108,7 +109,7 @@ class ToolsScreen extends StatelessWidget {
         tr('Text aus einem Foto erkennen, kopieren oder als .txt speichern', 'Recognize text in a photo, copy it or save it as .txt'),
         Icons.text_snippet_outlined,
         (_) => const TextFromImageScreen(),
-        needsInternet: !Platform.isAndroid,
+        needsInternet: !AppPlatform.isAndroid,
       ),
       _ToolEntry(
         tr('PDF durchsuchbar machen', 'Make PDF searchable'),
@@ -178,63 +179,121 @@ class ToolsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(tr('Werkzeuge', 'Tools'))),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          for (final section in _sections) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
-              child: Text(
-                section.title,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-              ),
-            ),
-            for (final tool in section.tools)
-              if (!tool.androidOnly || Platform.isAndroid)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Card(
-                  clipBehavior: Clip.antiAlias,
-                  child: ListTile(
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    leading: CircleAvatar(
-                      backgroundColor:
-                          Theme.of(context).colorScheme.primaryContainer,
-                      foregroundColor:
-                          Theme.of(context).colorScheme.onPrimaryContainer,
-                      child: Icon(tool.icon),
-                    ),
-                    title: Row(
-                      children: [
-                        Flexible(
-                          child: Text(tool.title,
-                              style: const TextStyle(fontWeight: FontWeight.w600)),
-                        ),
-                        if (tool.needsInternet) ...[
-                          const SizedBox(width: 6),
-                          Icon(Icons.cloud_outlined,
-                              size: 16,
-                              color: Theme.of(context).colorScheme.outline),
-                        ],
-                      ],
-                    ),
-                    subtitle: Text(tool.subtitle),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: tool.builder),
+      appBar: AppBar(
+        title: Text(tr('Werkzeuge', 'Tools')),
+        actions: const [SettingsButton()],
+      ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final side = centeredPadding(constraints.maxWidth, maxWidth: 1160).left;
+          return CustomScrollView(
+            slivers: [
+              for (final section in _sections) ...[
+                SliverPadding(
+                  padding: EdgeInsets.fromLTRB(side + 4, 12, side, 10),
+                  sliver: SliverToBoxAdapter(
+                    child: Text(
+                      section.title,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: theme.colorScheme.primary,
+                      ),
                     ),
                   ),
                 ),
+                SliverPadding(
+                  padding: EdgeInsets.fromLTRB(side, 0, side, 12),
+                  sliver: SliverGrid(
+                    gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 380,
+                      mainAxisExtent: 92,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                    ),
+                    delegate: SliverChildListDelegate([
+                      for (final tool in section.tools)
+                        if (!tool.androidOnly || AppPlatform.isAndroid) _ToolCard(tool),
+                    ]),
+                  ),
+                ),
+              ],
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ToolCard extends StatelessWidget {
+  final _ToolEntry tool;
+
+  const _ToolCard(this.tool);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Card(
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: tool.builder)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: scheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(tool.icon, color: scheme.onPrimaryContainer),
               ),
-            const SizedBox(height: 8),
-          ],
-        ],
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            tool.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                        if (tool.needsInternet) ...[
+                          const SizedBox(width: 6),
+                          Tooltip(
+                            message: tr('Braucht Internet und dein Google-Konto',
+                                'Needs internet and your Google account'),
+                            child: Icon(Icons.cloud_outlined, size: 16, color: scheme.outline),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      tool.subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -10,6 +10,7 @@ import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/tool_drop_zone.dart';
+import '../../widgets/tool_layout.dart';
 import '../../widgets/tool_result.dart';
 import '../../l10n.dart';
 
@@ -106,17 +107,17 @@ class _MergePdfScreenState extends State<MergePdfScreen> {
   Widget build(BuildContext context) {
     return ToolDropZone(
       onDrop: _addPdfs,
-      child: Scaffold(
+      child: ToolScaffold(
         appBar: AppBar(title: Text(tr('PDFs zusammenführen', 'Merge PDFs'))),
         body: _pdfs.isEmpty
-            ? Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text(
-                    tr('Füge mindestens zwei PDFs hinzu. Sie werden in dieser Reihenfolge zusammengeführt.', 'Add at least two PDFs. They are merged in this order.'),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Theme.of(context).colorScheme.outline),
-                  ),
+            ? Padding(
+                padding: const EdgeInsets.all(24),
+                child: FilePickPanel(
+                  multiple: true,
+                  hint: tr('Füge mindestens zwei PDFs hinzu. Sie werden in dieser Reihenfolge zusammengeführt.', 'Add at least two PDFs. They are merged in this order.'),
+                  onPressed: _addPdfs,
+                  icon: const Icon(Icons.picture_as_pdf_outlined),
+                  label: Text(tr('PDFs hinzufügen', 'Add PDFs')),
                 ),
               )
             : ReorderableListView.builder(

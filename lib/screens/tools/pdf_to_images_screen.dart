@@ -11,6 +11,7 @@ import '../../services/pdf_tools_service.dart';
 import '../../utils/formatting.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/tool_drop_zone.dart';
+import '../../widgets/tool_layout.dart';
 import '../../widgets/tool_result.dart';
 import '../../l10n.dart';
 
@@ -102,29 +103,16 @@ class _PdfToImagesScreenState extends State<PdfToImagesScreen> {
   Widget build(BuildContext context) {
     return ToolDropZone(
       onDrop: _pickPdf,
-      child: Scaffold(
+      child: ToolScaffold(
         appBar: AppBar(title: Text(tr('PDF → Bilder', 'PDF → images'))),
         body: _pdfBytes == null
-            ? Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        tr('Wähle eine PDF-Datei, deren Seiten als Bilder exportiert werden sollen.', 'Choose a PDF file whose pages should be exported as images.'),
-                        textAlign: TextAlign.center,
-                        style:
-                            TextStyle(color: Theme.of(context).colorScheme.outline),
-                      ),
-                      const SizedBox(height: 16),
-                      FilledButton.icon(
-                        onPressed: _pickPdf,
-                        icon: const Icon(Icons.picture_as_pdf_outlined),
-                        label: Text(tr('PDF wählen', 'Choose PDF')),
-                      ),
-                    ],
-                  ),
+            ? Padding(
+                padding: const EdgeInsets.all(24),
+                child: FilePickPanel(
+                  hint: tr('Wähle eine PDF-Datei, deren Seiten als Bilder exportiert werden sollen.', 'Choose a PDF file whose pages should be exported as images.'),
+                  onPressed: _pickPdf,
+                  icon: const Icon(Icons.picture_as_pdf_outlined),
+                  label: Text(tr('PDF wählen', 'Choose PDF')),
                 ),
               )
             : _busy && _previewImages == null

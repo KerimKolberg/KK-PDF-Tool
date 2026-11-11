@@ -14,6 +14,7 @@ import '../../utils/formatting.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/rect_crop_overlay.dart';
 import '../../widgets/tool_drop_zone.dart';
+import '../../widgets/tool_layout.dart';
 import '../../widgets/tool_result.dart';
 import '../../l10n.dart';
 
@@ -143,31 +144,19 @@ class _CropPdfScreenState extends State<CropPdfScreen> {
   Widget build(BuildContext context) {
     return ToolDropZone(
       onDrop: _pickPdf,
-      child: Scaffold(
+      child: ToolScaffold(
         appBar: AppBar(title: Text(tr('PDF zuschneiden', 'Crop PDF'))),
         body: _fileName == null
-            ? Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        tr('Wähle eine PDF. Der Zuschnitt wird an der ersten Seite '
+            ? Padding(
+                padding: const EdgeInsets.all(24),
+                child: FilePickPanel(
+                  hint: tr('Wähle eine PDF. Der Zuschnitt wird an der ersten Seite '
                         'festgelegt und auf alle (oder gewählte) Seiten angewendet.',
                         'Choose a PDF. The crop is set on the first page '
                         'and applied to all (or the chosen) pages.'),
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Theme.of(context).colorScheme.outline),
-                      ),
-                      const SizedBox(height: 16),
-                      FilledButton.icon(
-                        onPressed: _pickPdf,
-                        icon: const Icon(Icons.picture_as_pdf_outlined),
-                        label: Text(tr('PDF wählen', 'Choose PDF')),
-                      ),
-                    ],
-                  ),
+                  onPressed: _pickPdf,
+                  icon: const Icon(Icons.picture_as_pdf_outlined),
+                  label: Text(tr('PDF wählen', 'Choose PDF')),
                 ),
               )
             : _loadingPreview || _previewImage == null

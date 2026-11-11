@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import '../../services/downloads_export_service.dart';
 import '../../services/file_picker_service.dart';
 import '../../widgets/tool_drop_zone.dart';
+import '../../widgets/tool_layout.dart';
 import '../../services/google_drive_convert_service.dart';
 import '../../services/ocr_service.dart';
 import '../../services/original_files_cleanup_service.dart';
@@ -134,7 +135,7 @@ class _TextFromImageScreenState extends State<TextFromImageScreen> {
   Widget build(BuildContext context) {
     return ToolDropZone(
       onDrop: _pickFile,
-      child: Scaffold(
+      child: ToolScaffold(
         appBar: AppBar(title: Text(tr('Text aus Bild (OCR)', 'Text from image (OCR)'))),
         body: Padding(
           padding: const EdgeInsets.all(24),
@@ -193,7 +194,7 @@ class _TextFromImageScreenState extends State<TextFromImageScreen> {
               ),
               const SizedBox(height: 24),
               if (_fileName == null)
-                FilledButton.icon(
+                FilePickPanel(
                   onPressed: _pickFile,
                   icon: const Icon(Icons.image_outlined),
                   label: Text(tr('Bild wählen', 'Choose image')),

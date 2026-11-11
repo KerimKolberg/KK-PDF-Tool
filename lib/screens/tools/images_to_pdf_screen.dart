@@ -9,6 +9,7 @@ import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_service.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/tool_drop_zone.dart';
+import '../../widgets/tool_layout.dart';
 import '../../widgets/tool_result.dart';
 import '../../l10n.dart';
 
@@ -106,17 +107,17 @@ class _ImagesToPdfScreenState extends State<ImagesToPdfScreen> {
   Widget build(BuildContext context) {
     return ToolDropZone(
       onDrop: _addImages,
-      child: Scaffold(
+      child: ToolScaffold(
         appBar: AppBar(title: Text(tr('Bilder → PDF', 'Images → PDF'))),
         body: _images.isEmpty
-            ? Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text(
-                    tr('Füge Bilder hinzu, die zu einer PDF zusammengefasst werden sollen.', 'Add images to combine into one PDF.'),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Theme.of(context).colorScheme.outline),
-                  ),
+            ? Padding(
+                padding: const EdgeInsets.all(24),
+                child: FilePickPanel(
+                  multiple: true,
+                  hint: tr('Füge Bilder hinzu, die zu einer PDF zusammengefasst werden sollen.', 'Add images to combine into one PDF.'),
+                  onPressed: _addImages,
+                  icon: const Icon(Icons.add_photo_alternate_outlined),
+                  label: Text(tr('Bilder hinzufügen', 'Add images')),
                 ),
               )
             : ReorderableListView.builder(

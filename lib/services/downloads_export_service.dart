@@ -44,12 +44,13 @@ class DownloadsExportService {
       });
       return location ?? 'Downloads/$_folderName/$fileName';
     }
-    final targetDir = await _desktopTargetDir();
+    final targetDir = await desktopTargetDir();
     final copy = await source.copy(p.join(targetDir.path, fileName));
     return copy.path;
   }
 
-  Future<Directory> _desktopTargetDir() async {
+  /// Desktop: the Downloads\KK-PDF-Tool folder (created if missing).
+  Future<Directory> desktopTargetDir() async {
     final downloads = await getDownloadsDirectory();
     final baseDir = downloads ?? await getApplicationDocumentsDirectory();
     final targetDir = Directory(p.join(baseDir.path, _folderName));
@@ -69,7 +70,7 @@ class DownloadsExportService {
       return location ?? 'Downloads/$_folderName/$fileName';
     }
 
-    final targetDir = await _desktopTargetDir();
+    final targetDir = await desktopTargetDir();
     final file = File(p.join(targetDir.path, fileName));
     await file.writeAsBytes(bytes, flush: true);
     return file.path;

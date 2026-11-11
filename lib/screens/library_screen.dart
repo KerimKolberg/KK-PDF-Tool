@@ -15,6 +15,7 @@ import 'home_shell.dart';
 import 'id_scan_screen.dart';
 import 'scan_flow_screen.dart';
 import '../l10n.dart';
+import '../utils/layout.dart';
 
 enum LibrarySort {
   newest('Neueste zuerst', 'Newest first'),
@@ -425,6 +426,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
               padding: const EdgeInsets.only(right: 8),
               child: GestureDetector(
                 onLongPress: () => _folderOptions(f),
+                onSecondaryTap: () => _folderOptions(f),
                 child: ChoiceChip(
                   avatar: const Icon(Icons.folder_outlined, size: 18),
                   label: Text(f),
@@ -490,7 +492,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
               _query.isNotEmpty
                   ? tr('Keine Treffer für "$_query".', 'No results for "$_query".')
                   : noDocsAtAll
-                      ? tr('Noch keine Scans vorhanden.\nTippe unten auf "Neuer Scan".', 'No scans yet.\nTap "New scan" below.')
+                      ? (AppPlatform.isWindows
+                          ? tr('Noch keine Scans vorhanden.\nStarte mit "Neuer Scan" oder ziehe PDFs und Bilder hierher.',
+                              'No scans yet.\nStart with "New scan" or drag PDFs and images here.')
+                          : tr('Noch keine Scans vorhanden.\nTippe unten auf "Neuer Scan".', 'No scans yet.\nTap "New scan" below.'))
                       : tr('Dieser Ordner ist leer.\nNeue Scans landen automatisch hier.', 'This folder is empty.\nNew scans land here automatically.'),
               textAlign: TextAlign.center,
             ),
@@ -501,13 +506,19 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 
   Widget _buildList(List<(ScanDocument, String?)> visible) {
+    final width = MediaQuery.sizeOf(context).width;
+    final wide = isWideLayout(context);
     return ListView.builder(
-      padding: const EdgeInsets.only(bottom: 88),
+      padding: wide
+          ? centeredPadding(width, maxWidth: 1000, vertical: 0).copyWith(bottom: 88)
+          : const EdgeInsets.only(bottom: 88),
       itemCount: visible.length,
       itemBuilder: (context, i) {
         final (doc, snippet) = visible[i];
         final meta = _meta(doc);
-        return ListTile(
+        return GestureDetector(
+          onSecondaryTap: () => _documentActions(doc),
+          child: ListTile(
           leading: ClipRRect(
             borderRadius: BorderRadius.circular(6),
             child: _thumbnail(doc, size: 48),
@@ -519,8 +530,16 @@ class _LibraryScreenState extends State<LibraryScreen> {
             overflow: TextOverflow.ellipsis,
           ),
           isThreeLine: snippet != null,
+          trailing: wide
+              ? IconButton(
+                  tooltip: tr('Weitere Aktionen', 'More actions'),
+                  icon: const Icon(Icons.more_vert),
+                  onPressed: () => _documentActions(doc),
+                )
+              : null,
           onTap: () => _openDocument(doc),
           onLongPress: () => _documentActions(doc),
+          ),
         );
       },
     );
@@ -546,6 +565,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           child: InkWell(
             onTap: () => _openDocument(doc),
             onLongPress: () => _documentActions(doc),
+            onSecondaryTap: () => _documentActions(doc),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
