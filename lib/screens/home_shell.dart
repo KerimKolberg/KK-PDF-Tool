@@ -7,6 +7,8 @@ import '../services/document_store.dart';
 import '../services/incoming_file_service.dart';
 import '../utils/layout.dart';
 import '../widgets/drop_visuals.dart';
+import '../widgets/file_actions.dart';
+import '../widgets/tool_drop_zone.dart';
 import 'import_shared_file_screen.dart';
 import 'library_screen.dart';
 import 'settings_screen.dart';
@@ -14,7 +16,8 @@ import 'tools_screen.dart';
 import '../l10n.dart';
 
 /// Top-level navigation shell: Library and Tools (plus Settings in the
-/// desktop layout's side navigation). Also watches for files the OS hands to the app
+/// desktop layout's side navigation). Files dropped on the window or
+/// opened with the app get a choice: add to the library or open a tool. Also watches for files the OS hands to the app
 /// via "Open with" / the share sheet and offers to import them.
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
@@ -45,29 +48,39 @@ class _HomeShellState extends State<HomeShell> {
 
   void _offerImport(IncomingFile? file) {
     if (file == null || !mounted) return;
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ImportSharedFileScreen(file: file, store: _store),
-      ),
-    );
+    _handleFiles([file]);
   }
 
-  static const _droppableExtensions = {'.pdf', '.jpg', '.jpeg', '.png'};
-
-  /// Windows: files dragged from Explorer onto the window go through the
-  /// same import flow as "Open with" on Android, one after another.
+  /// Windows: files dragged from Explorer onto the window.
   Future<void> _onDrop(DropDoneDetails details) async {
-    for (final f in details.files) {
-      final lower = f.path.toLowerCase();
-      if (!_droppableExtensions.any(lower.endsWith)) continue;
+    final files = [
+      for (final f in details.files)
+        if (isSupportedFile(f.name)) IncomingFile(path: f.path, name: f.name),
+    ];
+    if (files.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(tr('Dieser Dateityp wird nicht unterstützt', 'This file type is not supported')),
+      ));
+      return;
+    }
+    await _handleFiles(files);
+  }
+
+  /// Asks what to do with dropped or shared files - add them to the library
+  /// or open a tool that takes them - and does it.
+  Future<void> _handleFiles(List<IncomingFile> files) async {
+    final action = await chooseFileAction(context, [for (final f in files) f.name]);
+    if (action == null || !mounted) return;
+    final tool = action.tool;
+    if (tool != null) {
+      ToolDropZone.openWithFiles([for (final f in files) f.path]);
+      await Navigator.of(context).push(MaterialPageRoute(builder: tool.builder));
+      return;
+    }
+    for (final file in files) {
       if (!mounted) return;
       await Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => ImportSharedFileScreen(
-            file: IncomingFile(path: f.path, name: f.name),
-            store: _store,
-          ),
-        ),
+        MaterialPageRoute(builder: (_) => ImportSharedFileScreen(file: file, store: _store)),
       );
     }
   }
@@ -114,7 +127,7 @@ class _HomeShellState extends State<HomeShell> {
             if (_dragging)
               Positioned.fill(
                 child: DropOverlay(
-                  message: tr('PDF oder Bild hier ablegen', 'Drop PDF or image here'),
+                  message: tr('Dateien hier ablegen', 'Drop files here'),
                 ),
               ),
           ],

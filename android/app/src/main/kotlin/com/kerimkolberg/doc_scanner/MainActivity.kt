@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.provider.OpenableColumns
+import android.webkit.MimeTypeMap
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.TextRecognizer
@@ -216,6 +217,13 @@ class MainActivity : FlutterActivity() {
             val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
             if (nameIndex >= 0 && cursor.moveToFirst()) {
                 cursor.getString(nameIndex)?.let { displayName = it }
+            }
+        }
+
+        // The tools recognise files by extension, so make sure there is one.
+        if (!displayName.contains('.') && mimeType != null) {
+            MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType)?.let {
+                displayName = "$displayName.$it"
             }
         }
 
