@@ -308,7 +308,19 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(tr('Neuer Scan (${_pages.length} Seite(n))', 'New scan (${_pages.length} page(s))')),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(tr('Neuer Scan', 'New scan')),
+              Text(
+                tr('${_pages.length} ${_pages.length == 1 ? 'Seite' : 'Seiten'}',
+                    '${_pages.length} ${_pages.length == 1 ? 'page' : 'pages'}'),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+              ),
+            ],
+          ),
           actions: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),

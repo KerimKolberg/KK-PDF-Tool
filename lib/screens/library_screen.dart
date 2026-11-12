@@ -516,29 +516,40 @@ class _LibraryScreenState extends State<LibraryScreen> {
       itemBuilder: (context, i) {
         final (doc, snippet) = visible[i];
         final meta = _meta(doc);
+        final scheme = Theme.of(context).colorScheme;
         return GestureDetector(
           onSecondaryTap: () => _documentActions(doc),
           child: ListTile(
-          leading: ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: _thumbnail(doc, size: 48),
-          ),
-          title: Text(doc.title),
-          subtitle: Text(
-            snippet == null ? meta : '$meta\n$snippet',
-            maxLines: snippet == null ? 1 : 3,
-            overflow: TextOverflow.ellipsis,
-          ),
-          isThreeLine: snippet != null,
-          trailing: wide
-              ? IconButton(
-                  tooltip: tr('Weitere Aktionen', 'More actions'),
-                  icon: const Icon(Icons.more_vert),
-                  onPressed: () => _documentActions(doc),
-                )
-              : null,
-          onTap: () => _openDocument(doc),
-          onLongPress: () => _documentActions(doc),
+            contentPadding: const EdgeInsets.fromLTRB(16, 4, 4, 4),
+            leading: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: scheme.outlineVariant),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(5),
+                child: _thumbnail(doc, size: 52),
+              ),
+            ),
+            title: Text(
+              doc.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: Text(
+              snippet == null ? meta : '$meta\n$snippet',
+              maxLines: snippet == null ? 1 : 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+            isThreeLine: snippet != null,
+            trailing: IconButton(
+              tooltip: tr('Weitere Aktionen', 'More actions'),
+              icon: const Icon(Icons.more_vert),
+              onPressed: () => _documentActions(doc),
+            ),
+            onTap: () => _openDocument(doc),
+            onLongPress: () => _documentActions(doc),
           ),
         );
       },

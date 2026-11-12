@@ -15,6 +15,7 @@ import 'annotate_pages_screen.dart';
 import 'edit_pages_screen.dart';
 import 'text_result_screen.dart';
 import '../l10n.dart';
+import '../utils/layout.dart';
 
 class DocumentViewerScreen extends StatefulWidget {
   final DocumentStore store;
@@ -312,22 +313,37 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : GridView.builder(
-              padding: const EdgeInsets.all(12),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-                childAspectRatio: 0.72,
-              ),
-              itemCount: _pages.length,
-              itemBuilder: (context, i) => GestureDetector(
-                onTap: () => _openFullPage(i),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.file(_pages[i], fit: BoxFit.cover),
-                ),
-              ),
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                final side = centeredPadding(constraints.maxWidth, maxWidth: 1100).left;
+                return CustomScrollView(
+                  slivers: [
+                    SliverPadding(
+                      padding: EdgeInsets.fromLTRB(side, 4, side, 12),
+                      sliver: SliverToBoxAdapter(child: _buildHeader(busy)),
+                    ),
+                    SliverPadding(
+                      padding: EdgeInsets.fromLTRB(side, 0, side, 16),
+                      sliver: SliverGrid(
+                        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 200,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.72,
+                        ),
+                        delegate: SliverChildBuilderDelegate(
+                          (context, i) => _PageThumbnail(
+                            file: _pages[i],
+                            number: i + 1,
+                            onTap: () => _openFullPage(i),
+                          ),
+                          childCount: _pages.length,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
       bottomNavigationBar: SafeArea(
         child: Padding(
@@ -356,6 +372,44 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
     );
   }
 
+  /// Page count and folder, plus the most used actions as buttons so they
+  /// don't hide in the menu.
+  Widget _buildHeader(bool busy) {
+    final theme = Theme.of(context);
+    final info = [
+      tr('${_pages.length} ${_pages.length == 1 ? 'Seite' : 'Seiten'}',
+          '${_pages.length} ${_pages.length == 1 ? 'page' : 'pages'}'),
+      ?_doc.folder,
+    ].join(' · ');
+    Widget action(IconData icon, String label, VoidCallback onPressed) => Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: ActionChip(
+            avatar: Icon(icon, size: 18),
+            label: Text(label),
+            onPressed: busy ? null : onPressed,
+          ),
+        );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(info, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        const SizedBox(height: 10),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              action(Icons.view_agenda_outlined, tr('Seiten bearbeiten', 'Edit pages'), _editPages),
+              action(Icons.edit_note, tr('Ausfüllen & unterschreiben', 'Fill in & sign'), () => _annotate(AnnotateMode.fill)),
+              action(Icons.brush_outlined, tr('Zeichnen', 'Draw'), () => _annotate(AnnotateMode.draw)),
+              action(Icons.text_snippet_outlined, tr('Text erkennen', 'Recognize text'), _recognizeText),
+              action(Icons.drive_file_move_outlined, tr('Verschieben', 'Move'), _moveToFolder),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   void _openFullPage(int index) {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -365,27 +419,88 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
   }
 }
 
-class _FullPageViewer extends StatelessWidget {
+class _PageThumbnail extends StatelessWidget {
+  final File file;
+  final int number;
+  final VoidCallback onTap;
+
+  const _PageThumbnail({required this.file, required this.number, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.file(file, fit: BoxFit.cover, alignment: Alignment.topCenter, cacheWidth: 480),
+            Positioned(
+              left: 8,
+              bottom: 8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: scheme.inverseSurface.withValues(alpha: 0.8),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$number',
+                  style: TextStyle(color: scheme.onInverseSurface, fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FullPageViewer extends StatefulWidget {
   final List<File> pages;
   final int initialIndex;
 
   const _FullPageViewer({required this.pages, required this.initialIndex});
 
   @override
+  State<_FullPageViewer> createState() => _FullPageViewerState();
+}
+
+class _FullPageViewerState extends State<_FullPageViewer> {
+  late final _controller = PageController(initialPage: widget.initialIndex);
+  late int _index = widget.initialIndex;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final total = widget.pages.length;
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
+        title: Text(
+          tr('Seite ${_index + 1} von $total', 'Page ${_index + 1} of $total'),
+          style: const TextStyle(color: Colors.white, fontSize: 16),
+        ),
       ),
       body: PageView.builder(
-        controller: PageController(initialPage: initialIndex),
-        itemCount: pages.length,
+        controller: _controller,
+        itemCount: total,
+        onPageChanged: (i) => setState(() => _index = i),
         itemBuilder: (context, i) => InteractiveViewer(
           minScale: 1,
           maxScale: 5,
-          child: Center(child: Image.file(pages[i])),
+          child: Center(child: Image.file(widget.pages[i])),
         ),
       ),
     );

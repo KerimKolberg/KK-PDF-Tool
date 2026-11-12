@@ -245,6 +245,8 @@ class _EditPagesScreenState extends State<EditPagesScreen> {
               padding: const EdgeInsets.all(12),
               itemCount: _pages.length,
               onReorderItem: _onReorder,
+              // Own drag handle, so long-press stays free for selecting.
+              buildDefaultDragHandles: false,
               itemBuilder: (context, i) {
                 final page = _pages[i];
                 final selected = _selected.contains(page.key);
@@ -295,7 +297,16 @@ class _EditPagesScreenState extends State<EditPagesScreen> {
                           onPressed: () => _delete(i),
                           icon: const Icon(Icons.delete_outline),
                         ),
-                        const SizedBox(width: 24), // room for the drag handle
+                        ReorderableDragStartListener(
+                          index: i,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: MouseRegion(
+                              cursor: SystemMouseCursors.grab,
+                              child: Icon(Icons.drag_handle, color: scheme.onSurfaceVariant),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
