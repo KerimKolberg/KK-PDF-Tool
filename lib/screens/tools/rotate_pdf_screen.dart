@@ -15,6 +15,7 @@ import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_layout.dart';
 import '../../widgets/tool_result.dart';
 import '../../l10n.dart';
+import '../../widgets/busy_icon.dart';
 
 class _PickedPdf {
   final String name;
@@ -73,12 +74,7 @@ class _RotatePdfScreenState extends State<RotatePdfScreen> {
       var message =
           tr('${_pdfs.length} Datei(en) gedreht${lastLocation != null ? ' → ${folderOf(lastLocation)}' : ''}', '${_pdfs.length} file(s) rotated${lastLocation != null ? ' → ${folderOf(lastLocation)}' : ''}');
       if (_deleteOriginals) {
-        final notDeleted = await OriginalFilesCleanupService.deleteAll(
-          [for (final pdf in _pdfs) pdf.path],
-        );
-        if (notDeleted.isNotEmpty) {
-          message += tr(' · ${notDeleted.length} Original(e) konnten nicht gelöscht werden', ' · ${notDeleted.length} original(s) could not be deleted');
-        }
+        message += await OriginalFilesCleanupService.deleteAndDescribe([for (final pdf in _pdfs) pdf.path]);
       }
       if (!mounted) return;
       finishTool(context, widget, message);
@@ -182,14 +178,7 @@ class _RotatePdfScreenState extends State<RotatePdfScreen> {
                     Expanded(
                       child: FilledButton.icon(
                         onPressed: _pdfs.isEmpty || _busy ? null : _rotate,
-                        icon: _busy
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 2, color: Colors.white),
-                              )
-                            : const Icon(Icons.rotate_right),
+                        icon: BusyIcon(busy: _busy, child: const Icon(Icons.rotate_right)),
                         label: Text(_busy ? tr('Drehe…', 'Rotating…') : tr('Drehen & speichern', 'Rotate & save')),
                       ),
                     ),

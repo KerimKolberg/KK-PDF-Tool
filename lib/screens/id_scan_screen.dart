@@ -13,6 +13,7 @@ import '../services/settings_service.dart';
 import 'capture_screen.dart';
 import 'crop_screen.dart';
 import '../l10n.dart';
+import '../widgets/busy_icon.dart';
 
 /// Captures the front and back of an ID card/document and combines both
 /// into a single one-page PDF, matching the "copy of both sides on one
@@ -220,13 +221,7 @@ class _IdScanScreenState extends State<IdScanScreen> {
           padding: const EdgeInsets.all(16),
           child: FilledButton.icon(
             onPressed: !ready || _saving ? null : _save,
-            icon: _saving
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                  )
-                : const Icon(Icons.save),
+            icon: BusyIcon(busy: _saving, child: const Icon(Icons.save)),
             label: Text(_saving ? tr('Speichere…', 'Saving…') : tr('Speichern', 'Save')),
           ),
         ),

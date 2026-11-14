@@ -10,6 +10,7 @@ import '../services/incoming_file_service.dart';
 import '../services/pdf_tools_service.dart';
 import 'document_viewer_screen.dart';
 import '../l10n.dart';
+import '../widgets/busy_icon.dart';
 
 /// Shown when the OS hands KK-PDF-Tool a PDF or image via "Open with" / the
 /// share sheet. Imports it into the local library so it shows up like any
@@ -146,14 +147,7 @@ class _ImportSharedFileScreenState extends State<ImportSharedFileScreen> {
                 Expanded(
                   child: FilledButton.icon(
                     onPressed: _busy ? null : _import,
-                    icon: _busy
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white),
-                          )
-                        : const Icon(Icons.download_outlined),
+                    icon: BusyIcon(busy: _busy, child: const Icon(Icons.download_outlined)),
                     label: Text(_busy ? tr('Importiere…', 'Importing…') : tr('Importieren', 'Import')),
                   ),
                 ),

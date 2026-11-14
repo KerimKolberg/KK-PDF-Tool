@@ -14,6 +14,7 @@ import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_layout.dart';
 import '../../widgets/tool_result.dart';
 import '../../l10n.dart';
+import '../../widgets/busy_icon.dart';
 
 /// Rasterizes every page of a picked PDF into a JPEG image and exports
 /// them all into a per-document subfolder under Downloads/KK-PDF-Tool.
@@ -83,10 +84,7 @@ class _PdfToImagesScreenState extends State<PdfToImagesScreen> {
       var message =
           tr('${images.length} Bild(er) gespeichert${lastLocation != null ? ' in ${folderOf(lastLocation)}' : ''}', '${images.length} image(s) saved${lastLocation != null ? ' in ${folderOf(lastLocation)}' : ''}');
       if (_deleteOriginal) {
-        final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
-        if (notDeleted.isNotEmpty) {
-          message += tr(' · Original konnte nicht gelöscht werden', ' · Original could not be deleted');
-        }
+        message += await OriginalFilesCleanupService.deleteAndDescribe([_sourcePath]);
       }
       if (!mounted) return;
       finishTool(context, widget, message);
@@ -146,14 +144,7 @@ class _PdfToImagesScreenState extends State<PdfToImagesScreen> {
                       ),
                       FilledButton.icon(
                         onPressed: _busy ? null : _exportAll,
-                        icon: _busy
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 2, color: Colors.white),
-                              )
-                            : const Icon(Icons.download_outlined),
+                        icon: BusyIcon(busy: _busy, child: const Icon(Icons.download_outlined)),
                         label: Text(
                           _busy
                               ? tr('Exportiere…', 'Exporting…')

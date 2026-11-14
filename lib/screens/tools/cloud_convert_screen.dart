@@ -13,6 +13,7 @@ import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_layout.dart';
 import '../../widgets/tool_result.dart';
 import '../../l10n.dart';
+import '../../widgets/busy_icon.dart';
 
 /// Generic "pick a file -> convert via Google Drive -> save" screen, shared
 /// by every cloud-based conversion tool so the flow and error handling stay
@@ -86,10 +87,7 @@ class _CloudConvertScreenState extends State<CloudConvertScreen> {
       );
       var message = tr('Gespeichert unter $location', 'Saved to $location');
       if (_deleteOriginal) {
-        final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
-        if (notDeleted.isNotEmpty) {
-          message += tr(' · Original konnte nicht gelöscht werden', ' · Original could not be deleted');
-        }
+        message += await OriginalFilesCleanupService.deleteAndDescribe([_sourcePath]);
       }
       if (!mounted) return;
       finishTool(context, widget, message);
@@ -146,13 +144,9 @@ class _CloudConvertScreenState extends State<CloudConvertScreen> {
                   label: Text(widget.pickButtonLabel),
                 )
               else ...[
-                ListTile(
-                  leading: const Icon(Icons.description_outlined),
-                  title: Text(_fileName!),
-                  trailing: TextButton(
-                    onPressed: _busy ? null : _pickFile,
-                    child: Text(tr('Ändern', 'Change')),
-                  ),
+                SelectedFileTile(
+                  name: _fileName!,
+                  onChange: _busy ? null : _pickFile,
                 ),
                 DeleteOriginalsSwitch(
                   label: tr('Originaldatei danach löschen', 'Delete original file afterwards'),
@@ -162,14 +156,7 @@ class _CloudConvertScreenState extends State<CloudConvertScreen> {
                 const SizedBox(height: 12),
                 FilledButton.icon(
                   onPressed: _busy ? null : _convert,
-                  icon: _busy
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
-                        )
-                      : Icon(widget.convertIcon),
+                  icon: BusyIcon(busy: _busy, child: Icon(widget.convertIcon)),
                   label: Text(_busy ? tr('Wandle um…', 'Converting…') : widget.convertButtonLabel),
                 ),
               ],

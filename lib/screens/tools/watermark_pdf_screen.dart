@@ -14,6 +14,7 @@ import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_layout.dart';
 import '../../widgets/tool_result.dart';
 import '../../l10n.dart';
+import '../../widgets/busy_icon.dart';
 
 /// Stamps a diagonal text watermark across every page of a PDF.
 class WatermarkPdfScreen extends StatefulWidget {
@@ -64,10 +65,7 @@ class _WatermarkPdfScreenState extends State<WatermarkPdfScreen> {
           await _downloadsExport.export(result, '${name}_wasserzeichen.pdf');
       var message = tr('Gespeichert unter $location', 'Saved to $location');
       if (_deleteOriginal) {
-        final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
-        if (notDeleted.isNotEmpty) {
-          message += tr(' · Original konnte nicht gelöscht werden', ' · Original could not be deleted');
-        }
+        message += await OriginalFilesCleanupService.deleteAndDescribe([_sourcePath]);
       }
       if (!mounted) return;
       finishTool(context, widget, message);
@@ -105,13 +103,9 @@ class _WatermarkPdfScreenState extends State<WatermarkPdfScreen> {
                   label: Text(tr('PDF wählen', 'Choose PDF')),
                 )
               else ...[
-                ListTile(
-                  leading: const Icon(Icons.description_outlined),
-                  title: Text(_fileName!),
-                  trailing: TextButton(
-                    onPressed: _busy ? null : _pickPdf,
-                    child: Text(tr('Ändern', 'Change')),
-                  ),
+                SelectedFileTile(
+                  name: _fileName!,
+                  onChange: _busy ? null : _pickPdf,
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -137,14 +131,7 @@ class _WatermarkPdfScreenState extends State<WatermarkPdfScreen> {
                 const SizedBox(height: 12),
                 FilledButton.icon(
                   onPressed: _busy ? null : _apply,
-                  icon: _busy
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Icon(Icons.water_drop_outlined),
+                  icon: BusyIcon(busy: _busy, child: const Icon(Icons.water_drop_outlined)),
                   label: Text(_busy ? tr('Wende an…', 'Applying…') : tr('Wasserzeichen einfügen', 'Add watermark')),
                 ),
               ],

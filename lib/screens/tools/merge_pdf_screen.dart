@@ -13,6 +13,7 @@ import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_layout.dart';
 import '../../widgets/tool_result.dart';
 import '../../l10n.dart';
+import '../../widgets/busy_icon.dart';
 
 class _PickedPdf {
   final String name;
@@ -61,12 +62,7 @@ class _MergePdfScreenState extends State<MergePdfScreen> {
       final location = await _downloadsExport.export(merged, '$title.pdf');
       var message = tr('Zusammengeführt und gespeichert unter $location', 'Merged and saved to $location');
       if (_deleteOriginals) {
-        final notDeleted = await OriginalFilesCleanupService.deleteAll(
-          [for (final pdf in _pdfs) pdf.path],
-        );
-        if (notDeleted.isNotEmpty) {
-          message += tr(' · ${notDeleted.length} Original(e) konnten nicht gelöscht werden', ' · ${notDeleted.length} original(s) could not be deleted');
-        }
+        message += await OriginalFilesCleanupService.deleteAndDescribe([for (final pdf in _pdfs) pdf.path]);
       }
       if (!mounted) return;
       finishTool(context, widget, message);
@@ -166,14 +162,7 @@ class _MergePdfScreenState extends State<MergePdfScreen> {
                     Expanded(
                       child: FilledButton.icon(
                         onPressed: _pdfs.length < 2 || _busy ? null : _merge,
-                        icon: _busy
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 2, color: Colors.white),
-                              )
-                            : const Icon(Icons.merge_type),
+                        icon: BusyIcon(busy: _busy, child: const Icon(Icons.merge_type)),
                         label: Text(_busy ? tr('Führe zusammen…', 'Merging…') : tr('Zusammenführen', 'Merge')),
                       ),
                     ),

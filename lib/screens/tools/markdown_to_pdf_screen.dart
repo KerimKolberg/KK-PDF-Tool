@@ -13,6 +13,7 @@ import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_layout.dart';
 import '../../widgets/tool_result.dart';
 import '../../l10n.dart';
+import '../../widgets/busy_icon.dart';
 
 /// Converts Markdown (.md) source into a styled PDF - fully offline, no
 /// Google account needed.
@@ -53,10 +54,7 @@ class _MarkdownToPdfScreenState extends State<MarkdownToPdfScreen> {
       final location = await _downloadsExport.export(pdfBytes, '$name.pdf');
       var message = tr('PDF gespeichert unter $location', 'PDF saved to $location');
       if (_deleteOriginal) {
-        final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
-        if (notDeleted.isNotEmpty) {
-          message += tr(' · Original konnte nicht gelöscht werden', ' · Original could not be deleted');
-        }
+        message += await OriginalFilesCleanupService.deleteAndDescribe([_sourcePath]);
       }
       if (!mounted) return;
       finishTool(context, widget, message);
@@ -106,13 +104,9 @@ class _MarkdownToPdfScreenState extends State<MarkdownToPdfScreen> {
                   label: Text(tr('Markdown-Datei wählen', 'Choose Markdown file')),
                 )
               else ...[
-                ListTile(
-                  leading: const Icon(Icons.description_outlined),
-                  title: Text(_fileName!),
-                  trailing: TextButton(
-                    onPressed: _busy ? null : _pickFile,
-                    child: Text(tr('Ändern', 'Change')),
-                  ),
+                SelectedFileTile(
+                  name: _fileName!,
+                  onChange: _busy ? null : _pickFile,
                 ),
                 DeleteOriginalsSwitch(
                   label: tr('Originaldatei danach löschen', 'Delete original file afterwards'),
@@ -122,13 +116,7 @@ class _MarkdownToPdfScreenState extends State<MarkdownToPdfScreen> {
                 const SizedBox(height: 12),
                 FilledButton.icon(
                   onPressed: _busy ? null : _convert,
-                  icon: _busy
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Icon(Icons.picture_as_pdf_outlined),
+                  icon: BusyIcon(busy: _busy, child: const Icon(Icons.picture_as_pdf_outlined)),
                   label: Text(_busy ? tr('Wandle um…', 'Converting…') : tr('In PDF umwandeln', 'Convert to PDF')),
                 ),
               ],

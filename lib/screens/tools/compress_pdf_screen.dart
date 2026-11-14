@@ -15,6 +15,7 @@ import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_layout.dart';
 import '../../widgets/tool_result.dart';
 import '../../l10n.dart';
+import '../../widgets/busy_icon.dart';
 
 enum _CompressLevel { low, medium, high }
 
@@ -85,10 +86,7 @@ class _CompressPdfScreenState extends State<CompressPdfScreen> {
       final after = formatFileSize(compressed.length);
       var message = tr('$before → $after · gespeichert unter $location', '$before → $after · saved to $location');
       if (_deleteOriginal) {
-        final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
-        if (notDeleted.isNotEmpty) {
-          message += tr(' · Original konnte nicht gelöscht werden', ' · Original could not be deleted');
-        }
+        message += await OriginalFilesCleanupService.deleteAndDescribe([_sourcePath]);
       }
       if (!mounted) return;
       finishTool(context, widget, message);
@@ -120,14 +118,10 @@ class _CompressPdfScreenState extends State<CompressPdfScreen> {
                   label: Text(tr('PDF wählen', 'Choose PDF')),
                 )
               else ...[
-                ListTile(
-                  leading: const Icon(Icons.description_outlined),
-                  title: Text(_fileName!),
+                SelectedFileTile(
+                  name: _fileName!,
                   subtitle: Text(formatFileSize(_pdfBytes!.length)),
-                  trailing: TextButton(
-                    onPressed: _busy ? null : _pickPdf,
-                    child: Text(tr('Ändern', 'Change')),
-                  ),
+                  onChange: _busy ? null : _pickPdf,
                 ),
                 const SizedBox(height: 12),
                 Text(tr('Kompressionsgrad', 'Compression level'), style: Theme.of(context).textTheme.titleSmall),
@@ -159,14 +153,7 @@ class _CompressPdfScreenState extends State<CompressPdfScreen> {
                 const SizedBox(height: 12),
                 FilledButton.icon(
                   onPressed: _busy ? null : _compress,
-                  icon: _busy
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Icon(Icons.compress),
+                  icon: BusyIcon(busy: _busy, child: const Icon(Icons.compress)),
                   label: Text(_busy ? tr('Komprimiere…', 'Compressing…') : tr('Komprimieren', 'Compress')),
                 ),
               ],

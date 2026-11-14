@@ -14,6 +14,7 @@ import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_layout.dart';
 import '../../widgets/tool_result.dart';
 import '../../l10n.dart';
+import '../../widgets/busy_icon.dart';
 
 /// Picks a PDF, opens it in the fill-in/drawing editor and saves the edited
 /// copy to Downloads.
@@ -73,8 +74,7 @@ class _AnnotatePdfScreenState extends State<AnnotatePdfScreen> {
       final location = await _downloadsExport.export(pdf, '$name$suffix.pdf');
       var message = tr('Gespeichert unter $location', 'Saved to $location');
       if (_deleteOriginal) {
-        final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
-        if (notDeleted.isNotEmpty) message += tr(' · Original konnte nicht gelöscht werden', ' · Original could not be deleted');
+        message += await OriginalFilesCleanupService.deleteAndDescribe([_sourcePath]);
       }
       if (!mounted) return;
       finishTool(context, widget, message);
@@ -120,13 +120,9 @@ class _AnnotatePdfScreenState extends State<AnnotatePdfScreen> {
                   label: Text(tr('PDF wählen', 'Choose PDF')),
                 )
               else ...[
-                ListTile(
-                  leading: const Icon(Icons.description_outlined),
-                  title: Text(_fileName!),
-                  trailing: TextButton(
-                    onPressed: busy ? null : _pickPdf,
-                    child: Text(tr('Ändern', 'Change')),
-                  ),
+                SelectedFileTile(
+                  name: _fileName!,
+                  onChange: busy ? null : _pickPdf,
                 ),
                 DeleteOriginalsSwitch(
                   label: tr('Originaldatei danach löschen', 'Delete original file afterwards'),
@@ -136,13 +132,7 @@ class _AnnotatePdfScreenState extends State<AnnotatePdfScreen> {
                 const SizedBox(height: 12),
                 FilledButton.icon(
                   onPressed: busy ? null : _edit,
-                  icon: busy
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : Icon(_fill ? Icons.edit_note : Icons.brush_outlined),
+                  icon: BusyIcon(busy: busy, child: Icon(_fill ? Icons.edit_note : Icons.brush_outlined)),
                   label: Text(_busyLabel ?? (_fill ? tr('Ausfüllen', 'Fill in') : tr('Zeichnen', 'Draw'))),
                 ),
               ],

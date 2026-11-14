@@ -13,6 +13,7 @@ import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_layout.dart';
 import '../../widgets/tool_result.dart';
 import '../../l10n.dart';
+import '../../widgets/busy_icon.dart';
 
 /// Packs every page of a picked PDF as a full-slide picture into a new
 /// .pptx file. This is a mechanical "one page per slide" export, not a real
@@ -56,10 +57,7 @@ class _PdfToPptxScreenState extends State<PdfToPptxScreen> {
       final location = await _downloadsExport.export(pptx, '$name.pptx');
       var message = tr('Gespeichert unter $location', 'Saved to $location');
       if (_deleteOriginal) {
-        final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
-        if (notDeleted.isNotEmpty) {
-          message += tr(' · Original konnte nicht gelöscht werden', ' · Original could not be deleted');
-        }
+        message += await OriginalFilesCleanupService.deleteAndDescribe([_sourcePath]);
       }
       if (!mounted) return;
       finishTool(context, widget, message);
@@ -115,13 +113,9 @@ class _PdfToPptxScreenState extends State<PdfToPptxScreen> {
                   label: Text(tr('PDF wählen', 'Choose PDF')),
                 )
               else ...[
-                ListTile(
-                  leading: const Icon(Icons.description_outlined),
-                  title: Text(_fileName!),
-                  trailing: TextButton(
-                    onPressed: _busy ? null : _pickPdf,
-                    child: Text(tr('Ändern', 'Change')),
-                  ),
+                SelectedFileTile(
+                  name: _fileName!,
+                  onChange: _busy ? null : _pickPdf,
                 ),
                 DeleteOriginalsSwitch(
                   label: tr('Originaldatei danach löschen', 'Delete original file afterwards'),
@@ -131,14 +125,7 @@ class _PdfToPptxScreenState extends State<PdfToPptxScreen> {
                 const SizedBox(height: 12),
                 FilledButton.icon(
                   onPressed: _busy ? null : _convert,
-                  icon: _busy
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Icon(Icons.slideshow_outlined),
+                  icon: BusyIcon(busy: _busy, child: const Icon(Icons.slideshow_outlined)),
                   label: Text(_busy ? tr('Wandle um…', 'Converting…') : tr('Als PPTX speichern', 'Save as PPTX')),
                 ),
               ],

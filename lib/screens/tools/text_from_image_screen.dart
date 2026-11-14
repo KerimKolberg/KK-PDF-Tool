@@ -15,6 +15,7 @@ import '../../services/original_files_cleanup_service.dart';
 import '../../services/settings_service.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../l10n.dart';
+import '../../widgets/busy_icon.dart';
 
 const _mimeByExtension = {
   'jpg': 'image/jpeg',
@@ -200,13 +201,10 @@ class _TextFromImageScreenState extends State<TextFromImageScreen> {
                   label: Text(tr('Bild wählen', 'Choose image')),
                 )
               else ...[
-                ListTile(
-                  leading: const Icon(Icons.image_outlined),
-                  title: Text(_fileName!),
-                  trailing: TextButton(
-                    onPressed: _busy ? null : _pickFile,
-                    child: Text(tr('Ändern', 'Change')),
-                  ),
+                SelectedFileTile(
+                  icon: Icons.image_outlined,
+                  name: _fileName!,
+                  onChange: _busy ? null : _pickFile,
                 ),
                 DeleteOriginalsSwitch(
                   label: tr('Originalbild danach löschen', 'Delete original image afterwards'),
@@ -216,13 +214,7 @@ class _TextFromImageScreenState extends State<TextFromImageScreen> {
                 const SizedBox(height: 8),
                 FilledButton.icon(
                   onPressed: _busy ? null : _extract,
-                  icon: _busy
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Icon(Icons.text_snippet_outlined),
+                  icon: BusyIcon(busy: _busy, child: const Icon(Icons.text_snippet_outlined)),
                   label: Text(_busy ? tr('Erkenne Text…', 'Recognizing text…') : tr('Text erkennen', 'Recognize text')),
                 ),
                 if (_extractedText != null) ...[

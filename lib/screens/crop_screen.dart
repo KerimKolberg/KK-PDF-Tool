@@ -7,6 +7,7 @@ import '../services/image_processing.dart';
 import '../services/settings_service.dart';
 import '../widgets/corner_crop_overlay.dart';
 import '../l10n.dart';
+import '../widgets/busy_icon.dart';
 
 /// Lets the user fine-tune the four document corners on a captured photo,
 /// optionally rotate it, and pick a filter, before it is flattened into a
@@ -276,13 +277,7 @@ class _CropScreenState extends State<CropScreen> {
                       width: double.infinity,
                       child: FilledButton.icon(
                         onPressed: _busy ? null : _confirm,
-                        icon: _busy
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                              )
-                            : const Icon(Icons.check),
+                        icon: BusyIcon(busy: _busy, child: const Icon(Icons.check)),
                         label: Text(_busy ? tr('Verarbeite…', 'Processing…') : tr('Übernehmen', 'Apply')),
                       ),
                     ),

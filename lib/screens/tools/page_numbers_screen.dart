@@ -13,6 +13,7 @@ import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_layout.dart';
 import '../../widgets/tool_result.dart';
 import '../../l10n.dart';
+import '../../widgets/busy_icon.dart';
 
 /// Adds page numbers and/or a header/footer text to every page of a PDF.
 class PageNumbersScreen extends StatefulWidget {
@@ -93,8 +94,7 @@ class _PageNumbersScreenState extends State<PageNumbersScreen> {
       final location = await _downloadsExport.export(result, '${name}_nummeriert.pdf');
       var message = tr('Gespeichert unter $location', 'Saved to $location');
       if (_deleteOriginal) {
-        final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
-        if (notDeleted.isNotEmpty) message += tr(' · Original konnte nicht gelöscht werden', ' · Original could not be deleted');
+        message += await OriginalFilesCleanupService.deleteAndDescribe([_sourcePath]);
       }
       if (!mounted) return;
       finishTool(context, widget, message);
@@ -123,15 +123,11 @@ class _PageNumbersScreenState extends State<PageNumbersScreen> {
             : ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.description_outlined),
-                    title: Text(_fileName!),
-                    trailing: TextButton(
-                      onPressed: _busy ? null : _pickPdf,
-                      child: Text(tr('Ändern', 'Change')),
-                    ),
+                  SelectedFileTile(
+                    name: _fileName!,
+                    onChange: _busy ? null : _pickPdf,
                   ),
+                  const SizedBox(height: 8),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     title: Text(tr('Seitenzahlen', 'Page numbers')),
@@ -207,13 +203,7 @@ class _PageNumbersScreenState extends State<PageNumbersScreen> {
                   padding: const EdgeInsets.all(12),
                   child: FilledButton.icon(
                     onPressed: _busy || !_hasSomethingToAdd ? null : _apply,
-                    icon: _busy
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                          )
-                        : const Icon(Icons.format_list_numbered),
+                    icon: BusyIcon(busy: _busy, child: const Icon(Icons.format_list_numbered)),
                     label: Text(_busy ? tr('Wird erstellt…', 'Creating…') : tr('Anwenden & speichern', 'Apply & save')),
                   ),
                 ),

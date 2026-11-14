@@ -13,6 +13,7 @@ import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_layout.dart';
 import '../../widgets/tool_result.dart';
 import '../../l10n.dart';
+import '../../widgets/busy_icon.dart';
 
 /// Android only: OCRs every page of a scanned PDF offline and saves a copy
 /// with an invisible text layer, so it can be searched and text copied.
@@ -71,8 +72,7 @@ class _SearchablePdfScreenState extends State<SearchablePdfScreen> {
           ? tr('Kein Text erkannt · gespeichert unter $location', 'No text recognized · saved to $location')
           : tr('Gespeichert unter $location', 'Saved to $location');
       if (_deleteOriginal) {
-        final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
-        if (notDeleted.isNotEmpty) message += tr(' · Original konnte nicht gelöscht werden', ' · Original could not be deleted');
+        message += await OriginalFilesCleanupService.deleteAndDescribe([_sourcePath]);
       }
       if (!mounted) return;
       finishTool(context, widget, message);
@@ -113,13 +113,9 @@ class _SearchablePdfScreenState extends State<SearchablePdfScreen> {
                   label: Text(tr('PDF wählen', 'Choose PDF')),
                 )
               else ...[
-                ListTile(
-                  leading: const Icon(Icons.description_outlined),
-                  title: Text(_fileName!),
-                  trailing: TextButton(
-                    onPressed: busy ? null : _pickPdf,
-                    child: Text(tr('Ändern', 'Change')),
-                  ),
+                SelectedFileTile(
+                  name: _fileName!,
+                  onChange: busy ? null : _pickPdf,
                 ),
                 DeleteOriginalsSwitch(
                   label: tr('Originaldatei danach löschen', 'Delete original file afterwards'),
@@ -129,13 +125,7 @@ class _SearchablePdfScreenState extends State<SearchablePdfScreen> {
                 const SizedBox(height: 12),
                 FilledButton.icon(
                   onPressed: busy ? null : _convert,
-                  icon: busy
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Icon(Icons.manage_search),
+                  icon: BusyIcon(busy: busy, child: const Icon(Icons.manage_search)),
                   label: Text(_busyLabel ?? tr('Durchsuchbar machen', 'Make searchable')),
                 ),
               ],

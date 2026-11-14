@@ -12,6 +12,7 @@ import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_layout.dart';
 import '../../widgets/tool_result.dart';
 import '../../l10n.dart';
+import '../../widgets/busy_icon.dart';
 
 class _PickedImage {
   final String? path;
@@ -61,12 +62,7 @@ class _ImagesToPdfScreenState extends State<ImagesToPdfScreen> {
       final location = await _downloadsExport.export(pdfBytes, '$title.pdf');
       var message = tr('PDF gespeichert unter $location', 'PDF saved to $location');
       if (_deleteOriginals) {
-        final notDeleted = await OriginalFilesCleanupService.deleteAll(
-          [for (final image in _images) image.path],
-        );
-        if (notDeleted.isNotEmpty) {
-          message += tr(' · ${notDeleted.length} Original(e) konnten nicht gelöscht werden', ' · ${notDeleted.length} original(s) could not be deleted');
-        }
+        message += await OriginalFilesCleanupService.deleteAndDescribe([for (final image in _images) image.path]);
       }
       if (!mounted) return;
       finishTool(context, widget, message);
@@ -170,14 +166,7 @@ class _ImagesToPdfScreenState extends State<ImagesToPdfScreen> {
                     Expanded(
                       child: FilledButton.icon(
                         onPressed: _images.isEmpty || _busy ? null : _createPdf,
-                        icon: _busy
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 2, color: Colors.white),
-                              )
-                            : const Icon(Icons.picture_as_pdf_outlined),
+                        icon: BusyIcon(busy: _busy, child: const Icon(Icons.picture_as_pdf_outlined)),
                         label: Text(_busy ? tr('Erstelle…', 'Creating…') : tr('PDF erstellen', 'Create PDF')),
                       ),
                     ),

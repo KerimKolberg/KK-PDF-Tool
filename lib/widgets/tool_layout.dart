@@ -112,3 +112,37 @@ class FilePickPanel extends StatelessWidget {
     return SizedBox(width: double.infinity, child: panel);
   }
 }
+
+/// The file a tool is working on, with a button to pick a different one.
+class SelectedFileTile extends StatelessWidget {
+  final String name;
+  final IconData icon;
+  final Widget? subtitle;
+
+  /// Null while the tool is busy.
+  final VoidCallback? onChange;
+
+  const SelectedFileTile({
+    super.key,
+    required this.name,
+    required this.onChange,
+    this.icon = Icons.description_outlined,
+    this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: EdgeInsets.zero,
+      child: ListTile(
+        leading: Icon(icon),
+        title: Text(name, maxLines: 2, overflow: TextOverflow.ellipsis),
+        subtitle: subtitle,
+        trailing: TextButton(
+          onPressed: onChange,
+          child: Text(tr('Ändern', 'Change')),
+        ),
+      ),
+    );
+  }
+}

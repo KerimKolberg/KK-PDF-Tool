@@ -14,6 +14,7 @@ import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_layout.dart';
 import '../../widgets/tool_result.dart';
 import '../../l10n.dart';
+import '../../widgets/busy_icon.dart';
 
 class _PageRange {
   final TextEditingController from;
@@ -126,10 +127,7 @@ class _SplitPdfScreenState extends State<SplitPdfScreen> {
       var message =
           tr('${parsedRanges.length} Datei(en) gespeichert${lastLocation != null ? ' in ${folderOf(lastLocation)}' : ''}', '${parsedRanges.length} file(s) saved${lastLocation != null ? ' in ${folderOf(lastLocation)}' : ''}');
       if (_deleteOriginal) {
-        final notDeleted = await OriginalFilesCleanupService.deleteAll([_sourcePath]);
-        if (notDeleted.isNotEmpty) {
-          message += tr(' · Original konnte nicht gelöscht werden', ' · Original could not be deleted');
-        }
+        message += await OriginalFilesCleanupService.deleteAndDescribe([_sourcePath]);
       }
       if (!mounted) return;
       finishTool(context, widget, message);
@@ -226,14 +224,7 @@ class _SplitPdfScreenState extends State<SplitPdfScreen> {
                       ),
                       FilledButton.icon(
                         onPressed: _busy ? null : _split,
-                        icon: _busy
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 2, color: Colors.white),
-                              )
-                            : const Icon(Icons.content_cut),
+                        icon: BusyIcon(busy: _busy, child: const Icon(Icons.content_cut)),
                         label: Text(_busy ? tr('Teile auf…', 'Splitting…') : tr('Aufteilen & speichern', 'Split & save')),
                       ),
                     ],
