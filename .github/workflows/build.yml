@@ -34,7 +34,11 @@ jobs:
 
       - run: flutter pub get
 
-      - run: flutter analyze
+      # Warnings and errors fail the build. Notices don't: newer Flutter
+      # versions announce future API moves this way (currently: Material
+      # widgets moving to the material_ui package), which is a planned
+      # migration, not a defect.
+      - run: flutter analyze --no-fatal-infos
 
       - run: flutter test
 
