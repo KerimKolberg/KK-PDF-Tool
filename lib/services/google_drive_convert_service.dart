@@ -19,6 +19,8 @@ class GoogleDriveConvertService {
   static const _uploadUrl =
       'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
   static const _filesUrl = 'https://www.googleapis.com/drive/v3/files';
+  static const _timeout = Duration(seconds: 60);
+  static const _uploadTimeout = Duration(minutes: 5);
 
   final SettingsService _settings = SettingsService();
   GoogleSignIn? _signIn;
@@ -101,7 +103,7 @@ class GoogleDriveConvertService {
         'Content-Type': 'multipart/related; boundary=$boundary',
       },
       body: body.toBytes(),
-    );
+    ).timeout(_uploadTimeout);
     if (response.statusCode == 401) GoogleDesktopAuth.invalidate();
     if (response.statusCode != 200) {
       throw GoogleDriveApiException(
@@ -116,7 +118,7 @@ class GoogleDriveConvertService {
       final response = await http.get(
         Uri.parse('$_filesUrl/$fileId/export?mimeType=${Uri.encodeComponent(exportMimeType)}'),
         headers: _authHeader,
-      );
+      ).timeout(_timeout);
       if (response.statusCode != 200) {
         throw GoogleDriveApiException(
           tr('Export fehlgeschlagen (${response.statusCode}): ${response.body}', 'Export failed (${response.statusCode}): ${response.body}'),
@@ -124,7 +126,10 @@ class GoogleDriveConvertService {
       }
       return response.bodyBytes;
     } finally {
-      await http.delete(Uri.parse('$_filesUrl/$fileId'), headers: _authHeader);
+      // Best effort: the conversion result matters more than the cleanup.
+      try {
+        await http.delete(Uri.parse('$_filesUrl/$fileId'), headers: _authHeader).timeout(_timeout);
+      } catch (_) {}
     }
   }
 

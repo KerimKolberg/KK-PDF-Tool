@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'secret_store.dart';
 import 'settings_service.dart';
 import '../l10n.dart';
 
@@ -23,8 +24,32 @@ class GoogleDesktopAuth {
   static const _revokeUrl = 'https://oauth2.googleapis.com/revoke';
   static const _refreshTokenKey = 'google.desktop.refreshToken';
 
+  static const _timeout = Duration(seconds: 30);
+
   static String? _accessToken;
   static DateTime _expiry = DateTime.fromMillisecondsSinceEpoch(0);
+
+  static String? _refreshToken;
+  static Future<void>? _loaded;
+
+  /// Reads the saved sign-in from the protected storage (once). Call before
+  /// using [isSignedIn].
+  static Future<void> load() => _loaded ??= _load();
+
+  static Future<void> _load() async {
+    // Older versions kept the token in the plain preferences file.
+    final legacy = AppPrefs.getString(_refreshTokenKey);
+    if (legacy != null) {
+      await SecretStore.write(_refreshTokenKey, legacy);
+      AppPrefs.setString(_refreshTokenKey, null);
+    }
+    _refreshToken = legacy ?? await SecretStore.read(_refreshTokenKey);
+  }
+
+  static Future<void> _setRefreshToken(String? token) {
+    _refreshToken = token;
+    return SecretStore.write(_refreshTokenKey, token);
+  }
 
   /// A valid access token for [scopes]; signs in through the browser only
   /// when there is no usable refresh token yet.
@@ -36,18 +61,25 @@ class GoogleDesktopAuth {
     final cached = _accessToken;
     if (cached != null && DateTime.now().isBefore(_expiry)) return cached;
 
-    final refreshToken = AppPrefs.getString(_refreshTokenKey);
+    await load();
+    final refreshToken = _refreshToken;
     if (refreshToken != null) {
       final response = await http.post(Uri.parse(_tokenUrl), body: {
         'client_id': clientId,
         'client_secret': clientSecret,
         'refresh_token': refreshToken,
         'grant_type': 'refresh_token',
-      });
+      }).timeout(_timeout);
       if (response.statusCode == 200) return _store(response.body);
+      if (response.statusCode != 400 && response.statusCode != 401) {
+        // A server or network problem - keep the sign-in for the next try.
+        throw GoogleDesktopAuthException(
+          tr('Google-Anmeldung fehlgeschlagen (${response.statusCode}): ${response.body}', 'Google sign-in failed (${response.statusCode}): ${response.body}'),
+        );
+      }
       // Revoked or expired (Google expires them after 7 days while the
       // Cloud project is in "Testing" mode): sign in again below.
-      AppPrefs.setString(_refreshTokenKey, null);
+      await _setRefreshToken(null);
     }
     return _signIn(clientId: clientId, clientSecret: clientSecret, scopes: scopes);
   }
@@ -56,19 +88,21 @@ class GoogleDesktopAuth {
   static void invalidate() => _accessToken = null;
 
   static Future<void> signOut() async {
-    final token = AppPrefs.getString(_refreshTokenKey) ?? _accessToken;
+    await load();
+    final token = _refreshToken ?? _accessToken;
     _accessToken = null;
-    AppPrefs.setString(_refreshTokenKey, null);
+    await _setRefreshToken(null);
     if (token != null) {
       try {
-        await http.post(Uri.parse(_revokeUrl), body: {'token': token});
+        await http.post(Uri.parse(_revokeUrl), body: {'token': token}).timeout(_timeout);
       } catch (_) {
         // Offline: the token is forgotten locally either way.
       }
     }
   }
 
-  static bool get isSignedIn => AppPrefs.getString(_refreshTokenKey) != null;
+  /// Whether a sign-in is saved. Only meaningful after [load].
+  static bool get isSignedIn => _refreshToken != null;
 
   static Future<String> _signIn({
     required String clientId,
@@ -113,13 +147,13 @@ class GoogleDesktopAuth {
         'code_verifier': verifier,
         'redirect_uri': redirectUri,
         'grant_type': 'authorization_code',
-      });
+      }).timeout(_timeout);
       if (response.statusCode != 200) {
         throw GoogleDesktopAuthException(
           tr('Google-Anmeldung fehlgeschlagen (${response.statusCode}): ${response.body}', 'Google sign-in failed (${response.statusCode}): ${response.body}'),
         );
       }
-      return _store(response.body);
+      return await _store(response.body);
     } finally {
       await server.close(force: true);
     }
@@ -157,14 +191,14 @@ class GoogleDesktopAuth {
     throw GoogleDesktopAuthException(tr('Anmeldung abgebrochen.', 'Sign-in cancelled.'));
   }
 
-  static String _store(String body) {
+  static Future<String> _store(String body) async {
     final json = jsonDecode(body) as Map<String, dynamic>;
     final token = json['access_token'] as String;
     final expiresIn = (json['expires_in'] as num?)?.toInt() ?? 3600;
     _accessToken = token;
     _expiry = DateTime.now().add(Duration(seconds: expiresIn - 60));
     final refreshToken = json['refresh_token'] as String?;
-    if (refreshToken != null) AppPrefs.setString(_refreshTokenKey, refreshToken);
+    if (refreshToken != null) await _setRefreshToken(refreshToken);
     return token;
   }
 

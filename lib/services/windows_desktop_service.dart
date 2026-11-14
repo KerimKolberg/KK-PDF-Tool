@@ -20,6 +20,13 @@ class WindowsDesktopService with TrayListener {
 
   static bool get supported => Platform.isWindows;
 
+  /// Windows' own reg.exe by full path, so a "reg.exe" lying in the working
+  /// folder can never be started instead.
+  static String get _regExe {
+    final root = Platform.environment['SystemRoot'] ?? r'C:\Windows';
+    return '$root\\System32\\reg.exe';
+  }
+
   /// Shows the window - or keeps it hidden in the tray when started by
   /// Windows with [minimizedArg].
   Future<void> init(List<String> args) async {
@@ -77,7 +84,7 @@ class WindowsDesktopService with TrayListener {
   }
 
   Future<bool> isAutostartEnabled() async {
-    final result = await Process.run('reg', ['query', _runKey, '/v', _valueName]);
+    final result = await Process.run(_regExe, ['query', _runKey, '/v', _valueName]);
     return result.exitCode == 0;
   }
 
@@ -89,9 +96,9 @@ class WindowsDesktopService with TrayListener {
     AppPrefs.setBool('windows.startMinimized', minimized);
     if (enabled) {
       final command = '"${Platform.resolvedExecutable}"${minimized ? ' $minimizedArg' : ''}';
-      await Process.run('reg', ['add', _runKey, '/v', _valueName, '/t', 'REG_SZ', '/d', command, '/f']);
+      await Process.run(_regExe, ['add', _runKey, '/v', _valueName, '/t', 'REG_SZ', '/d', command, '/f']);
     } else {
-      await Process.run('reg', ['delete', _runKey, '/v', _valueName, '/f']);
+      await Process.run(_regExe, ['delete', _runKey, '/v', _valueName, '/f']);
     }
   }
 }

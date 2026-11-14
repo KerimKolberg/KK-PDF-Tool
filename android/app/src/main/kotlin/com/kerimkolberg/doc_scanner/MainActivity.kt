@@ -19,6 +19,7 @@ import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
 import java.io.FileOutputStream
+import java.util.concurrent.Executors
 
 /**
  * Small native features that don't need a third-party Flutter plugin:
@@ -41,6 +42,14 @@ class MainActivity : FlutterActivity() {
     private var pendingSharedFile: Map<String, String?>? = null
     private var textRecognizer: TextRecognizer? = null
 
+    // File copies and image decoding run here, never on the UI thread.
+    private val io = Executors.newSingleThreadExecutor()
+
+    // The file the app was opened with is still being copied: Flutter's
+    // "getInitialSharedFile" call is answered once the copy has finished.
+    private var initialCopyRunning = false
+    private var initialFileRequest: MethodChannel.Result? = null
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
 
@@ -55,52 +64,47 @@ class MainActivity : FlutterActivity() {
                     result.error("bad_args", "bytes is required", null)
                     return@setMethodCallHandler
                 }
-                recognizeText(bytes, result)
+                io.execute { recognizeText(bytes, result) }
             }
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, downloadsChannelName)
             .setMethodCallHandler { call, result ->
-                if (call.method == "saveToDownloads") {
-                    val fileName = call.argument<String>("fileName")
-                    val bytes = call.argument<ByteArray>("bytes")
-                    if (fileName == null || bytes == null) {
-                        result.error("bad_args", "fileName and bytes are required", null)
-                        return@setMethodCallHandler
-                    }
-                    try {
-                        result.success(saveToDownloads(fileName, bytes))
-                    } catch (e: Exception) {
-                        result.error("save_failed", e.message, null)
-                    }
-                } else if (call.method == "saveFileToDownloads") {
-                    // Streams a (possibly very large) file, e.g. a library
-                    // backup, on a background thread instead of passing its
-                    // bytes through the channel.
-                    val fileName = call.argument<String>("fileName")
-                    val sourcePath = call.argument<String>("sourcePath")
-                    val mimeType = call.argument<String>("mimeType")
-                    if (fileName == null || sourcePath == null) {
-                        result.error("bad_args", "fileName and sourcePath are required", null)
-                        return@setMethodCallHandler
-                    }
-                    Thread {
-                        try {
-                            val location = copyFileToDownloads(fileName, File(sourcePath), mimeType)
-                            runOnUiThread { result.success(location) }
-                        } catch (e: Exception) {
-                            runOnUiThread { result.error("save_failed", e.message, null) }
+                val fileName = call.argument<String>("fileName")?.let(::safeFileName)
+                when (call.method) {
+                    "saveToDownloads" -> {
+                        val bytes = call.argument<ByteArray>("bytes")
+                        if (fileName == null || bytes == null) {
+                            result.error("bad_args", "fileName and bytes are required", null)
+                            return@setMethodCallHandler
                         }
-                    }.start()
-                } else {
-                    result.notImplemented()
+                        runInBackground(result, "save_failed") { saveToDownloads(fileName, bytes) }
+                    }
+                    // Streams a (possibly very large) file, e.g. a library
+                    // backup, instead of passing its bytes through the channel.
+                    "saveFileToDownloads" -> {
+                        val sourcePath = call.argument<String>("sourcePath")
+                        val mimeType = call.argument<String>("mimeType")
+                        if (fileName == null || sourcePath == null) {
+                            result.error("bad_args", "fileName and sourcePath are required", null)
+                            return@setMethodCallHandler
+                        }
+                        runInBackground(result, "save_failed") {
+                            copyFileToDownloads(fileName, File(sourcePath), mimeType)
+                        }
+                    }
+                    else -> result.notImplemented()
                 }
             }
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "$sharedFilesChannelName/methods")
             .setMethodCallHandler { call, result ->
                 if (call.method == "getInitialSharedFile") {
-                    result.success(pendingSharedFile)
-                    pendingSharedFile = null
+                    if (initialCopyRunning) {
+                        initialFileRequest = result
+                    } else {
+                        result.success(pendingSharedFile)
+                        pendingSharedFile = null
+                    }
                 } else {
                     result.notImplemented()
                 }
@@ -117,6 +121,7 @@ class MainActivity : FlutterActivity() {
                 }
             })
 
+        io.execute(::deleteOldIncomingFiles)
         handleIncomingIntent(intent, isInitial = true)
     }
 
@@ -125,29 +130,63 @@ class MainActivity : FlutterActivity() {
         handleIncomingIntent(intent, isInitial = false)
     }
 
+    /** Runs [work] on the IO thread and reports its value or error to Flutter. */
+    private fun runInBackground(result: MethodChannel.Result, errorCode: String, work: () -> Any?) {
+        io.execute {
+            try {
+                val value = work()
+                runOnUiThread { result.success(value) }
+            } catch (e: Exception) {
+                runOnUiThread { result.error(errorCode, e.message, null) }
+            }
+        }
+    }
+
     private fun handleIncomingIntent(intent: Intent?, isInitial: Boolean) {
-        val uri: Uri? = when (intent?.action) {
+        if (intent == null || intent.getBooleanExtra(EXTRA_HANDLED, false)) return
+        val uri: Uri? = when (intent.action) {
             Intent.ACTION_VIEW -> intent.data
-            Intent.ACTION_SEND -> intent.getParcelableExtra(Intent.EXTRA_STREAM)
+            Intent.ACTION_SEND ->
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
+                } else {
+                    @Suppress("DEPRECATION")
+                    intent.getParcelableExtra(Intent.EXTRA_STREAM)
+                }
             else -> null
         }
-        if (uri == null) return
+        // Only content:// Uris: a file:// Uri could point another app's
+        // request at this app's own private files.
+        if (uri == null || uri.scheme != "content") return
+        // Don't offer the same file again when the activity is recreated.
+        intent.putExtra(EXTRA_HANDLED, true)
 
-        val fileInfo = copyUriToCache(uri) ?: return
-        if (isInitial) {
-            pendingSharedFile = fileInfo
-        } else {
-            eventSink?.success(fileInfo)
+        if (isInitial) initialCopyRunning = true
+        io.execute {
+            val fileInfo = copyUriToCache(uri)
+            runOnUiThread {
+                if (!isInitial) {
+                    if (fileInfo != null) eventSink?.success(fileInfo)
+                    return@runOnUiThread
+                }
+                initialCopyRunning = false
+                val request = initialFileRequest
+                initialFileRequest = null
+                if (request != null) request.success(fileInfo) else pendingSharedFile = fileInfo
+            }
         }
     }
 
     override fun onDestroy() {
         textRecognizer?.close()
         textRecognizer = null
+        io.shutdown()
         super.onDestroy()
     }
 
     /**
+     * Runs on the IO thread; ML Kit calls the listeners on the UI thread.
+     *
      * Returns the full text plus every recognised line with its bounding box
      * (in the pixel space of the decoded bitmap, whose size is returned too),
      * so Flutter can lay an invisible, selectable text layer over the page.
@@ -167,13 +206,15 @@ class MainActivity : FlutterActivity() {
             BitmapFactory.Options().apply { inSampleSize = sample },
         )
         if (bitmap == null) {
-            result.error("decode_failed", "Bild konnte nicht gelesen werden", null)
+            runOnUiThread { result.error("decode_failed", "Could not read image", null) }
             return
         }
 
-        val recognizer = textRecognizer
-            ?: TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-                .also { textRecognizer = it }
+        val recognizer = synchronized(this) {
+            textRecognizer
+                ?: TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+                    .also { textRecognizer = it }
+        }
         val width = bitmap.width
         val height = bitmap.height
 
@@ -206,29 +247,44 @@ class MainActivity : FlutterActivity() {
             .addOnFailureListener { e ->
                 result.error("ocr_failed", e.message, null)
             }
+            .addOnCompleteListener { bitmap.recycle() }
     }
 
+    /**
+     * Copies a file another app handed over into the app's cache.
+     *
+     * The other app controls the display name, so it is reduced to a plain
+     * file name first - a name like "../../files/x" must never let a
+     * foreign app write outside the incoming folder.
+     */
     private fun copyUriToCache(uri: Uri): Map<String, String?>? {
-        val resolver = applicationContext.contentResolver
-        val mimeType = resolver.getType(uri)
-
-        var displayName = "geteilte_datei"
-        resolver.query(uri, null, null, null, null)?.use { cursor ->
-            val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-            if (nameIndex >= 0 && cursor.moveToFirst()) {
-                cursor.getString(nameIndex)?.let { displayName = it }
-            }
-        }
-
-        // The tools recognise files by extension, so make sure there is one.
-        if (!displayName.contains('.') && mimeType != null) {
-            MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType)?.let {
-                displayName = "$displayName.$it"
-            }
-        }
-
-        val outFile = File(cacheDir, "shared_${System.currentTimeMillis()}_$displayName")
         return try {
+            val resolver = applicationContext.contentResolver
+            val mimeType = resolver.getType(uri)
+
+            var displayName = "shared_file"
+            resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+                val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                if (nameIndex >= 0 && cursor.moveToFirst()) {
+                    cursor.getString(nameIndex)?.let { displayName = it }
+                }
+            }
+            displayName = safeFileName(displayName)
+
+            // The tools recognise files by extension, so make sure there is one.
+            if (!displayName.contains('.') && mimeType != null) {
+                MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType)?.let {
+                    displayName = "$displayName.$it"
+                }
+            }
+
+            // Each file gets its own folder, so it keeps its real name.
+            val dir = File(incomingDir(), System.currentTimeMillis().toString())
+            val outFile = File(dir, displayName)
+            if (!outFile.canonicalPath.startsWith(incomingDir().canonicalPath + File.separator)) {
+                return null
+            }
+            dir.mkdirs()
             resolver.openInputStream(uri)?.use { input ->
                 FileOutputStream(outFile).use { output -> input.copyTo(output) }
             } ?: return null
@@ -242,6 +298,31 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    private fun incomingDir() = File(cacheDir, "incoming")
+
+    /** Removes copies of shared files that are more than a day old. */
+    private fun deleteOldIncomingFiles() {
+        try {
+            val cutoff = System.currentTimeMillis() - 24L * 60 * 60 * 1000
+            incomingDir().listFiles()?.forEach { if (it.lastModified() < cutoff) it.deleteRecursively() }
+            // Copies made by older versions of the app.
+            cacheDir.listFiles { file -> file.isFile && file.name.startsWith("shared_") }
+                ?.forEach { if (it.lastModified() < cutoff) it.delete() }
+        } catch (e: Exception) {
+            // Cleaning up is best effort.
+        }
+    }
+
+    /** A plain file name: no folders, no characters file systems reject. */
+    private fun safeFileName(raw: String): String {
+        val base = raw.substringAfterLast('/').substringAfterLast('\\')
+        val cleaned = base.replace(Regex("[\\x00-\\x1F<>:\"|?*]"), "_").trim().trimStart('.')
+        if (cleaned.isEmpty()) return "file"
+        if (cleaned.length <= 120) return cleaned
+        val extension = cleaned.substringAfterLast('.', "").take(10)
+        return cleaned.take(100) + if (extension.isEmpty()) "" else ".$extension"
+    }
+
     private fun copyFileToDownloads(fileName: String, source: File, mimeType: String?): String {
         val subFolder = "KK-PDF-Tool"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -252,10 +333,10 @@ class MainActivity : FlutterActivity() {
             }
             val resolver = applicationContext.contentResolver
             val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
-                ?: throw IllegalStateException("MediaStore lehnte das Erstellen der Datei ab")
+                ?: throw IllegalStateException("MediaStore refused to create the file")
             resolver.openOutputStream(uri)?.use { output ->
                 source.inputStream().use { input -> input.copyTo(output) }
-            } ?: throw IllegalStateException("Konnte Datei nicht öffnen")
+            } ?: throw IllegalStateException("Could not open the file")
             return "Downloads/$subFolder/$fileName"
         } else {
             @Suppress("DEPRECATION")
@@ -276,9 +357,9 @@ class MainActivity : FlutterActivity() {
             }
             val resolver = applicationContext.contentResolver
             val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
-                ?: throw IllegalStateException("MediaStore lehnte das Erstellen der Datei ab")
+                ?: throw IllegalStateException("MediaStore refused to create the file")
             resolver.openOutputStream(uri)?.use { it.write(bytes) }
-                ?: throw IllegalStateException("Konnte Datei nicht öffnen")
+                ?: throw IllegalStateException("Could not open the file")
             return "Downloads/$subFolder/$fileName"
         } else {
             @Suppress("DEPRECATION")
@@ -288,5 +369,9 @@ class MainActivity : FlutterActivity() {
             FileOutputStream(file).use { it.write(bytes) }
             return file.absolutePath
         }
+    }
+
+    private companion object {
+        const val EXTRA_HANDLED = "com.kerimkolberg.doc_scanner.HANDLED"
     }
 }

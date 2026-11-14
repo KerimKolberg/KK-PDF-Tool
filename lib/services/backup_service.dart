@@ -136,6 +136,11 @@ class BackupService {
             tr('Diese Sicherung stammt aus einer neueren App-Version - bitte zuerst die App aktualisieren.', 'This backup comes from a newer app version - please update the app first.'),
           );
         }
+        // A backup made by this app only holds plain files. Links could
+        // point outside the library, so such an archive is refused.
+        if (archive.any((entry) => entry.isSymbolicLink)) {
+          throw FormatException(tr('Diese Datei ist keine KK-PDF-Tool-Sicherung.', 'This file is not a KK-PDF-Tool backup.'));
+        }
         // Path traversal ("../") entries are skipped by extractArchiveToDisk.
         await extractArchiveToDisk(archive, work.path);
       } finally {

@@ -44,24 +44,89 @@ class DocumentStore {
     return File(p.join(root.path, 'index.json'));
   }
 
+  /// All changes to the index run one after another through this queue, so
+  /// two of them (e.g. a batch save and a rename) can never overwrite each
+  /// other's result. Shared by all [DocumentStore] instances.
+  static Future<void> _queue = Future.value();
+
+  static Future<T> _serialized<T>(Future<T> Function() action) {
+    final result = _queue.then((_) => action());
+    _queue = result.then<void>((_) {}, onError: (_) {});
+    return result;
+  }
+
+  /// All documents, newest first.
+  ///
+  /// The index is written atomically with the previous version kept as
+  /// `index.json.bak`. Should the index still be unreadable (e.g. the disk
+  /// was full), the backup copy is used; as a last resort the list is
+  /// rebuilt from the document folders, so scans are never "lost" just
+  /// because the list of them is damaged.
   Future<List<ScanDocument>> loadAll() async {
     final file = await _indexFile;
-    if (!await file.exists()) return [];
-    final raw = await file.readAsString();
-    if (raw.trim().isEmpty) return [];
-    final list = jsonDecode(raw) as List<dynamic>;
-    final docs = list
-        .map((e) => ScanDocument.fromJson(e as Map<String, dynamic>))
-        .toList();
+    final backup = File('${file.path}.bak');
+    if (!await file.exists() && !await backup.exists()) return [];
+    final docs = await _readIndex(file) ?? await _readIndex(backup) ?? await _rebuildIndex();
     docs.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return docs;
   }
 
+  /// Null when [file] is missing, empty or not a valid index.
+  static Future<List<ScanDocument>?> _readIndex(File file) async {
+    try {
+      if (!await file.exists()) return null;
+      final raw = await file.readAsString();
+      if (raw.trim().isEmpty) return null;
+      return [
+        for (final e in jsonDecode(raw) as List) ScanDocument.fromJson(e as Map<String, dynamic>),
+      ];
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Recreates the document list from the folders on disk.
+  Future<List<ScanDocument>> _rebuildIndex() async {
+    final root = await _root;
+    final docs = <ScanDocument>[];
+    await for (final entity in root.list()) {
+      final id = p.basename(entity.path);
+      if (entity is! Directory || !_validId.hasMatch(id)) continue;
+      if (!await File(p.join(entity.path, 'document.pdf')).exists()) continue;
+      var pages = 0;
+      while (await File(p.join(entity.path, 'page_$pages.jpg')).exists()) {
+        pages++;
+      }
+      final micros = int.tryParse(id);
+      final created = micros != null
+          ? DateTime.fromMicrosecondsSinceEpoch(micros)
+          : (await entity.stat()).modified;
+      docs.add(ScanDocument(
+        id: id,
+        title: 'Scan ${created.year}-${_two(created.month)}-${_two(created.day)} '
+            '${_two(created.hour)}:${_two(created.minute)}',
+        createdAt: created,
+        pageCount: pages,
+      ));
+    }
+    return docs;
+  }
+
+  static String _two(int n) => n.toString().padLeft(2, '0');
+
   Future<void> _writeIndex(List<ScanDocument> docs) async {
-    final file = await _indexFile;
-    final raw = jsonEncode(docs.map((d) => d.toJson()).toList());
-    await file.writeAsString(raw);
+    await _writeAtomically(await _indexFile, jsonEncode([for (final d in docs) d.toJson()]));
     changes.value++;
+  }
+
+  /// Writes to a temporary file first and then swaps it in, keeping the
+  /// previous version as `.bak` - a crash or full disk in the middle of
+  /// writing can't leave a half-written file behind.
+  static Future<void> _writeAtomically(File file, String content) async {
+    final temp = File('${file.path}.tmp');
+    await temp.writeAsString(content, flush: true);
+    if (await file.exists()) await file.rename('${file.path}.bak');
+    await temp.rename(file.path);
   }
 
   /// The library's own folder (for backups).
@@ -71,6 +136,12 @@ class DocumentStore {
   /// folder) into the library. Documents already in the library (same id)
   /// are skipped, so restoring the same backup twice is harmless.
   Future<({int added, int skipped})> importDocuments(
+    Directory sourceScans,
+    List<ScanDocument> docs,
+  ) =>
+      _serialized(() => _importDocuments(sourceScans, docs));
+
+  Future<({int added, int skipped})> _importDocuments(
     Directory sourceScans,
     List<ScanDocument> docs,
   ) async {
@@ -112,13 +183,11 @@ class DocumentStore {
     }
   }
 
+  /// The folder of document [id]. Not created here: reading something of
+  /// a document that no longer exists must not bring its folder back.
   Future<Directory> documentDir(String id) async {
     final root = await _root;
-    final dir = Directory(p.join(root.path, id));
-    if (!await dir.exists()) {
-      await dir.create(recursive: true);
-    }
-    return dir;
+    return Directory(p.join(root.path, id));
   }
 
   Future<String> pdfPath(String id) async {
@@ -160,11 +229,14 @@ class DocumentStore {
       folder: folder,
     );
 
-    final all = await loadAll();
-    all.add(doc);
-    await _writeIndex(all);
+    await _updateIndex((all) => all..add(doc));
     return doc;
   }
+
+  /// Loads the index, applies [change] and saves it - as one step that
+  /// can't interleave with another change.
+  Future<void> _updateIndex(List<ScanDocument> Function(List<ScanDocument> all) change) =>
+      _serialized(() async => _writeIndex(change(await loadAll())));
 
   /// Replaces all pages, the PDF and the recognised text of an existing
   /// document (after reordering/deleting/adding pages or signing).
@@ -176,18 +248,22 @@ class DocumentStore {
     List<OcrResult?>? ocr,
   }) async {
     final dir = await documentDir(id);
-    await for (final entity in dir.list()) {
-      if (entity is File && p.basename(entity.path).startsWith('page_')) {
-        await entity.delete();
+    if (await dir.exists()) {
+      await for (final entity in dir.list()) {
+        if (entity is File && p.basename(entity.path).startsWith('page_')) {
+          await entity.delete();
+        }
       }
     }
     await _writeContent(id, pageJpegBytes, pdfBytes, text, ocr);
 
-    final all = await loadAll();
-    final idx = all.indexWhere((d) => d.id == id);
-    final updated = all[idx].copyWith(pageCount: pageJpegBytes.length);
-    all[idx] = updated;
-    await _writeIndex(all);
+    late ScanDocument updated;
+    await _updateIndex((all) {
+      final idx = all.indexWhere((d) => d.id == id);
+      if (idx == -1) throw StateError('Document $id no longer exists');
+      updated = all[idx].copyWith(pageCount: pageJpegBytes.length);
+      return all..[idx] = updated;
+    });
     return updated;
   }
 
@@ -199,6 +275,7 @@ class DocumentStore {
     List<OcrResult?>? ocr,
   ) async {
     final dir = await documentDir(id);
+    await dir.create(recursive: true);
     for (var i = 0; i < pageJpegBytes.length; i++) {
       final f = File(p.join(dir.path, 'page_$i.jpg'));
       await f.writeAsBytes(pageJpegBytes[i], flush: true);
@@ -251,21 +328,13 @@ class DocumentStore {
     await file.writeAsString(text, flush: true);
   }
 
-  Future<void> rename(String id, String newTitle) async {
-    final all = await loadAll();
-    final idx = all.indexWhere((d) => d.id == id);
-    if (idx == -1) return;
-    all[idx] = all[idx].copyWith(title: newTitle);
-    await _writeIndex(all);
-  }
+  Future<void> rename(String id, String newTitle) => _updateIndex((all) => [
+        for (final d in all) d.id == id ? d.copyWith(title: newTitle) : d,
+      ]);
 
-  Future<void> moveToFolder(String id, String? folder) async {
-    final all = await loadAll();
-    final idx = all.indexWhere((d) => d.id == id);
-    if (idx == -1) return;
-    all[idx] = all[idx].copyWith(folder: folder);
-    await _writeIndex(all);
-  }
+  Future<void> moveToFolder(String id, String? folder) => _updateIndex((all) => [
+        for (final d in all) d.id == id ? d.copyWith(folder: folder) : d,
+      ]);
 
   Future<File> get _foldersFile async =>
       File(p.join((await _root).path, 'folders.json'));
@@ -288,43 +357,39 @@ class DocumentStore {
     return names.toList()..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
   }
 
-  Future<void> _writeFolders(List<String> names) async {
-    final file = await _foldersFile;
-    await file.writeAsString(jsonEncode(names));
-  }
+  Future<void> _writeFolders(List<String> names) async =>
+      _writeAtomically(await _foldersFile, jsonEncode(names));
 
-  Future<void> addFolder(String name) async {
-    final folders = await loadFolders();
-    if (!folders.contains(name)) folders.add(name);
-    await _writeFolders(folders);
-  }
+  Future<void> addFolder(String name) => _serialized(() async {
+        final folders = await loadFolders();
+        if (!folders.contains(name)) folders.add(name);
+        await _writeFolders(folders);
+      });
 
-  Future<void> renameFolder(String oldName, String newName) async {
-    final folders = await loadFolders()
-      ..remove(oldName);
-    if (!folders.contains(newName)) folders.add(newName);
-    await _writeFolders(folders);
-    final all = await loadAll();
-    await _writeIndex([
-      for (final d in all) d.folder == oldName ? d.copyWith(folder: newName) : d,
-    ]);
-  }
+  Future<void> renameFolder(String oldName, String newName) => _serialized(() async {
+        final all = await loadAll();
+        final folders = await loadFolders(docs: all)
+          ..remove(oldName);
+        if (!folders.contains(newName)) folders.add(newName);
+        await _writeFolders(folders);
+        await _writeIndex([
+          for (final d in all) d.folder == oldName ? d.copyWith(folder: newName) : d,
+        ]);
+      });
 
   /// Deletes the folder only; its documents stay, just without a folder.
-  Future<void> deleteFolder(String name) async {
-    final folders = await loadFolders()
-      ..remove(name);
-    await _writeFolders(folders);
-    final all = await loadAll();
-    await _writeIndex([
-      for (final d in all) d.folder == name ? d.copyWith(folder: null) : d,
-    ]);
-  }
+  Future<void> deleteFolder(String name) => _serialized(() async {
+        final all = await loadAll();
+        final folders = await loadFolders(docs: all)
+          ..remove(name);
+        await _writeFolders(folders);
+        await _writeIndex([
+          for (final d in all) d.folder == name ? d.copyWith(folder: null) : d,
+        ]);
+      });
 
   Future<void> delete(String id) async {
-    final all = await loadAll();
-    all.removeWhere((d) => d.id == id);
-    await _writeIndex(all);
+    await _updateIndex((all) => all..removeWhere((d) => d.id == id));
     final dir = await documentDir(id);
     if (await dir.exists()) {
       await dir.delete(recursive: true);

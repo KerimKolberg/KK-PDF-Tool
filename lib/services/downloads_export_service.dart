@@ -19,8 +19,13 @@ class DownloadsExportService {
   static const _folderName = 'KK-PDF-Tool';
   static const _channel = MethodChannel('docscanner/downloads');
 
-  /// Replaces characters that aren't allowed in Windows/Android file names
-  /// (titles like "Scan 3.10.2026 14:05" contain a colon).
+  /// Names Windows reserves for devices; a file can't be called that.
+  static final _reservedName = RegExp(r'^(con|prn|aux|nul|com[1-9]|lpt[1-9])$', caseSensitive: false);
+
+  /// Turns [name] into a file name that works on Windows and Android:
+  /// no path separators or forbidden characters (titles like
+  /// "Scan 3.10.2026 14:05" contain a colon), no reserved device names, and
+  /// not longer than file systems allow.
   static String safeFileName(String name) {
     var safe = name
         .replaceAll(':', '-')
@@ -29,7 +34,15 @@ class DownloadsExportService {
     while (safe.endsWith('.') || safe.endsWith(' ')) {
       safe = safe.substring(0, safe.length - 1);
     }
-    return safe.isEmpty ? tr('Dokument', 'Document') : safe;
+    if (safe.isEmpty) return tr('Dokument', 'Document');
+    if (_reservedName.hasMatch(p.basenameWithoutExtension(safe))) safe = '_$safe';
+    const maxLength = 150;
+    if (safe.length > maxLength) {
+      final extension = p.extension(safe);
+      final keep = extension.length <= 10 ? extension : '';
+      safe = safe.substring(0, maxLength - keep.length).trimRight() + keep;
+    }
+    return safe;
   }
 
   /// Like [export], but copies an existing (possibly very large) file without

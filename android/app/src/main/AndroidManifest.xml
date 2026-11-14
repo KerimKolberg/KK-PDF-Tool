@@ -10,10 +10,14 @@
         android:maxSdkVersion="29"
         tools:replace="android:maxSdkVersion"/>
 
+    <!-- allowBackup is off: scans (IDs, contracts, ...) should not be copied
+         to the Google account behind the user's back. The app has its own
+         backup in Settings instead. -->
     <application
         android:label="KK-PDF-Tool"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
         android:requestLegacyExternalStorage="true">
         <activity
             android:name=".MainActivity"

@@ -50,6 +50,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final cropEnabled = await _settings.getCropEnabledDefault();
     final searchablePdf = await _settings.getSearchablePdfEnabled();
     final clientId = await _settings.getGoogleWebClientId();
+    if (AppPlatform.isWindows) await GoogleDesktopAuth.load();
     final autostart = WindowsDesktopService.supported
         ? await WindowsDesktopService.instance.isAutostartEnabled()
         : false;
