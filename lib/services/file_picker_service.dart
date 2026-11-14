@@ -9,20 +9,24 @@ import 'settings_service.dart';
 /// Only matters on desktop: Android's system picker manages its own
 /// "recent" location and ignores a starting folder.
 class FilePickers {
-  /// Files dragged onto a tool (Windows); consumed by the next open call
-  /// instead of showing the dialog.
+  /// Files handed to a tool (dragged onto it, or chosen for it); consumed
+  /// by the tool's next open call instead of showing the dialog.
   static List<XFile>? _dropped;
+  static bool _dropPending = false;
   static bool _droppedMatched = false;
 
   static void setDropped(List<XFile> files) {
     _dropped = files;
+    _dropPending = true;
     _droppedMatched = false;
   }
 
-  /// Clears pending dropped files; true if none of them fit the tool.
+  /// Ends a hand-over started with [setDropped]; true if none of the files
+  /// were of a type the tool takes.
   static bool clearDropped() {
-    final unmatched = _dropped != null && !_droppedMatched;
+    final unmatched = _dropPending && !_droppedMatched;
     _dropped = null;
+    _dropPending = false;
     return unmatched;
   }
 

@@ -2,6 +2,10 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+/// Version name and build number, set by the CI build (see
+/// .github/workflows/build.yml); "dev" for local builds.
+const appVersion = String.fromEnvironment('APP_VERSION', defaultValue: 'dev');
+
 /// Platform checks for UI code. Overridable so the Windows layout can be
 /// rendered in tests on other machines.
 class AppPlatform {

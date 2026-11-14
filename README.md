@@ -188,8 +188,12 @@ jedem Neu-Build neu eingerichtet werden müsste).
 ## Fertige APK/EXE bauen — ohne eigene Installation (empfohlen)
 
 Dieses Projekt enthält bereits eine GitHub-Actions-Pipeline
-(`.github/workflows/build.yml`), die bei jedem Push automatisch **beide**
-Artefakte baut:
+(`.github/workflows/build.yml`). Bei jedem Push prüft sie zuerst den Code
+(`flutter analyze`) und lässt die Tests laufen; nur wenn beides sauber ist,
+baut sie **beide** Artefakte. Die Flutter-Version ist dort fest eingetragen
+(`FLUTTER_VERSION`), damit ein neues Flutter-Release den Build nicht
+unbemerkt bricht. Jeder Build bekommt die Laufnummer als Build-Nummer, die
+App zeigt sie unten in den Einstellungen ("Version 1.1.0+42").
 
 1. Projekt in ein eigenes (privates oder öffentliches) GitHub-Repository pushen.
 2. Im Reiter **Actions** den Workflow-Lauf abwarten (ca. 5–10 Minuten).
@@ -233,28 +237,79 @@ flutter build windows --release
 
 ```
 lib/
-  main.dart                       Einstiegspunkt, Theme (hell/dunkel)
+  main.dart                       Einstiegspunkt
+  theme.dart                      Aussehen (hell/dunkel, Desktop/Mobil)
+  l10n.dart                       Deutsch/Englisch: tr('Deutsch', 'English')
   models/                         ScanDocument, OcrResult
   services/                       Logik ohne UI
     document_store.dart           Bibliothek auf der Festplatte (Index, Ordner, Text)
     document_builder.dart         Seiten -> PDF (+ durchsuchbare Textebene)
     image_processing.dart         Zuschnitt, Filter, Schattenentfernung
-    pdf_service.dart / pdf_tools_service.dart   PDF erzeugen / bearbeiten
+    pdf_service.dart / pdf_tools_service.dart   PDF erzeugen / bearbeiten (PDFium)
     searchable_pdf_service.dart   unsichtbare OCR-Textebene
     ocr_service.dart              Offline-Texterkennung (Android, ML Kit)
     google_drive_convert_service.dart   Online-Umwandlungen über Google
+    google_desktop_auth.dart      Google-Anmeldung unter Windows (Browser, PKCE)
+    secret_store.dart             geschützter Speicher für Anmelde-Token
     backup_service.dart           Sicherung / Wiederherstellung (ZIP)
     document_share_service.dart   Teilen als PDF / klein / JPG
     signature_service.dart        gespeicherte Unterschriften
     settings_service.dart         Einstellungen + gemerkte Werkzeug-Optionen
     file_picker_service.dart / downloads_export_service.dart   Dateien wählen / speichern
+    windows_desktop_service.dart  Fenster, Infobereich-Symbol, Autostart
   screens/                        Bildschirme (Bibliothek, Scan, Zuschnitt,
                                   Dokument, Ausfüllen & Zeichnen, Einstellungen …)
     tools/                        je ein Bildschirm pro Werkzeug
   widgets/                        wiederverwendbare UI-Bausteine
-  utils/formatting.dart           kleine gemeinsame Helfer
+    tool_layout.dart              Seitenrahmen, Datei-Auswahlfläche, Datei-Zeile
+    tool_drop_zone.dart           Dateien in ein Werkzeug ziehen / übergeben
+    file_actions.dart             "Was möchtest du damit machen?"-Auswahl
+    settings_widgets.dart         Abschnitte und Zeilen der Einstellungen
+  utils/                          formatting.dart (Helfer), layout.dart (Breiten, Plattform)
+test/                             automatische Tests (siehe unten)
 android/app/src/main/kotlin/…/MainActivity.kt   Downloads, "Öffnen mit", OCR
+windows/installer/                Inno-Setup-Skript für den Installer
 ```
+
+## Tests und Code-Qualität
+
+```bash
+flutter analyze        # Lint-Regeln aus analysis_options.yaml (inkl. strict-casts)
+dart format lib test   # einheitliche Formatierung (Zeilenbreite 100)
+flutter test           # alle Tests
+```
+
+Die Tests decken u. a. ab: die Bibliothek (gleichzeitige Änderungen,
+beschädigter Index, Wiederaufbau aus den Ordnern), Sicherung und
+Wiederherstellung (inkl. manipulierter ZIP-Dateien), Dateinamen, die
+PDF-Werkzeuge mit der echten PDF-Engine (Seitenformate, Aufteilen,
+Zusammenfügen, Drehen, Zuschneiden), Markdown/PPTX, die Sprachumschaltung,
+die Mehrfachauswahl im Seiten-Editor und die Übergabe von Dateien an
+Werkzeuge. Die PDF-Engine-Tests werden übersprungen, wenn PDFium für den
+Rechner noch nicht gebaut wurde.
+
+## Sicherheit und Datenschutz
+
+- **Alles bleibt lokal.** Ins Internet gehen nur die Werkzeuge mit
+  Wolken-Symbol, und zwar in das eigene Google-Konto (Berechtigung
+  `drive.file`: die App sieht dort nur Dateien, die sie selbst angelegt hat;
+  die hochgeladene Datei wird nach dem Umwandeln wieder gelöscht).
+- **Dateien von anderen Apps (Android "Öffnen mit"/Teilen):** Der vom
+  Absender gelieferte Dateiname wird auf einen reinen Dateinamen reduziert
+  und die Kopie landet in einem eigenen Cache-Ordner — ein präparierter Name
+  wie `../../…` kann keine App-Dateien überschreiben. Es werden nur
+  `content://`-Adressen angenommen; die Kopien werden nach einem Tag entfernt.
+- **Kein automatisches Google-Backup** der App-Daten (`allowBackup="false"`):
+  Scans von Ausweisen, Verträgen usw. sollen nicht unbemerkt in der Cloud
+  landen. Dafür gibt es die eigene Sicherung in den Einstellungen.
+- **Windows-Anmeldung bei Google:** Anmeldung im Browser mit PKCE, Antwort
+  nur an `127.0.0.1`; das Refresh-Token liegt im geschützten Speicher von
+  Windows (für das Benutzerkonto verschlüsselt), nicht in der
+  Einstellungsdatei.
+- **Sicherungen wiederherstellen:** ZIP-Einträge außerhalb des Zielordners
+  und Verknüpfungen werden abgelehnt, Dokument-IDs müssen einfache Namen sein.
+- **Bibliotheks-Index:** wird atomar geschrieben (mit `.bak`-Kopie) und bei
+  Beschädigung aus der Kopie bzw. den Dokument-Ordnern wiederhergestellt.
 
 ## Bekannte Einschränkungen
 

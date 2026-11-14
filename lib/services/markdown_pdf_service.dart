@@ -171,7 +171,23 @@ class MarkdownPdfService {
 
     final rows = <pw.Widget>[];
     for (final li in items) {
-      final marker = ordered ? '$index.' : '•';
+      // The PDF's built-in font has no "•" glyph, so bullets are drawn.
+      final marker = ordered
+          ? pw.Text('$index.', style: style)
+          : pw.Padding(
+              padding: pw.EdgeInsets.only(top: (style.fontSize ?? 11) * 0.4),
+              child: pw.Align(
+                alignment: pw.Alignment.topLeft,
+                child: pw.Container(
+                  width: 4,
+                  height: 4,
+                  decoration: const pw.BoxDecoration(
+                    color: PdfColors.black,
+                    shape: pw.BoxShape.circle,
+                  ),
+                ),
+              ),
+            );
       if (ordered) index++;
 
       final children = li.children ?? const <md.Node>[];
@@ -194,7 +210,7 @@ class MarkdownPdfService {
           child: pw.Row(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.SizedBox(width: 18, child: pw.Text(marker, style: style)),
+              pw.SizedBox(width: 18, child: marker),
               pw.Expanded(
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,

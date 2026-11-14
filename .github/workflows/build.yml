@@ -3,20 +3,57 @@ name: Build APK & Windows EXE
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch: {}
 
+# The jobs only read the repository.
+permissions:
+  contents: read
+
+# A newer push makes an older, still running build pointless.
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Pinned, so a new Flutter release can't break the build unannounced.
+  # Raise it deliberately (and run the build) when updating Flutter.
+  FLUTTER_VERSION: "3.50.0"
+
 jobs:
-  build-android:
-    name: Android APK
+  check:
+    name: Analyze & test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
 
       - run: flutter pub get
+
+      - run: flutter analyze
+
+      - run: flutter test
+
+  build-android:
+    name: Android APK
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Read version
+        run: echo "APP_VERSION=$(grep -oP '^version:\s*\K[0-9.]+' pubspec.yaml)" >> "$GITHUB_ENV"
 
       - name: Decode release keystore (if configured)
         env:
@@ -33,8 +70,14 @@ jobs:
           DOCSCANNER_KEY_ALIAS: ${{ secrets.DOCSCANNER_KEY_ALIAS }}
           DOCSCANNER_KEY_PASSWORD: ${{ secrets.DOCSCANNER_KEY_PASSWORD }}
         run: |
-          flutter build apk --release
+          flutter build apk --release \
+            --build-number=${{ github.run_number }} \
+            --dart-define=APP_VERSION="$APP_VERSION+${{ github.run_number }}"
           cp build/app/outputs/flutter-apk/app-release.apk KK-PDF-Tool.apk
+
+      - name: Remove keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/docscanner-release.jks"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -44,19 +87,32 @@ jobs:
 
   build-windows:
     name: Windows EXE
+    needs: check
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
 
       - run: flutter config --enable-windows-desktop
 
       - run: flutter pub get
 
-      - run: flutter build windows --release
+      - name: Read version
+        shell: pwsh
+        run: |
+          $version = (Select-String -Path pubspec.yaml -Pattern '^version:\s*([0-9.]+)').Matches[0].Groups[1].Value
+          "APP_VERSION=$version" >> $env:GITHUB_ENV
+
+      - name: Build Windows app
+        shell: pwsh
+        run: >
+          flutter build windows --release
+          --build-number=${{ github.run_number }}
+          "--dart-define=APP_VERSION=$env:APP_VERSION+${{ github.run_number }}"
 
       - name: Zip Windows build
         run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath KK-PDF-Tool-Windows-Portable.zip
@@ -64,8 +120,7 @@ jobs:
       - name: Build installer
         shell: pwsh
         run: |
-          $version = (Select-String -Path pubspec.yaml -Pattern '^version:\s*([0-9.]+)').Matches[0].Groups[1].Value
-          & "${env:ProgramFiles(x86)}\Inno Setup 6\iscc.exe" "/DAppVersion=$version" windows\installer\kk-pdf-tool.iss
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\iscc.exe" "/DAppVersion=$env:APP_VERSION" windows\installer\kk-pdf-tool.iss
 
       - uses: actions/upload-artifact@v4
         with:
