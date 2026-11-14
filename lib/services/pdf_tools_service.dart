@@ -6,9 +6,9 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pdfrx/pdfrx.dart' as rx;
 
+import '../l10n.dart';
 import 'pdf_service.dart';
 import 'pptx_writer_service.dart';
-import '../l10n.dart';
 
 enum PageNumberFormat {
   plain,

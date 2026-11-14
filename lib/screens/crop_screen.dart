@@ -1,13 +1,14 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../l10n.dart';
 import '../services/image_processing.dart';
 import '../services/settings_service.dart';
-import '../widgets/corner_crop_overlay.dart';
-import '../l10n.dart';
 import '../widgets/busy_icon.dart';
+import '../widgets/corner_crop_overlay.dart';
 
 /// Lets the user fine-tune the four document corners on a captured photo,
 /// optionally rotate it, and pick a filter, before it is flattened into a
@@ -86,7 +87,7 @@ class _CropScreenState extends State<CropScreen> {
       _previewCache.clear();
       _previewBytes = null;
     });
-    _updatePreview();
+    unawaited(_updatePreview());
   }
 
   Future<ui.Size> _decodeSize(Uint8List bytes) async {

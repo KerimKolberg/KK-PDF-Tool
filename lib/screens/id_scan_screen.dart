@@ -2,18 +2,18 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import '../l10n.dart';
 import '../models/scan_document.dart';
-import '../services/document_store.dart';
 import '../services/document_builder.dart';
+import '../services/document_store.dart';
 import '../services/downloads_export_service.dart';
 import '../services/ocr_service.dart';
 import '../services/pdf_service.dart';
 import '../services/pdf_tools_service.dart';
 import '../services/settings_service.dart';
+import '../widgets/busy_icon.dart';
 import 'capture_screen.dart';
 import 'crop_screen.dart';
-import '../l10n.dart';
-import '../widgets/busy_icon.dart';
 
 /// Captures the front and back of an ID card/document and combines both
 /// into a single one-page PDF, matching the "copy of both sides on one

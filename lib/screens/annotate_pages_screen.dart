@@ -6,10 +6,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 
+import '../l10n.dart';
 import '../services/settings_service.dart';
 import '../services/signature_service.dart';
 import 'signature_pad_screen.dart';
-import '../l10n.dart';
 
 enum AnnotateMode { fill, draw }
 
@@ -572,8 +572,8 @@ class _AnnotatePagesScreenState extends State<AnnotatePagesScreen> {
           ] else ...[
             SegmentedButton<AnnotateMode>(
               segments: [
-                ButtonSegment(value: AnnotateMode.fill, icon: Icon(Icons.edit_note), label: Text(tr('Ausfüllen', 'Fill in'))),
-                ButtonSegment(value: AnnotateMode.draw, icon: Icon(Icons.brush_outlined), label: Text(tr('Zeichnen', 'Draw'))),
+                ButtonSegment(value: AnnotateMode.fill, icon: const Icon(Icons.edit_note), label: Text(tr('Ausfüllen', 'Fill in'))),
+                ButtonSegment(value: AnnotateMode.draw, icon: const Icon(Icons.brush_outlined), label: Text(tr('Zeichnen', 'Draw'))),
               ],
               selected: {_mode},
               onSelectionChanged: _busy ? null : (v) => _setMode(v.first),
@@ -731,7 +731,7 @@ class _TextStampDialogState extends State<_TextStampDialog> {
             onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
               hintText: tr('z. B. Name, Adresse, Betrag', 'e.g. name, address, amount'),
-              border: OutlineInputBorder(),
+              border: const OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 12),
@@ -803,7 +803,7 @@ class _SignaturePickerSheetState extends State<_SignaturePickerSheet> {
 
   Future<void> _delete(File file) async {
     await widget.service.delete(file);
-    _load();
+    await _load();
   }
 
   @override

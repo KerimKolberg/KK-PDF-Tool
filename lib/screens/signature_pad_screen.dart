@@ -140,7 +140,7 @@ class _SignaturePadScreenState extends State<SignaturePadScreen> {
                     ),
                     if (_strokes.isEmpty)
                       Center(
-                        child: Text(tr('Hier unterschreiben', 'Sign here'), style: TextStyle(color: Colors.black38)),
+                        child: Text(tr('Hier unterschreiben', 'Sign here'), style: const TextStyle(color: Colors.black38)),
                       ),
                     Positioned.fill(
                       child: GestureDetector(

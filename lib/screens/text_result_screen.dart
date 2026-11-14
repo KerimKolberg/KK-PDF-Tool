@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../services/downloads_export_service.dart';
 import '../l10n.dart';
+import '../services/downloads_export_service.dart';
 
 /// Shows recognised text with copy and "save as .txt" actions.
 class TextResultScreen extends StatelessWidget {

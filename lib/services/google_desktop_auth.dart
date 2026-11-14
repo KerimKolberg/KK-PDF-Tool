@@ -7,9 +7,9 @@ import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../l10n.dart';
 import 'secret_store.dart';
 import 'settings_service.dart';
-import '../l10n.dart';
 
 /// Google sign-in for Windows, where google_sign_in has no implementation.
 ///

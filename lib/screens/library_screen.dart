@@ -4,18 +4,18 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../l10n.dart';
 import '../models/scan_document.dart';
 import '../services/document_store.dart';
 import '../services/settings_service.dart';
 import '../utils/formatting.dart';
+import '../utils/layout.dart';
 import '../widgets/folder_picker.dart';
 import '../widgets/share_sheet.dart';
 import 'document_viewer_screen.dart';
 import 'home_shell.dart';
 import 'id_scan_screen.dart';
 import 'scan_flow_screen.dart';
-import '../l10n.dart';
-import '../utils/layout.dart';
 
 enum LibrarySort {
   newest('Neueste zuerst', 'Newest first'),
@@ -120,14 +120,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
     await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => ScanFlowScreen(store: _store, folder: _folder)),
     );
-    _reload();
+    await _reload();
   }
 
   Future<void> _newIdScan() async {
     await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => IdScanScreen(store: _store, folder: _folder)),
     );
-    _reload();
+    await _reload();
   }
 
   Future<void> _showScanOptions() async {
@@ -162,7 +162,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
         builder: (_) => DocumentViewerScreen(store: _store, document: doc),
       ),
     );
-    _reload();
+    await _reload();
   }
 
   Future<void> _documentActions(ScanDocument doc) async {
@@ -209,7 +209,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
         final choice = await pickFolder(context, _store, current: doc.folder);
         if (choice == null) return;
         await _store.moveToFolder(doc.id, choice.folder);
-        _reload();
+        await _reload();
       case 'rename':
         final controller = TextEditingController(text: doc.title);
         final name = await showDialog<String>(
@@ -228,7 +228,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
         );
         if (name == null || name.isEmpty) return;
         await _store.rename(doc.id, name);
-        _reload();
+        await _reload();
       case 'delete':
         final confirmed = await showDialog<bool>(
           context: context,
@@ -243,7 +243,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
         );
         if (confirmed != true) return;
         await _store.delete(doc.id);
-        _reload();
+        await _reload();
     }
   }
 
@@ -252,7 +252,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     if (name == null) return;
     await _store.addFolder(name);
     _openFolder(name);
-    _reload();
+    await _reload();
   }
 
   Future<void> _folderOptions(String folder) async {
@@ -289,7 +289,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     } else {
       return;
     }
-    _reload();
+    await _reload();
   }
 
   void _setSearching(bool searching) {

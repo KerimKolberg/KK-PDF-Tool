@@ -4,18 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../l10n.dart';
 import '../models/scan_document.dart';
 import '../services/document_builder.dart';
 import '../services/document_store.dart';
 import '../services/google_drive_convert_service.dart';
 import '../services/ocr_service.dart';
+import '../utils/layout.dart';
 import '../widgets/folder_picker.dart';
 import '../widgets/share_sheet.dart';
 import 'annotate_pages_screen.dart';
 import 'edit_pages_screen.dart';
 import 'text_result_screen.dart';
-import '../l10n.dart';
-import '../utils/layout.dart';
 
 class DocumentViewerScreen extends StatefulWidget {
   final DocumentStore store;
@@ -249,49 +249,49 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
               PopupMenuItem(
                 value: _editPages,
                 child: ListTile(
-                  leading: Icon(Icons.view_agenda_outlined),
+                  leading: const Icon(Icons.view_agenda_outlined),
                   title: Text(tr('Seiten bearbeiten', 'Edit pages')),
                 ),
               ),
               PopupMenuItem(
                 value: () => _annotate(AnnotateMode.fill),
                 child: ListTile(
-                  leading: Icon(Icons.edit_note),
+                  leading: const Icon(Icons.edit_note),
                   title: Text(tr('Ausfüllen & unterschreiben', 'Fill in & sign')),
                 ),
               ),
               PopupMenuItem(
                 value: () => _annotate(AnnotateMode.draw),
                 child: ListTile(
-                  leading: Icon(Icons.brush_outlined),
+                  leading: const Icon(Icons.brush_outlined),
                   title: Text(tr('Zeichnen & markieren', 'Draw & highlight')),
                 ),
               ),
               PopupMenuItem(
                 value: _recognizeText,
                 child: ListTile(
-                  leading: Icon(Icons.text_snippet_outlined),
+                  leading: const Icon(Icons.text_snippet_outlined),
                   title: Text(tr('Text erkennen', 'Recognize text')),
                 ),
               ),
               PopupMenuItem(
                 value: _moveToFolder,
                 child: ListTile(
-                  leading: Icon(Icons.drive_file_move_outlined),
+                  leading: const Icon(Icons.drive_file_move_outlined),
                   title: Text(tr('In Ordner verschieben', 'Move to folder')),
                 ),
               ),
               PopupMenuItem(
                 value: _rename,
                 child: ListTile(
-                  leading: Icon(Icons.edit_outlined),
+                  leading: const Icon(Icons.edit_outlined),
                   title: Text(tr('Umbenennen', 'Rename')),
                 ),
               ),
               PopupMenuItem(
                 value: _delete,
                 child: ListTile(
-                  leading: Icon(Icons.delete_outline),
+                  leading: const Icon(Icons.delete_outline),
                   title: Text(tr('Löschen', 'Delete')),
                 ),
               ),

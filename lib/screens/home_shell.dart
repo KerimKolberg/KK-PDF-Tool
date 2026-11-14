@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
 
+import '../l10n.dart';
 import '../services/document_store.dart';
 import '../services/incoming_file_service.dart';
 import '../utils/layout.dart';
@@ -13,7 +14,6 @@ import 'import_shared_file_screen.dart';
 import 'library_screen.dart';
 import 'settings_screen.dart';
 import 'tools_screen.dart';
-import '../l10n.dart';
 
 /// Top-level navigation shell: Library and Tools (plus Settings in the
 /// desktop layout's side navigation). Files dropped on the window or

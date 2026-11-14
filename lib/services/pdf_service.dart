@@ -54,7 +54,7 @@ class PdfService {
             height: headerHeight,
             child: pw.Text(
               label,
-              style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold),
+              style: const pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold),
             ),
           ),
           pw.Container(
@@ -77,7 +77,7 @@ class PdfService {
     doc.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
-        margin: pw.EdgeInsets.all(margin),
+        margin: const pw.EdgeInsets.all(margin),
         build: (context) => pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [

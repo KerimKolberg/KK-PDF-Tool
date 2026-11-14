@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
@@ -6,6 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../l10n.dart';
 import '../services/backup_service.dart';
 import '../services/document_store.dart';
 import '../services/downloads_export_service.dart';
@@ -16,7 +18,6 @@ import '../services/windows_desktop_service.dart';
 import '../utils/formatting.dart';
 import '../utils/layout.dart';
 import '../widgets/settings_widgets.dart';
-import '../l10n.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -79,7 +80,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   ) async {
     final progress = ValueNotifier<double?>(null);
     final navigator = Navigator.of(context, rootNavigator: true);
-    showDialog<void>(
+    unawaited(showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (_) => PopScope(
@@ -92,7 +93,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
       ),
-    );
+    ));
     try {
       await task((v) => progress.value = v);
     } finally {
@@ -156,8 +157,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _restoreBackup() async {
     final typeGroup = XTypeGroup(
       label: tr('Sicherung (ZIP)', 'Backup (ZIP)'),
-      extensions: ['zip'],
-      mimeTypes: ['application/zip', 'application/x-zip-compressed'],
+      extensions: const ['zip'],
+      mimeTypes: const ['application/zip', 'application/x-zip-compressed'],
     );
     final file = await FilePickers.openOne('backup', [typeGroup]);
     if (file == null || !mounted) return;

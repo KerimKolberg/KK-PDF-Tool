@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../l10n.dart';
 import '../services/image_processing.dart';
 import '../services/settings_service.dart';
 import 'capture_screen.dart';
 import 'crop_screen.dart';
-import '../l10n.dart';
 
 class _Page {
   final int key;

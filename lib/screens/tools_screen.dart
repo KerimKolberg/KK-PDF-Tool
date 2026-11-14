@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../l10n.dart';
+import '../utils/layout.dart';
 import 'annotate_pages_screen.dart';
+import 'home_shell.dart';
 import 'tools/annotate_pdf_screen.dart';
 import 'tools/compress_pdf_screen.dart';
 import 'tools/crop_pdf_screen.dart';
@@ -19,9 +22,6 @@ import 'tools/split_pdf_screen.dart';
 import 'tools/text_from_image_screen.dart';
 import 'tools/watermark_pdf_screen.dart';
 import 'tools/word_to_pdf_screen.dart';
-import '../l10n.dart';
-import '../utils/layout.dart';
-import 'home_shell.dart';
 
 const _pdf = {'pdf'};
 const _images = {'jpg', 'jpeg', 'png', 'webp'};

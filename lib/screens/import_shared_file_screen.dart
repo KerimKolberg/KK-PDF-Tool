@@ -3,14 +3,14 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import '../l10n.dart';
 import '../models/ocr_result.dart';
 import '../services/document_builder.dart';
 import '../services/document_store.dart';
 import '../services/incoming_file_service.dart';
 import '../services/pdf_tools_service.dart';
-import 'document_viewer_screen.dart';
-import '../l10n.dart';
 import '../widgets/busy_icon.dart';
+import 'document_viewer_screen.dart';
 
 /// Shown when the OS hands KK-PDF-Tool a PDF or image via "Open with" / the
 /// share sheet. Imports it into the local library so it shows up like any
@@ -127,7 +127,7 @@ class _ImportSharedFileScreenState extends State<ImportSharedFileScreen> {
               autofocus: true,
               decoration: InputDecoration(
                 labelText: tr('Titel', 'Title'),
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
               ),
             ),
             if (_error != null) ...[

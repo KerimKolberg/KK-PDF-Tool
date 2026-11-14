@@ -4,9 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 
+import '../l10n.dart';
 import '../models/ocr_result.dart';
 import 'image_processing.dart';
-import '../l10n.dart';
 
 /// Offline text recognition via ML Kit (Android only, see MainActivity.kt).
 /// Windows has no comparable offline engine, so callers fall back to the

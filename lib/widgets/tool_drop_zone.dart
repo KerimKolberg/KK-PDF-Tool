@@ -2,10 +2,10 @@ import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
+import '../l10n.dart';
 import '../services/file_picker_service.dart';
 import '../utils/layout.dart';
 import 'drop_visuals.dart';
-import '../l10n.dart';
 
 /// Windows: lets files be dragged from Explorer onto a tool (see also
 /// [ToolDropZone.openWithFiles]). The dropped

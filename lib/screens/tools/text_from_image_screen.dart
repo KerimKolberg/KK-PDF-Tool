@@ -5,17 +5,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 
+import '../../l10n.dart';
 import '../../services/downloads_export_service.dart';
 import '../../services/file_picker_service.dart';
-import '../../widgets/tool_drop_zone.dart';
-import '../../widgets/tool_layout.dart';
 import '../../services/google_drive_convert_service.dart';
 import '../../services/ocr_service.dart';
 import '../../services/original_files_cleanup_service.dart';
 import '../../services/settings_service.dart';
-import '../../widgets/delete_originals_switch.dart';
-import '../../l10n.dart';
 import '../../widgets/busy_icon.dart';
+import '../../widgets/delete_originals_switch.dart';
+import '../../widgets/tool_drop_zone.dart';
+import '../../widgets/tool_layout.dart';
 
 const _mimeByExtension = {
   'jpg': 'image/jpeg',
@@ -50,7 +50,7 @@ class _TextFromImageScreenState extends State<TextFromImageScreen> {
   bool _busy = false;
 
   Future<void> _pickFile() async {
-    final typeGroup = XTypeGroup(label: tr('Bilder', 'Images'), extensions: ['jpg', 'jpeg', 'png', 'webp']);
+    final typeGroup = XTypeGroup(label: tr('Bilder', 'Images'), extensions: const ['jpg', 'jpeg', 'png', 'webp']);
     final file = await FilePickers.openOne('text_from_image', [typeGroup]);
     if (file == null) return;
     final bytes = await file.readAsBytes();

@@ -4,16 +4,16 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
+import '../../l10n.dart';
 import '../../services/downloads_export_service.dart';
 import '../../services/file_picker_service.dart';
 import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
+import '../../widgets/busy_icon.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_layout.dart';
 import '../../widgets/tool_result.dart';
-import '../../l10n.dart';
-import '../../widgets/busy_icon.dart';
 
 class _PickedPdf {
   final String name;

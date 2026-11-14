@@ -4,16 +4,16 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
+import '../../l10n.dart';
 import '../../services/downloads_export_service.dart';
 import '../../services/file_picker_service.dart';
 import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
+import '../../widgets/busy_icon.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/tool_drop_zone.dart';
 import '../../widgets/tool_layout.dart';
 import '../../widgets/tool_result.dart';
-import '../../l10n.dart';
-import '../../widgets/busy_icon.dart';
 
 /// Packs every page of a picked PDF as a full-slide picture into a new
 /// .pptx file. This is a mechanical "one page per slide" export, not a real
@@ -98,7 +98,7 @@ class _PdfToPptxScreenState extends State<PdfToPptxScreen> {
                           'Every PDF page is placed as a picture on its own slide. '
                           'The text is no longer editable afterwards, '
                           'only the picture can be moved and resized.'),
-                          style: TextStyle(fontSize: 13),
+                          style: const TextStyle(fontSize: 13),
                         ),
                       ),
                     ],

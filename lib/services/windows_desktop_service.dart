@@ -1,11 +1,11 @@
 import 'dart:io';
 
-import 'package:tray_manager/tray_manager.dart';
 import 'package:flutter/widgets.dart';
+import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 
-import 'settings_service.dart';
 import '../l10n.dart';
+import 'settings_service.dart';
 
 /// Windows only: tray icon (click = open, right-click = menu), starting
 /// hidden in the tray, and "start with Windows" via the per-user Run key

@@ -5,10 +5,10 @@ import 'package:archive/archive_io.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../l10n.dart';
 import '../models/scan_document.dart';
 import 'document_store.dart';
 import 'signature_service.dart';
-import '../l10n.dart';
 
 class BackupSummary {
   final File file;

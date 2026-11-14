@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../l10n.dart';
 import '../models/scan_document.dart';
 import 'document_builder.dart';
 import 'document_store.dart';
@@ -12,7 +13,6 @@ import 'downloads_export_service.dart';
 import 'pdf_service.dart';
 import 'pdf_tools_service.dart';
 import 'searchable_pdf_service.dart';
-import '../l10n.dart';
 
 enum ShareFormat { originalPdf, smallPdf, images }
 

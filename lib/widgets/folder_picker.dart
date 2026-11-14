@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../services/document_store.dart';
 import '../l10n.dart';
+import '../services/document_store.dart';
 
 /// Asks for a folder name; returns the trimmed name or null if cancelled.
 Future<String?> promptFolderName(

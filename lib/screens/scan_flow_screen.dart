@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'package:flutter/material.dart';
 
+import '../l10n.dart';
 import '../models/scan_document.dart';
 import '../services/document_builder.dart';
 import '../services/document_store.dart';
@@ -11,7 +12,6 @@ import '../services/downloads_export_service.dart';
 import '../services/settings_service.dart';
 import 'capture_screen.dart';
 import 'crop_screen.dart';
-import '../l10n.dart';
 
 /// Orchestrates a scanning session: capture/crop one or more pages, then
 /// save them as a new [ScanDocument] with a generated PDF.
@@ -326,7 +326,7 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Row(
                 children: [
-                  Text(tr('Zuschnitt', 'Crop'), style: TextStyle(fontSize: 13)),
+                  Text(tr('Zuschnitt', 'Crop'), style: const TextStyle(fontSize: 13)),
                   Switch(
                     value: _cropEnabled,
                     onChanged: (v) => setState(() => _cropEnabled = v),

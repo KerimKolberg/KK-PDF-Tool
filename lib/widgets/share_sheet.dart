@@ -1,13 +1,14 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../l10n.dart';
 import '../models/scan_document.dart';
 import '../services/document_share_service.dart';
 import '../services/document_store.dart';
 import '../utils/formatting.dart';
-import '../l10n.dart';
 
 /// Asks how to share [doc] (original PDF, smaller PDF or JPG images),
 /// prepares the files with a progress indicator and opens the system share
@@ -57,7 +58,7 @@ Future<void> showShareSheet(
   if (format == null || !context.mounted) return;
 
   final navigator = Navigator.of(context, rootNavigator: true);
-  showDialog<void>(
+  unawaited(showDialog<void>(
     context: context,
     barrierDismissible: false,
     builder: (_) => PopScope(
@@ -65,14 +66,14 @@ Future<void> showShareSheet(
       child: AlertDialog(
         content: Row(
           children: [
-            SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5)),
-            SizedBox(width: 16),
+            const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5)),
+            const SizedBox(width: 16),
             Text(tr('Wird vorbereitet…', 'Preparing…')),
           ],
         ),
       ),
     ),
-  );
+  ));
   PreparedShare? prepared;
   Object? error;
   try {

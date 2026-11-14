@@ -4,7 +4,7 @@ import 'package:doc_scanner/utils/formatting.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  final safe = DownloadsExportService.safeFileName;
+  const safe = DownloadsExportService.safeFileName;
 
   group('safeFileName', () {
     test('removes path separators and forbidden characters', () {

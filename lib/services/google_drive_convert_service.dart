@@ -5,9 +5,9 @@ import 'dart:typed_data';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 
+import '../l10n.dart';
 import 'google_desktop_auth.dart';
 import 'settings_service.dart';
-import '../l10n.dart';
 
 /// Converts documents by round-tripping them through the user's own Google
 /// Drive: Drive auto-converts recognised uploads into a native Google
