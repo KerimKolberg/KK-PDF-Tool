@@ -16,9 +16,20 @@ class SearchablePdfService {
   /// typographic characters ML Kit returns to plain equivalents so they
   /// stay searchable instead of being dropped.
   static const _replacements = {
-    '„': '"', '“': '"', '”': '"', '‚': "'", '‘': "'", '’': "'",
-    '–': '-', '—': '-', '…': '...', '€': 'EUR', '•': '*',
-    'ﬁ': 'fi', 'ﬂ': 'fl', ' ': ' ',
+    '„': '"',
+    '“': '"',
+    '”': '"',
+    '‚': "'",
+    '‘': "'",
+    '’': "'",
+    '–': '-',
+    '—': '-',
+    '…': '...',
+    '€': 'EUR',
+    '•': '*',
+    'ﬁ': 'fi',
+    'ﬂ': 'fl',
+    ' ': ' ',
   };
 
   static String _pdfSafe(String text) {

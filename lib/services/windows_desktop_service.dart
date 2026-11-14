@@ -49,11 +49,15 @@ class WindowsDesktopService with TrayListener {
     });
     await trayManager.setIcon('assets/icon/app_icon.ico');
     await trayManager.setToolTip('KK-PDF-Tool');
-    await trayManager.setContextMenu(Menu(items: [
-      MenuItem(key: 'show', label: tr('Öffnen', 'Open')),
-      MenuItem.separator(),
-      MenuItem(key: 'quit', label: tr('Beenden', 'Quit')),
-    ]));
+    await trayManager.setContextMenu(
+      Menu(
+        items: [
+          MenuItem(key: 'show', label: tr('Öffnen', 'Open')),
+          MenuItem.separator(),
+          MenuItem(key: 'quit', label: tr('Beenden', 'Quit')),
+        ],
+      ),
+    );
     trayManager.addListener(this);
     // After an update/reinstall the exe may live elsewhere; refresh the
     // autostart entry so it never points at a missing file.
@@ -96,7 +100,17 @@ class WindowsDesktopService with TrayListener {
     AppPrefs.setBool('windows.startMinimized', minimized);
     if (enabled) {
       final command = '"${Platform.resolvedExecutable}"${minimized ? ' $minimizedArg' : ''}';
-      await Process.run(_regExe, ['add', _runKey, '/v', _valueName, '/t', 'REG_SZ', '/d', command, '/f']);
+      await Process.run(_regExe, [
+        'add',
+        _runKey,
+        '/v',
+        _valueName,
+        '/t',
+        'REG_SZ',
+        '/d',
+        command,
+        '/f',
+      ]);
     } else {
       await Process.run(_regExe, ['delete', _runKey, '/v', _valueName, '/f']);
     }

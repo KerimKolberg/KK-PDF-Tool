@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../l10n.dart';
 
 class _Stroke {
@@ -91,9 +92,9 @@ class _SignaturePadScreenState extends State<SignaturePadScreen> {
       ..translate(-bounds.left, -bounds.top);
     _paintStrokes(canvas, _strokes, _strokeWidth);
     final image = await recorder.endRecording().toImage(
-          (bounds.width * ratio).ceil(),
-          (bounds.height * ratio).ceil(),
-        );
+      (bounds.width * ratio).ceil(),
+      (bounds.height * ratio).ceil(),
+    );
     final data = await image.toByteData(format: ui.ImageByteFormat.png);
     image.dispose();
     if (!mounted) return;
@@ -140,7 +141,10 @@ class _SignaturePadScreenState extends State<SignaturePadScreen> {
                     ),
                     if (_strokes.isEmpty)
                       Center(
-                        child: Text(tr('Hier unterschreiben', 'Sign here'), style: const TextStyle(color: Colors.black38)),
+                        child: Text(
+                          tr('Hier unterschreiben', 'Sign here'),
+                          style: const TextStyle(color: Colors.black38),
+                        ),
                       ),
                     Positioned.fill(
                       child: GestureDetector(

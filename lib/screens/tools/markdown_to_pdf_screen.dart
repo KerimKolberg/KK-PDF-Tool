@@ -88,7 +88,10 @@ class _MarkdownToPdfScreenState extends State<MarkdownToPdfScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          tr('Läuft komplett offline, ohne Internet oder Google-Konto.', 'Runs completely offline, without internet or a Google account.'),
+                          tr(
+                            'Läuft komplett offline, ohne Internet oder Google-Konto.',
+                            'Runs completely offline, without internet or a Google account.',
+                          ),
                           style: const TextStyle(fontSize: 13),
                         ),
                       ),
@@ -104,10 +107,7 @@ class _MarkdownToPdfScreenState extends State<MarkdownToPdfScreen> {
                   label: Text(tr('Markdown-Datei wählen', 'Choose Markdown file')),
                 )
               else ...[
-                SelectedFileTile(
-                  name: _fileName!,
-                  onChange: _busy ? null : _pickFile,
-                ),
+                SelectedFileTile(name: _fileName!, onChange: _busy ? null : _pickFile),
                 DeleteOriginalsSwitch(
                   label: tr('Originaldatei danach löschen', 'Delete original file afterwards'),
                   value: _deleteOriginal,
@@ -117,7 +117,11 @@ class _MarkdownToPdfScreenState extends State<MarkdownToPdfScreen> {
                 FilledButton.icon(
                   onPressed: _busy ? null : _convert,
                   icon: BusyIcon(busy: _busy, child: const Icon(Icons.picture_as_pdf_outlined)),
-                  label: Text(_busy ? tr('Wandle um…', 'Converting…') : tr('In PDF umwandeln', 'Convert to PDF')),
+                  label: Text(
+                    _busy
+                        ? tr('Wandle um…', 'Converting…')
+                        : tr('In PDF umwandeln', 'Convert to PDF'),
+                  ),
                 ),
               ],
             ],

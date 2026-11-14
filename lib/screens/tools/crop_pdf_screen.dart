@@ -88,8 +88,13 @@ class _CropPdfScreenState extends State<CropPdfScreen> {
     final top = AppPrefs.getDouble('cropPdf.top', -1);
     final right = AppPrefs.getDouble('cropPdf.right', -1);
     final bottom = AppPrefs.getDouble('cropPdf.bottom', -1);
-    final valid = left >= 0 && top >= 0 && right <= 1 && bottom <= 1 &&
-        right - left > 0.05 && bottom - top > 0.05;
+    final valid =
+        left >= 0 &&
+        top >= 0 &&
+        right <= 1 &&
+        bottom <= 1 &&
+        right - left > 0.05 &&
+        bottom - top > 0.05;
     return valid ? (left: left, top: top, right: right, bottom: bottom) : null;
   }
 
@@ -115,8 +120,7 @@ class _CropPdfScreenState extends State<CropPdfScreen> {
         rightFrac: rect.right,
         bottomFrac: rect.bottom,
       );
-      final location =
-          await _downloadsExport.export(result, '${name}_zugeschnitten.pdf');
+      final location = await _downloadsExport.export(result, '${name}_zugeschnitten.pdf');
       var message = tr('Gespeichert unter $location', 'Saved to $location');
       if (_deleteOriginal) {
         message += await OriginalFilesCleanupService.deleteAndDescribe([_sourcePath]);
@@ -148,27 +152,29 @@ class _CropPdfScreenState extends State<CropPdfScreen> {
             ? Padding(
                 padding: const EdgeInsets.all(24),
                 child: FilePickPanel(
-                  hint: tr('Wähle eine PDF. Der Zuschnitt wird an der ersten Seite '
+                  hint: tr(
+                    'Wähle eine PDF. Der Zuschnitt wird an der ersten Seite '
                         'festgelegt und auf alle (oder gewählte) Seiten angewendet.',
-                        'Choose a PDF. The crop is set on the first page '
-                        'and applied to all (or the chosen) pages.'),
+                    'Choose a PDF. The crop is set on the first page '
+                        'and applied to all (or the chosen) pages.',
+                  ),
                   onPressed: _pickPdf,
                   icon: const Icon(Icons.picture_as_pdf_outlined),
                   label: Text(tr('PDF wählen', 'Choose PDF')),
                 ),
               )
             : _loadingPreview || _previewImage == null
-                ? const Center(child: CircularProgressIndicator())
-                : Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: RectCropOverlay(
-                      key: _overlayKey,
-                      imageBytes: _previewImage!,
-                      imageWidth: _previewW,
-                      imageHeight: _previewH,
-                      initialRect: _rememberedRect,
-                    ),
-                  ),
+            ? const Center(child: CircularProgressIndicator())
+            : Padding(
+                padding: const EdgeInsets.all(16),
+                child: RectCropOverlay(
+                  key: _overlayKey,
+                  imageBytes: _previewImage!,
+                  imageWidth: _previewW,
+                  imageHeight: _previewH,
+                  initialRect: _rememberedRect,
+                ),
+              ),
         bottomNavigationBar: _fileName == null || _loadingPreview
             ? null
             : SafeArea(
@@ -180,13 +186,19 @@ class _CropPdfScreenState extends State<CropPdfScreen> {
                       TextField(
                         controller: _pageSpecController,
                         decoration: InputDecoration(
-                          hintText: tr('z. B. 1-3,5 · leer lassen für alle Seiten', 'e.g. 1-3,5 · leave empty for all pages'),
+                          hintText: tr(
+                            'z. B. 1-3,5 · leer lassen für alle Seiten',
+                            'e.g. 1-3,5 · leave empty for all pages',
+                          ),
                           border: const OutlineInputBorder(),
                           isDense: true,
                         ),
                       ),
                       DeleteOriginalsSwitch(
-                        label: tr('Originaldatei danach löschen', 'Delete original file afterwards'),
+                        label: tr(
+                          'Originaldatei danach löschen',
+                          'Delete original file afterwards',
+                        ),
                         value: _deleteOriginal,
                         onChanged: (v) => setState(() => _deleteOriginal = v),
                       ),
@@ -194,7 +206,11 @@ class _CropPdfScreenState extends State<CropPdfScreen> {
                       FilledButton.icon(
                         onPressed: _busy ? null : _apply,
                         icon: BusyIcon(busy: _busy, child: const Icon(Icons.crop)),
-                        label: Text(_busy ? tr('Schneide zu…', 'Cropping…') : tr('Zuschneiden & speichern', 'Crop & save')),
+                        label: Text(
+                          _busy
+                              ? tr('Schneide zu…', 'Cropping…')
+                              : tr('Zuschneiden & speichern', 'Crop & save'),
+                        ),
                       ),
                     ],
                   ),

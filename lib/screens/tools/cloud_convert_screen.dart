@@ -31,7 +31,8 @@ class CloudConvertScreen extends StatefulWidget {
     GoogleDriveConvertService drive,
     Uint8List bytes,
     String fileName,
-  ) convert;
+  )
+  convert;
 
   const CloudConvertScreen({
     super.key,
@@ -76,15 +77,8 @@ class _CloudConvertScreenState extends State<CloudConvertScreen> {
     if (bytes == null || name == null || _busy) return;
     setState(() => _busy = true);
     try {
-      final result = await widget.convert(
-        _drive,
-        bytes,
-        '$name.${widget.sourceExtension}',
-      );
-      final location = await _downloadsExport.export(
-        result,
-        '$name.${widget.outputExtension}',
-      );
+      final result = await widget.convert(_drive, bytes, '$name.${widget.sourceExtension}');
+      final location = await _downloadsExport.export(result, '$name.${widget.outputExtension}');
       var message = tr('Gespeichert unter $location', 'Saved to $location');
       if (_deleteOriginal) {
         message += await OriginalFilesCleanupService.deleteAndDescribe([_sourcePath]);
@@ -125,10 +119,12 @@ class _CloudConvertScreenState extends State<CloudConvertScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          tr('Läuft über dein Google-Konto (kostenlos) und braucht '
-                          'Internet. Beim ersten Mal wirst du zum Anmelden aufgefordert.',
-                          'Runs through your Google account (free) and needs '
-                          'internet. The first time you will be asked to sign in.'),
+                          tr(
+                            'Läuft über dein Google-Konto (kostenlos) und braucht '
+                                'Internet. Beim ersten Mal wirst du zum Anmelden aufgefordert.',
+                            'Runs through your Google account (free) and needs '
+                                'internet. The first time you will be asked to sign in.',
+                          ),
                           style: const TextStyle(fontSize: 13),
                         ),
                       ),
@@ -144,10 +140,7 @@ class _CloudConvertScreenState extends State<CloudConvertScreen> {
                   label: Text(widget.pickButtonLabel),
                 )
               else ...[
-                SelectedFileTile(
-                  name: _fileName!,
-                  onChange: _busy ? null : _pickFile,
-                ),
+                SelectedFileTile(name: _fileName!, onChange: _busy ? null : _pickFile),
                 DeleteOriginalsSwitch(
                   label: tr('Originaldatei danach löschen', 'Delete original file afterwards'),
                   value: _deleteOriginal,

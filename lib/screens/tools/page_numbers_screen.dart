@@ -25,10 +25,12 @@ class PageNumbersScreen extends StatefulWidget {
 
 class _PageNumbersScreenState extends State<PageNumbersScreen> {
   final _downloadsExport = DownloadsExportService();
-  final _headerController =
-      TextEditingController(text: AppPrefs.getString('pageNumbers.header') ?? '');
-  final _footerController =
-      TextEditingController(text: AppPrefs.getString('pageNumbers.footer') ?? '');
+  final _headerController = TextEditingController(
+    text: AppPrefs.getString('pageNumbers.header') ?? '',
+  );
+  final _footerController = TextEditingController(
+    text: AppPrefs.getString('pageNumbers.footer') ?? '',
+  );
   final _startController = TextEditingController(text: '1');
   String? _fileName;
   String? _sourcePath;
@@ -101,7 +103,8 @@ class _PageNumbersScreenState extends State<PageNumbersScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _busy = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Fehlgeschlagen: $e', 'Failed: $e'))));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(tr('Fehlgeschlagen: $e', 'Failed: $e'))));
     }
   }
 
@@ -123,10 +126,7 @@ class _PageNumbersScreenState extends State<PageNumbersScreen> {
             : ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  SelectedFileTile(
-                    name: _fileName!,
-                    onChange: _busy ? null : _pickPdf,
-                  ),
+                  SelectedFileTile(name: _fileName!, onChange: _busy ? null : _pickPdf),
                   const SizedBox(height: 8),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
@@ -175,7 +175,10 @@ class _PageNumbersScreenState extends State<PageNumbersScreen> {
                     controller: _headerController,
                     onChanged: (_) => setState(() {}),
                     decoration: InputDecoration(
-                      labelText: tr('Kopfzeile (optional, oben Mitte)', 'Header (optional, top center)'),
+                      labelText: tr(
+                        'Kopfzeile (optional, oben Mitte)',
+                        'Header (optional, top center)',
+                      ),
                       border: const OutlineInputBorder(),
                     ),
                   ),
@@ -184,7 +187,10 @@ class _PageNumbersScreenState extends State<PageNumbersScreen> {
                     controller: _footerController,
                     onChanged: (_) => setState(() {}),
                     decoration: InputDecoration(
-                      labelText: tr('Fußzeile (optional, unten links)', 'Footer (optional, bottom left)'),
+                      labelText: tr(
+                        'Fußzeile (optional, unten links)',
+                        'Footer (optional, bottom left)',
+                      ),
                       border: const OutlineInputBorder(),
                     ),
                   ),
@@ -204,7 +210,11 @@ class _PageNumbersScreenState extends State<PageNumbersScreen> {
                   child: FilledButton.icon(
                     onPressed: _busy || !_hasSomethingToAdd ? null : _apply,
                     icon: BusyIcon(busy: _busy, child: const Icon(Icons.format_list_numbered)),
-                    label: Text(_busy ? tr('Wird erstellt…', 'Creating…') : tr('Anwenden & speichern', 'Apply & save')),
+                    label: Text(
+                      _busy
+                          ? tr('Wird erstellt…', 'Creating…')
+                          : tr('Anwenden & speichern', 'Apply & save'),
+                    ),
                   ),
                 ),
               ),

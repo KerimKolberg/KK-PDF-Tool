@@ -118,14 +118,18 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   Future<void> _newScan() async {
     await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => ScanFlowScreen(store: _store, folder: _folder)),
+      MaterialPageRoute(
+        builder: (_) => ScanFlowScreen(store: _store, folder: _folder),
+      ),
     );
     await _reload();
   }
 
   Future<void> _newIdScan() async {
     await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => IdScanScreen(store: _store, folder: _folder)),
+      MaterialPageRoute(
+        builder: (_) => IdScanScreen(store: _store, folder: _folder),
+      ),
     );
     await _reload();
   }
@@ -140,13 +144,20 @@ class _LibraryScreenState extends State<LibraryScreen> {
             ListTile(
               leading: const Icon(Icons.add_a_photo_outlined),
               title: Text(tr('Neuer Scan', 'New scan')),
-              subtitle: Text(tr('Ein oder mehrere Seiten, auch als Stapel', 'One or more pages, also as a batch')),
+              subtitle: Text(
+                tr(
+                  'Ein oder mehrere Seiten, auch als Stapel',
+                  'One or more pages, also as a batch',
+                ),
+              ),
               onTap: () => Navigator.pop(context, _newScan),
             ),
             ListTile(
               leading: const Icon(Icons.badge_outlined),
               title: Text(tr('Ausweis scannen', 'Scan ID card')),
-              subtitle: Text(tr('Vorder- und Rückseite auf einer Seite', 'Front and back on one page')),
+              subtitle: Text(
+                tr('Vorder- und Rückseite auf einer Seite', 'Front and back on one page'),
+              ),
               onTap: () => Navigator.pop(context, _newIdScan),
             ),
           ],
@@ -218,7 +229,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
             title: Text(tr('Umbenennen', 'Rename')),
             content: TextField(controller: controller, autofocus: true),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('Abbrechen', 'Cancel'))),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(tr('Abbrechen', 'Cancel')),
+              ),
               FilledButton(
                 onPressed: () => Navigator.pop(context, controller.text.trim()),
                 child: Text(tr('Speichern', 'Save')),
@@ -234,10 +248,21 @@ class _LibraryScreenState extends State<LibraryScreen> {
           context: context,
           builder: (context) => AlertDialog(
             title: Text(tr('Dokument löschen?', 'Delete document?')),
-            content: Text(tr('"${doc.title}" wird unwiderruflich gelöscht.', '"${doc.title}" will be deleted permanently.')),
+            content: Text(
+              tr(
+                '"${doc.title}" wird unwiderruflich gelöscht.',
+                '"${doc.title}" will be deleted permanently.',
+              ),
+            ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: Text(tr('Abbrechen', 'Cancel'))),
-              FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(tr('Löschen', 'Delete'))),
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(tr('Abbrechen', 'Cancel')),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(tr('Löschen', 'Delete')),
+              ),
             ],
           ),
         );
@@ -279,7 +304,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
     if (!mounted) return;
     if (action == 'rename') {
-      final name = await promptFolderName(context, title: tr('Ordner umbenennen', 'Rename folder'), initial: folder);
+      final name = await promptFolderName(
+        context,
+        title: tr('Ordner umbenennen', 'Rename folder'),
+        initial: folder,
+      );
       if (name == null || name == folder) return;
       await _store.renameFolder(folder, name);
       if (_folder == folder) _openFolder(name);
@@ -339,15 +368,21 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   String _formatDate(DateTime dt) {
     String two(int n) => n.toString().padLeft(2, '0');
-    return tr('${two(dt.day)}.${two(dt.month)}.${dt.year} ${two(dt.hour)}:${two(dt.minute)}', '${dt.year}-${two(dt.month)}-${two(dt.day)} ${two(dt.hour)}:${two(dt.minute)}');
+    return tr(
+      '${two(dt.day)}.${two(dt.month)}.${dt.year} ${two(dt.hour)}:${two(dt.minute)}',
+      '${dt.year}-${two(dt.month)}-${two(dt.day)} ${two(dt.hour)}:${two(dt.minute)}',
+    );
   }
 
   String _meta(ScanDocument doc, {bool withFolder = true}) => [
-        _formatDate(doc.createdAt),
-        tr('${doc.pageCount} ${doc.pageCount == 1 ? 'Seite' : 'Seiten'}', '${doc.pageCount} ${doc.pageCount == 1 ? 'page' : 'pages'}'),
-        if ((_sizes[doc.id] ?? 0) > 0) formatFileSize(_sizes[doc.id]!),
-        if (withFolder && _folder == null && doc.folder != null) doc.folder!,
-      ].join(' · ');
+    _formatDate(doc.createdAt),
+    tr(
+      '${doc.pageCount} ${doc.pageCount == 1 ? 'Seite' : 'Seiten'}',
+      '${doc.pageCount} ${doc.pageCount == 1 ? 'page' : 'pages'}',
+    ),
+    if ((_sizes[doc.id] ?? 0) > 0) formatFileSize(_sizes[doc.id]!),
+    if (withFolder && _folder == null && doc.folder != null) doc.folder!,
+  ].join(' · ');
 
   PreferredSizeWidget _buildAppBar() {
     if (_searching) {
@@ -489,11 +524,19 @@ class _LibraryScreenState extends State<LibraryScreen> {
               _query.isNotEmpty
                   ? tr('Keine Treffer für "$_query".', 'No results for "$_query".')
                   : noDocsAtAll
-                      ? (AppPlatform.isWindows
-                          ? tr('Noch keine Scans vorhanden.\nStarte mit "Neuer Scan" oder ziehe PDFs und Bilder hierher.',
-                              'No scans yet.\nStart with "New scan" or drag PDFs and images here.')
-                          : tr('Noch keine Scans vorhanden.\nTippe unten auf "Neuer Scan".', 'No scans yet.\nTap "New scan" below.'))
-                      : tr('Dieser Ordner ist leer.\nNeue Scans landen automatisch hier.', 'This folder is empty.\nNew scans land here automatically.'),
+                  ? (AppPlatform.isWindows
+                        ? tr(
+                            'Noch keine Scans vorhanden.\nStarte mit "Neuer Scan" oder ziehe PDFs und Bilder hierher.',
+                            'No scans yet.\nStart with "New scan" or drag PDFs and images here.',
+                          )
+                        : tr(
+                            'Noch keine Scans vorhanden.\nTippe unten auf "Neuer Scan".',
+                            'No scans yet.\nTap "New scan" below.',
+                          ))
+                  : tr(
+                      'Dieser Ordner ist leer.\nNeue Scans landen automatisch hier.',
+                      'This folder is empty.\nNew scans land here automatically.',
+                    ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -579,11 +622,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
               children: [
                 Expanded(
                   child: LayoutBuilder(
-                    builder: (context, constraints) => _thumbnail(
-                      doc,
-                      size: constraints.maxWidth,
-                      cacheWidth: 480,
-                    ),
+                    builder: (context, constraints) =>
+                        _thumbnail(doc, size: constraints.maxWidth, cacheWidth: 480),
                   ),
                 ),
                 Padding(
@@ -636,8 +676,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
                             ),
                           )
                         : _grid
-                            ? _buildGrid(visible)
-                            : _buildList(visible),
+                        ? _buildGrid(visible)
+                        : _buildList(visible),
                   ),
                 ),
               ],

@@ -40,10 +40,12 @@ class _MergePdfScreenState extends State<MergePdfScreen> {
     const typeGroup = XTypeGroup(label: 'PDF', extensions: ['pdf']);
     final files = await FilePickers.openMany('merge_pdf', [typeGroup]);
     if (files.isEmpty) return;
-    final picked = await Future.wait(files.map((f) async {
-      final bytes = await f.readAsBytes();
-      return _PickedPdf(p.basenameWithoutExtension(f.name), f.path, bytes);
-    }));
+    final picked = await Future.wait(
+      files.map((f) async {
+        final bytes = await f.readAsBytes();
+        return _PickedPdf(p.basenameWithoutExtension(f.name), f.path, bytes);
+      }),
+    );
     setState(() => _pdfs.addAll(picked));
   }
 
@@ -56,13 +58,16 @@ class _MergePdfScreenState extends State<MergePdfScreen> {
 
     setState(() => _busy = true);
     try {
-      final merged = await PdfToolsService.merge(
-        [for (final pdf in _pdfs) pdf.bytes],
-      );
+      final merged = await PdfToolsService.merge([for (final pdf in _pdfs) pdf.bytes]);
       final location = await _downloadsExport.export(merged, '$title.pdf');
-      var message = tr('Zusammengeführt und gespeichert unter $location', 'Merged and saved to $location');
+      var message = tr(
+        'Zusammengeführt und gespeichert unter $location',
+        'Merged and saved to $location',
+      );
       if (_deleteOriginals) {
-        message += await OriginalFilesCleanupService.deleteAndDescribe([for (final pdf in _pdfs) pdf.path]);
+        message += await OriginalFilesCleanupService.deleteAndDescribe([
+          for (final pdf in _pdfs) pdf.path,
+        ]);
       }
       if (!mounted) return;
       finishTool(context, widget, message);
@@ -110,7 +115,10 @@ class _MergePdfScreenState extends State<MergePdfScreen> {
                 padding: const EdgeInsets.all(24),
                 child: FilePickPanel(
                   multiple: true,
-                  hint: tr('Füge mindestens zwei PDFs hinzu. Sie werden in dieser Reihenfolge zusammengeführt.', 'Add at least two PDFs. They are merged in this order.'),
+                  hint: tr(
+                    'Füge mindestens zwei PDFs hinzu. Sie werden in dieser Reihenfolge zusammengeführt.',
+                    'Add at least two PDFs. They are merged in this order.',
+                  ),
                   onPressed: _addPdfs,
                   icon: const Icon(Icons.picture_as_pdf_outlined),
                   label: Text(tr('PDFs hinzufügen', 'Add PDFs')),
@@ -163,7 +171,9 @@ class _MergePdfScreenState extends State<MergePdfScreen> {
                       child: FilledButton.icon(
                         onPressed: _pdfs.length < 2 || _busy ? null : _merge,
                         icon: BusyIcon(busy: _busy, child: const Icon(Icons.merge_type)),
-                        label: Text(_busy ? tr('Führe zusammen…', 'Merging…') : tr('Zusammenführen', 'Merge')),
+                        label: Text(
+                          _busy ? tr('Führe zusammen…', 'Merging…') : tr('Zusammenführen', 'Merge'),
+                        ),
                       ),
                     ),
                   ],

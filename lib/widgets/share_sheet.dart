@@ -13,11 +13,7 @@ import '../utils/formatting.dart';
 /// Asks how to share [doc] (original PDF, smaller PDF or JPG images),
 /// prepares the files with a progress indicator and opens the system share
 /// sheet.
-Future<void> showShareSheet(
-  BuildContext context,
-  DocumentStore store,
-  ScanDocument doc,
-) async {
+Future<void> showShareSheet(BuildContext context, DocumentStore store, ScanDocument doc) async {
   final pdfFile = File(await store.pdfPath(doc.id));
   final size = await pdfFile.exists() ? await pdfFile.length() : 0;
   if (!context.mounted) return;
@@ -31,7 +27,10 @@ Future<void> showShareSheet(
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text(tr('"${doc.title}" teilen als …', 'Share "${doc.title}" as …'), style: Theme.of(sheetContext).textTheme.titleMedium),
+            child: Text(
+              tr('"${doc.title}" teilen als …', 'Share "${doc.title}" as …'),
+              style: Theme.of(sheetContext).textTheme.titleMedium,
+            ),
           ),
           ListTile(
             leading: const Icon(Icons.picture_as_pdf_outlined),
@@ -48,7 +47,14 @@ Future<void> showShareSheet(
           ListTile(
             leading: const Icon(Icons.image_outlined),
             title: Text(tr('Bilder (JPG)', 'Images (JPG)')),
-            subtitle: Text(doc.pageCount == 1 ? tr('1 Bild', '1 image') : tr('${doc.pageCount} Bilder, eins pro Seite', '${doc.pageCount} images, one per page')),
+            subtitle: Text(
+              doc.pageCount == 1
+                  ? tr('1 Bild', '1 image')
+                  : tr(
+                      '${doc.pageCount} Bilder, eins pro Seite',
+                      '${doc.pageCount} images, one per page',
+                    ),
+            ),
             onTap: () => Navigator.pop(sheetContext, ShareFormat.images),
           ),
         ],
@@ -58,22 +64,28 @@ Future<void> showShareSheet(
   if (format == null || !context.mounted) return;
 
   final navigator = Navigator.of(context, rootNavigator: true);
-  unawaited(showDialog<void>(
-    context: context,
-    barrierDismissible: false,
-    builder: (_) => PopScope(
-      canPop: false,
-      child: AlertDialog(
-        content: Row(
-          children: [
-            const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5)),
-            const SizedBox(width: 16),
-            Text(tr('Wird vorbereitet…', 'Preparing…')),
-          ],
+  unawaited(
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          content: Row(
+            children: [
+              const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(strokeWidth: 2.5),
+              ),
+              const SizedBox(width: 16),
+              Text(tr('Wird vorbereitet…', 'Preparing…')),
+            ],
+          ),
         ),
       ),
     ),
-  ));
+  );
   PreparedShare? prepared;
   Object? error;
   try {

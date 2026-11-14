@@ -33,7 +33,12 @@ void main() {
   File index() => File(p.join(scans.path, 'index.json'));
 
   test('create, rename, move and delete keep the index in step', () async {
-    final doc = await store.createDocument(title: 'A', pageJpegBytes: [_page, _page], pdfBytes: _pdf, text: 'hello');
+    final doc = await store.createDocument(
+      title: 'A',
+      pageJpegBytes: [_page, _page],
+      pdfBytes: _pdf,
+      text: 'hello',
+    );
     expect((await store.loadAll()).single.pageCount, 2);
     expect(await store.readText(doc.id), 'hello');
 
@@ -58,10 +63,12 @@ void main() {
 
   test('changes made at the same time do not overwrite each other', () async {
     final docs = await Future.wait([
-      for (var i = 0; i < 8; i++) store.createDocument(title: 'Doc $i', pageJpegBytes: [_page], pdfBytes: _pdf),
+      for (var i = 0; i < 8; i++)
+        store.createDocument(title: 'Doc $i', pageJpegBytes: [_page], pdfBytes: _pdf),
     ]);
     await Future.wait([
-      for (final (i, d) in docs.indexed) i.isEven ? store.rename(d.id, 'Renamed $i') : store.moveToFolder(d.id, 'F$i'),
+      for (final (i, d) in docs.indexed)
+        i.isEven ? store.rename(d.id, 'Renamed $i') : store.moveToFolder(d.id, 'F$i'),
     ]);
     final all = await store.loadAll();
     expect(all, hasLength(8));
@@ -78,7 +85,11 @@ void main() {
   });
 
   test('without any readable index the list is rebuilt from the folders', () async {
-    final doc = await store.createDocument(title: 'Lost', pageJpegBytes: [_page, _page, _page], pdfBytes: _pdf);
+    final doc = await store.createDocument(
+      title: 'Lost',
+      pageJpegBytes: [_page, _page, _page],
+      pdfBytes: _pdf,
+    );
     await index().writeAsString('');
     await File('${index().path}.bak').writeAsString('garbage');
     final rebuilt = (await store.loadAll()).single;
@@ -88,7 +99,12 @@ void main() {
   group('backup', () {
     test('round trip restores documents, folders and text; twice is harmless', () async {
       final doc = await store.createDocument(
-        title: 'Vertrag', pageJpegBytes: [_page], pdfBytes: _pdf, text: 'Miete', folder: 'Wohnung');
+        title: 'Vertrag',
+        pageJpegBytes: [_page],
+        pdfBytes: _pdf,
+        text: 'Miete',
+        folder: 'Wohnung',
+      );
       await store.addFolder('Leer');
       final backup = await BackupService(store).create();
       expect(backup.documents, 1);
@@ -125,7 +141,12 @@ void main() {
       final evil = zipOf({
         'manifest.json': jsonEncode({'app': 'KK-PDF-Tool', 'format': 1}),
         'scans/index.json': jsonEncode([
-          {'id': '../../escape', 'title': 'x', 'createdAt': DateTime(2026).toIso8601String(), 'pageCount': 1},
+          {
+            'id': '../../escape',
+            'title': 'x',
+            'createdAt': DateTime(2026).toIso8601String(),
+            'pageCount': 1,
+          },
         ]),
         'scans/../../escape/document.pdf': 'x',
       });

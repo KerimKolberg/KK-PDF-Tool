@@ -64,19 +64,22 @@ class _EditPagesScreenState extends State<EditPagesScreen> {
   final Set<int> _selected = {};
 
   bool get _selecting => _selected.isNotEmpty;
-  List<_Page> get _selectedPages => [for (final p in _pages) if (_selected.contains(p.key)) p];
+  List<_Page> get _selectedPages => [
+    for (final p in _pages)
+      if (_selected.contains(p.key)) p,
+  ];
 
   void _toggle(_Page page) => setState(() {
-        if (!_selected.remove(page.key)) _selected.add(page.key);
-      });
+    if (!_selected.remove(page.key)) _selected.add(page.key);
+  });
 
   void _selectAll() => setState(() {
-        if (_selected.length == _pages.length) {
-          _selected.clear();
-        } else {
-          _selected.addAll(_pages.map((p) => p.key));
-        }
-      });
+    if (_selected.length == _pages.length) {
+      _selected.clear();
+    } else {
+      _selected.addAll(_pages.map((p) => p.key));
+    }
+  });
 
   void _deleteSelected() {
     setState(() {
@@ -105,7 +108,10 @@ class _EditPagesScreenState extends State<EditPagesScreen> {
   void _moveSelectedTo(int index) {
     setState(() {
       final block = _selectedPages;
-      final others = [for (final p in _pages) if (!_selected.contains(p.key)) p];
+      final others = [
+        for (final p in _pages)
+          if (!_selected.contains(p.key)) p,
+      ];
       others.insertAll(index.clamp(0, others.length), block);
       _pages
         ..clear()
@@ -117,8 +123,10 @@ class _EditPagesScreenState extends State<EditPagesScreen> {
   /// Moves the selected pages one step up (-1) or down (1).
   void _shiftSelected(int delta) {
     final firstSelected = _pages.indexWhere((p) => _selected.contains(p.key));
-    final unselectedBefore =
-        _pages.take(firstSelected).where((p) => !_selected.contains(p.key)).length;
+    final unselectedBefore = _pages
+        .take(firstSelected)
+        .where((p) => !_selected.contains(p.key))
+        .length;
     _moveSelectedTo(unselectedBefore + delta);
   }
 
@@ -135,16 +143,18 @@ class _EditPagesScreenState extends State<EditPagesScreen> {
     // together in front of the first unselected page at the drop position.
     final rest = [..._pages]..removeAt(oldIndex);
     final anchor = rest.skip(newIndex).where((p) => !_selected.contains(p.key)).firstOrNull;
-    final others = [for (final p in _pages) if (!_selected.contains(p.key)) p];
+    final others = [
+      for (final p in _pages)
+        if (!_selected.contains(p.key)) p,
+    ];
     _moveSelectedTo(anchor == null ? others.length : others.indexOf(anchor));
   }
 
   Future<void> _addPage() async {
     final cropEnabled = await SettingsService().getCropEnabledDefault();
     if (!mounted) return;
-    final raw = await Navigator.of(context).push<Uint8List>(
-      MaterialPageRoute(builder: (_) => const CaptureScreen()),
-    );
+    final raw = await Navigator.of(context)
+        .push<Uint8List>(MaterialPageRoute(builder: (_) => const CaptureScreen()));
     if (raw == null || !mounted) return;
     final processed = await Navigator.of(context).push<Uint8List>(
       MaterialPageRoute(
@@ -217,9 +227,11 @@ class _EditPagesScreenState extends State<EditPagesScreen> {
           itemBuilder: (context) => [
             PopupMenuItem(
               value: 'all',
-              child: Text(_selected.length == _pages.length
-                  ? tr('Keine auswählen', 'Select none')
-                  : tr('Alle auswählen', 'Select all')),
+              child: Text(
+                _selected.length == _pages.length
+                    ? tr('Keine auswählen', 'Select none')
+                    : tr('Alle auswählen', 'Select all'),
+              ),
             ),
             PopupMenuItem(value: 'start', child: Text(tr('An den Anfang', 'Move to start'))),
             PopupMenuItem(value: 'end', child: Text(tr('Ans Ende', 'Move to end'))),
@@ -237,7 +249,10 @@ class _EditPagesScreenState extends State<EditPagesScreen> {
       body: _pages.isEmpty
           ? Center(
               child: Text(
-                tr('Keine Seiten mehr - füge mindestens eine hinzu.', 'No pages left - add at least one.'),
+                tr(
+                  'Keine Seiten mehr - füge mindestens eine hinzu.',
+                  'No pages left - add at least one.',
+                ),
                 style: TextStyle(color: Theme.of(context).colorScheme.outline),
               ),
             )
@@ -261,55 +276,52 @@ class _EditPagesScreenState extends State<EditPagesScreen> {
                     onTap: _selecting ? () => _toggle(page) : null,
                     onLongPress: () => _toggle(page),
                     child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Row(
-                      children: [
-                        Checkbox(
-                          value: selected,
-                          onChanged: (_) => _toggle(page),
-                        ),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: Image.memory(
-                            page.bytes,
-                            width: 64,
-                            height: 88,
-                            fit: BoxFit.cover,
-                            cacheWidth: 200,
-                            gaplessPlayback: true,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(child: Text(tr('Seite ${i + 1}', 'Page ${i + 1}'))),
-                        IconButton(
-                          tooltip: tr('Drehen', 'Rotate'),
-                          onPressed: _rotating.contains(page.key) ? null : () => _rotate(page),
-                          icon: _rotating.contains(page.key)
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : const Icon(Icons.rotate_right),
-                        ),
-                        IconButton(
-                          tooltip: tr('Löschen', 'Delete'),
-                          onPressed: () => _delete(i),
-                          icon: const Icon(Icons.delete_outline),
-                        ),
-                        ReorderableDragStartListener(
-                          index: i,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            child: MouseRegion(
-                              cursor: SystemMouseCursors.grab,
-                              child: Icon(Icons.drag_handle, color: scheme.onSurfaceVariant),
+                      padding: const EdgeInsets.all(8),
+                      child: Row(
+                        children: [
+                          Checkbox(value: selected, onChanged: (_) => _toggle(page)),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: Image.memory(
+                              page.bytes,
+                              width: 64,
+                              height: 88,
+                              fit: BoxFit.cover,
+                              cacheWidth: 200,
+                              gaplessPlayback: true,
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 12),
+                          Expanded(child: Text(tr('Seite ${i + 1}', 'Page ${i + 1}'))),
+                          IconButton(
+                            tooltip: tr('Drehen', 'Rotate'),
+                            onPressed: _rotating.contains(page.key) ? null : () => _rotate(page),
+                            icon: _rotating.contains(page.key)
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.rotate_right),
+                          ),
+                          IconButton(
+                            tooltip: tr('Löschen', 'Delete'),
+                            onPressed: () => _delete(i),
+                            icon: const Icon(Icons.delete_outline),
+                          ),
+                          ReorderableDragStartListener(
+                            index: i,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              child: MouseRegion(
+                                cursor: SystemMouseCursors.grab,
+                                child: Icon(Icons.drag_handle, color: scheme.onSurfaceVariant),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
                   ),
                 );
               },

@@ -78,11 +78,16 @@ class _PdfToImagesScreenState extends State<PdfToImagesScreen> {
       for (var i = 0; i < images.length; i++) {
         lastLocation = await _downloadsExport.export(
           images[i],
-          tr('${name}_seite_${(i + 1).toString().padLeft(2, '0')}.png', '${name}_page_${(i + 1).toString().padLeft(2, '0')}.png'),
+          tr(
+            '${name}_seite_${(i + 1).toString().padLeft(2, '0')}.png',
+            '${name}_page_${(i + 1).toString().padLeft(2, '0')}.png',
+          ),
         );
       }
-      var message =
-          tr('${images.length} Bild(er) gespeichert${lastLocation != null ? ' in ${folderOf(lastLocation)}' : ''}', '${images.length} image(s) saved${lastLocation != null ? ' in ${folderOf(lastLocation)}' : ''}');
+      var message = tr(
+        '${images.length} Bild(er) gespeichert${lastLocation != null ? ' in ${folderOf(lastLocation)}' : ''}',
+        '${images.length} image(s) saved${lastLocation != null ? ' in ${folderOf(lastLocation)}' : ''}',
+      );
       if (_deleteOriginal) {
         message += await OriginalFilesCleanupService.deleteAndDescribe([_sourcePath]);
       }
@@ -91,9 +96,9 @@ class _PdfToImagesScreenState extends State<PdfToImagesScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _busy = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(tr('Export fehlgeschlagen: $e', 'Export failed: $e'))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(tr('Export fehlgeschlagen: $e', 'Export failed: $e'))));
     }
   }
 
@@ -107,28 +112,31 @@ class _PdfToImagesScreenState extends State<PdfToImagesScreen> {
             ? Padding(
                 padding: const EdgeInsets.all(24),
                 child: FilePickPanel(
-                  hint: tr('Wähle eine PDF-Datei, deren Seiten als Bilder exportiert werden sollen.', 'Choose a PDF file whose pages should be exported as images.'),
+                  hint: tr(
+                    'Wähle eine PDF-Datei, deren Seiten als Bilder exportiert werden sollen.',
+                    'Choose a PDF file whose pages should be exported as images.',
+                  ),
                   onPressed: _pickPdf,
                   icon: const Icon(Icons.picture_as_pdf_outlined),
                   label: Text(tr('PDF wählen', 'Choose PDF')),
                 ),
               )
             : _busy && _previewImages == null
-                ? const Center(child: CircularProgressIndicator())
-                : GridView.builder(
-                    padding: const EdgeInsets.all(12),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 8,
-                      mainAxisSpacing: 8,
-                      childAspectRatio: 0.72,
-                    ),
-                    itemCount: _previewImages?.length ?? 0,
-                    itemBuilder: (context, i) => ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.memory(_previewImages![i], fit: BoxFit.cover),
-                    ),
-                  ),
+            ? const Center(child: CircularProgressIndicator())
+            : GridView.builder(
+                padding: const EdgeInsets.all(12),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                  childAspectRatio: 0.72,
+                ),
+                itemCount: _previewImages?.length ?? 0,
+                itemBuilder: (context, i) => ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.memory(_previewImages![i], fit: BoxFit.cover),
+                ),
+              ),
         bottomNavigationBar: _previewImages == null
             ? null
             : SafeArea(
@@ -138,7 +146,10 @@ class _PdfToImagesScreenState extends State<PdfToImagesScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       DeleteOriginalsSwitch(
-                        label: tr('Originaldatei danach löschen', 'Delete original file afterwards'),
+                        label: tr(
+                          'Originaldatei danach löschen',
+                          'Delete original file afterwards',
+                        ),
                         value: _deleteOriginal,
                         onChanged: (v) => setState(() => _deleteOriginal = v),
                       ),
@@ -148,7 +159,10 @@ class _PdfToImagesScreenState extends State<PdfToImagesScreen> {
                         label: Text(
                           _busy
                               ? tr('Exportiere…', 'Exporting…')
-                              : tr('${_previewImages!.length} Bild(er) speichern', 'Save ${_previewImages!.length} image(s)'),
+                              : tr(
+                                  '${_previewImages!.length} Bild(er) speichern',
+                                  'Save ${_previewImages!.length} image(s)',
+                                ),
                         ),
                       ),
                     ],

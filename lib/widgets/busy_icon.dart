@@ -15,10 +15,7 @@ class BusyIcon extends StatelessWidget {
     return SizedBox(
       width: 18,
       height: 18,
-      child: CircularProgressIndicator(
-        strokeWidth: 2,
-        color: IconTheme.of(context).color,
-      ),
+      child: CircularProgressIndicator(strokeWidth: 2, color: IconTheme.of(context).color),
     );
   }
 }

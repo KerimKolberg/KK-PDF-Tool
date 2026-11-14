@@ -66,14 +66,14 @@ class ToolsScreen extends StatelessWidget {
   /// The tools that can take [extensions] (one per file, lower case) as
   /// input, in the order of the tools page.
   static List<ToolEntry> toolsFor(List<String> extensions) => [
-        for (final section in _sections)
-          for (final tool in section.tools)
-            if (tool.available &&
-                extensions.isNotEmpty &&
-                (extensions.length == 1 || tool.multiple) &&
-                extensions.every(tool.accepts.contains))
-              tool,
-      ];
+    for (final section in _sections)
+      for (final tool in section.tools)
+        if (tool.available &&
+            extensions.isNotEmpty &&
+            (extensions.length == 1 || tool.multiple) &&
+            extensions.every(tool.accepts.contains))
+          tool,
+  ];
 
   // A getter, not a cached field, so the texts follow the current language.
   static List<_ToolSection> get _sections => [
@@ -83,7 +83,8 @@ class ToolsScreen extends StatelessWidget {
         tr('Mehrere Bilder zu einer PDF zusammenfassen', 'Combine several images into one PDF'),
         Icons.image_outlined,
         (_) => const ImagesToPdfScreen(),
-        accepts: _images, multiple: true,
+        accepts: _images,
+        multiple: true,
       ),
       ToolEntry(
         tr('PDF → Bilder', 'PDF → images'),
@@ -94,14 +95,20 @@ class ToolsScreen extends StatelessWidget {
       ),
       ToolEntry(
         'PDF → PowerPoint',
-        tr('Jede Seite als Bild-Folie (offline, nicht text-editierbar)', 'Every page as a picture slide (offline, text not editable)'),
+        tr(
+          'Jede Seite als Bild-Folie (offline, nicht text-editierbar)',
+          'Every page as a picture slide (offline, text not editable)',
+        ),
         Icons.slideshow_outlined,
         (_) => const PdfToPptxScreen(),
         accepts: _pdf,
       ),
       ToolEntry(
         'PowerPoint → PDF',
-        tr('Echte Konvertierung über dein Google-Konto', 'Real conversion through your Google account'),
+        tr(
+          'Echte Konvertierung über dein Google-Konto',
+          'Real conversion through your Google account',
+        ),
         Icons.picture_as_pdf_outlined,
         (_) => const PptxToPdfScreen(),
         accepts: {'pptx'},
@@ -109,7 +116,10 @@ class ToolsScreen extends StatelessWidget {
       ),
       ToolEntry(
         'Word → PDF',
-        tr('Echte Konvertierung über dein Google-Konto', 'Real conversion through your Google account'),
+        tr(
+          'Echte Konvertierung über dein Google-Konto',
+          'Real conversion through your Google account',
+        ),
         Icons.picture_as_pdf_outlined,
         (_) => const WordToPdfScreen(),
         accepts: {'docx'},
@@ -117,7 +127,10 @@ class ToolsScreen extends StatelessWidget {
       ),
       ToolEntry(
         'PDF → Word',
-        tr('Editierbar, mit Texterkennung über dein Google-Konto', 'Editable, with text recognition through your Google account'),
+        tr(
+          'Editierbar, mit Texterkennung über dein Google-Konto',
+          'Editable, with text recognition through your Google account',
+        ),
         Icons.description_outlined,
         (_) => const PdfToWordScreen(),
         accepts: _pdf,
@@ -133,14 +146,20 @@ class ToolsScreen extends StatelessWidget {
       ),
       ToolEntry(
         'Markdown → PDF',
-        tr('Formatierter Text aus .md-Dateien (offline)', 'Formatted text from .md files (offline)'),
+        tr(
+          'Formatierter Text aus .md-Dateien (offline)',
+          'Formatted text from .md files (offline)',
+        ),
         Icons.article_outlined,
         (_) => const MarkdownToPdfScreen(),
         accepts: {'md', 'markdown', 'txt'},
       ),
       ToolEntry(
         tr('Text aus Bild (OCR)', 'Text from image (OCR)'),
-        tr('Text aus einem Foto erkennen, kopieren oder als .txt speichern', 'Recognize text in a photo, copy it or save it as .txt'),
+        tr(
+          'Text aus einem Foto erkennen, kopieren oder als .txt speichern',
+          'Recognize text in a photo, copy it or save it as .txt',
+        ),
         Icons.text_snippet_outlined,
         (_) => const TextFromImageScreen(),
         accepts: _images,
@@ -148,7 +167,10 @@ class ToolsScreen extends StatelessWidget {
       ),
       ToolEntry(
         tr('PDF durchsuchbar machen', 'Make PDF searchable'),
-        tr('Gescannte PDF mit unsichtbarer Textebene (offline)', 'Scanned PDF with an invisible text layer (offline)'),
+        tr(
+          'Gescannte PDF mit unsichtbarer Textebene (offline)',
+          'Scanned PDF with an invisible text layer (offline)',
+        ),
         Icons.manage_search,
         (_) => const SearchablePdfScreen(),
         accepts: _pdf,
@@ -158,14 +180,20 @@ class ToolsScreen extends StatelessWidget {
     _ToolSection(tr('Bearbeiten', 'Edit'), [
       ToolEntry(
         tr('PDF ausfüllen & unterschreiben', 'Fill in & sign PDF'),
-        tr('Text, Datum, Haken und Unterschrift einfügen', 'Insert text, date, check marks and signature'),
+        tr(
+          'Text, Datum, Haken und Unterschrift einfügen',
+          'Insert text, date, check marks and signature',
+        ),
         Icons.edit_note,
         (_) => const AnnotatePdfScreen(mode: AnnotateMode.fill),
         accepts: _pdf,
       ),
       ToolEntry(
         tr('PDF markieren & zeichnen', 'Highlight & draw on PDF'),
-        tr('Mit Stift und Textmarker auf Seiten zeichnen', 'Draw on pages with pen and highlighter'),
+        tr(
+          'Mit Stift und Textmarker auf Seiten zeichnen',
+          'Draw on pages with pen and highlighter',
+        ),
         Icons.brush_outlined,
         (_) => const AnnotatePdfScreen(mode: AnnotateMode.draw),
         accepts: _pdf,
@@ -182,7 +210,8 @@ class ToolsScreen extends StatelessWidget {
         tr('Mehrere PDFs in einer Reihenfolge verbinden', 'Join several PDFs in a chosen order'),
         Icons.merge_type,
         (_) => const MergePdfScreen(),
-        accepts: _pdf, multiple: true,
+        accepts: _pdf,
+        multiple: true,
       ),
       ToolEntry(
         tr('PDF aufteilen', 'Split PDF'),
@@ -196,11 +225,15 @@ class ToolsScreen extends StatelessWidget {
         tr('Ganze Datei(en) oder einzelne Seiten', 'Whole file(s) or single pages'),
         Icons.rotate_right,
         (_) => const RotatePdfScreen(),
-        accepts: _pdf, multiple: true,
+        accepts: _pdf,
+        multiple: true,
       ),
       ToolEntry(
         tr('PDF zuschneiden', 'Crop PDF'),
-        tr('Ränder auf allen oder gewählten Seiten entfernen', 'Remove margins on all or chosen pages'),
+        tr(
+          'Ränder auf allen oder gewählten Seiten entfernen',
+          'Remove margins on all or chosen pages',
+        ),
         Icons.crop,
         (_) => const CropPdfScreen(),
         accepts: _pdf,
@@ -214,7 +247,10 @@ class ToolsScreen extends StatelessWidget {
       ),
       ToolEntry(
         tr('PDF komprimieren', 'Compress PDF'),
-        tr('Dateigröße durch geringere Qualität verkleinern', 'Reduce file size by lowering quality'),
+        tr(
+          'Dateigröße durch geringere Qualität verkleinern',
+          'Reduce file size by lowering quality',
+        ),
         Icons.compress,
         (_) => const CompressPdfScreen(),
         accepts: _pdf,
@@ -226,10 +262,7 @@ class ToolsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(tr('Werkzeuge', 'Tools')),
-        actions: const [SettingsButton()],
-      ),
+      appBar: AppBar(title: Text(tr('Werkzeuge', 'Tools')), actions: const [SettingsButton()]),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final side = centeredPadding(constraints.maxWidth, maxWidth: 1160).left;
@@ -313,14 +346,18 @@ class _ToolCard extends StatelessWidget {
                             tool.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                         if (tool.needsInternet) ...[
                           const SizedBox(width: 6),
                           Tooltip(
-                            message: tr('Braucht Internet und dein Google-Konto',
-                                'Needs internet and your Google account'),
+                            message: tr(
+                              'Braucht Internet und dein Google-Konto',
+                              'Needs internet and your Google account',
+                            ),
                             child: Icon(Icons.cloud_outlined, size: 16, color: scheme.outline),
                           ),
                         ],

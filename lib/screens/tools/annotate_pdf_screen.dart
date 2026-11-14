@@ -55,7 +55,11 @@ class _AnnotatePdfScreenState extends State<AnnotatePdfScreen> {
     if (bytes == null || name == null || _busyLabel != null) return;
     setState(() => _busyLabel = tr('Seiten werden geladen…', 'Loading pages…'));
     try {
-      final rendered = await PdfToolsService.renderPdf(bytes, dpi: 170, format: PageImageFormat.jpeg);
+      final rendered = await PdfToolsService.renderPdf(
+        bytes,
+        dpi: 170,
+        format: PageImageFormat.jpeg,
+      );
       final formats = rendered.formats;
       final pages = rendered.images;
       if (!mounted) return;
@@ -93,7 +97,13 @@ class _AnnotatePdfScreenState extends State<AnnotatePdfScreen> {
     return ToolDropZone(
       onDrop: _pickPdf,
       child: ToolScaffold(
-        appBar: AppBar(title: Text(_fill ? tr('PDF ausfüllen & unterschreiben', 'Fill in & sign PDF') : tr('PDF markieren & zeichnen', 'Highlight & draw on PDF'))),
+        appBar: AppBar(
+          title: Text(
+            _fill
+                ? tr('PDF ausfüllen & unterschreiben', 'Fill in & sign PDF')
+                : tr('PDF markieren & zeichnen', 'Highlight & draw on PDF'),
+          ),
+        ),
         body: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -102,14 +112,18 @@ class _AnnotatePdfScreenState extends State<AnnotatePdfScreen> {
             children: [
               Text(
                 _fill
-                    ? tr('Text, Datum, Haken/Kreuze und Unterschriften auf beliebigen Seiten '
-                        'platzieren - z. B. um Formulare auszufüllen. Läuft komplett offline.',
+                    ? tr(
+                        'Text, Datum, Haken/Kreuze und Unterschriften auf beliebigen Seiten '
+                            'platzieren - z. B. um Formulare auszufüllen. Läuft komplett offline.',
                         'Place text, date, check marks/crosses and signatures on any pages '
-                        '- e.g. to fill in forms. Runs completely offline.')
-                    : tr('Mit Stift und Textmarker direkt auf die Seiten zeichnen. Läuft '
-                        'komplett offline.',
+                            '- e.g. to fill in forms. Runs completely offline.',
+                      )
+                    : tr(
+                        'Mit Stift und Textmarker direkt auf die Seiten zeichnen. Läuft '
+                            'komplett offline.',
                         'Draw directly on the pages with pen and highlighter. Runs '
-                        'completely offline.'),
+                            'completely offline.',
+                      ),
                 style: TextStyle(color: Theme.of(context).colorScheme.outline),
               ),
               const SizedBox(height: 24),
@@ -120,10 +134,7 @@ class _AnnotatePdfScreenState extends State<AnnotatePdfScreen> {
                   label: Text(tr('PDF wählen', 'Choose PDF')),
                 )
               else ...[
-                SelectedFileTile(
-                  name: _fileName!,
-                  onChange: busy ? null : _pickPdf,
-                ),
+                SelectedFileTile(name: _fileName!, onChange: busy ? null : _pickPdf),
                 DeleteOriginalsSwitch(
                   label: tr('Originaldatei danach löschen', 'Delete original file afterwards'),
                   value: _deleteOriginal,
@@ -132,8 +143,13 @@ class _AnnotatePdfScreenState extends State<AnnotatePdfScreen> {
                 const SizedBox(height: 12),
                 FilledButton.icon(
                   onPressed: busy ? null : _edit,
-                  icon: BusyIcon(busy: busy, child: Icon(_fill ? Icons.edit_note : Icons.brush_outlined)),
-                  label: Text(_busyLabel ?? (_fill ? tr('Ausfüllen', 'Fill in') : tr('Zeichnen', 'Draw'))),
+                  icon: BusyIcon(
+                    busy: busy,
+                    child: Icon(_fill ? Icons.edit_note : Icons.brush_outlined),
+                  ),
+                  label: Text(
+                    _busyLabel ?? (_fill ? tr('Ausfüllen', 'Fill in') : tr('Zeichnen', 'Draw')),
+                  ),
                 ),
               ],
             ],

@@ -46,11 +46,11 @@ class RectCropOverlayState extends State<RectCropOverlay> {
 
   /// Current crop rectangle as fractions (0..1) of the image dimensions.
   ({double left, double top, double right, double bottom}) get fractionalRect => (
-        left: _topLeft.dx / widget.imageWidth,
-        top: _topLeft.dy / widget.imageHeight,
-        right: _bottomRight.dx / widget.imageWidth,
-        bottom: _bottomRight.dy / widget.imageHeight,
-      );
+    left: _topLeft.dx / widget.imageWidth,
+    top: _topLeft.dy / widget.imageHeight,
+    right: _bottomRight.dx / widget.imageWidth,
+    bottom: _bottomRight.dy / widget.imageHeight,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -81,14 +81,10 @@ class RectCropOverlayState extends State<RectCropOverlay> {
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                Positioned.fill(
-                  child: Image.memory(widget.imageBytes, fit: BoxFit.fill),
-                ),
+                Positioned.fill(child: Image.memory(widget.imageBytes, fit: BoxFit.fill)),
                 Positioned.fill(
                   child: IgnorePointer(
-                    child: CustomPaint(
-                      painter: _RectPainter(dTopLeft, dBottomRight),
-                    ),
+                    child: CustomPaint(painter: _RectPainter(dTopLeft, dBottomRight)),
                   ),
                 ),
                 _handle(
@@ -123,10 +119,7 @@ class RectCropOverlayState extends State<RectCropOverlay> {
     );
   }
 
-  Widget _handle({
-    required Offset position,
-    required ValueChanged<Offset> onDrag,
-  }) {
+  Widget _handle({required Offset position, required ValueChanged<Offset> onDrag}) {
     const size = 32.0;
     return Positioned(
       left: position.dx - size / 2,
@@ -159,11 +152,7 @@ class _RectPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final rect = Rect.fromPoints(topLeft, bottomRight);
     final full = Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
-    final cutout = Path.combine(
-      PathOperation.difference,
-      full,
-      Path()..addRect(rect),
-    );
+    final cutout = Path.combine(PathOperation.difference, full, Path()..addRect(rect));
     canvas.drawPath(cutout, Paint()..color = Colors.black.withValues(alpha: 0.45));
     canvas.drawRect(
       rect,

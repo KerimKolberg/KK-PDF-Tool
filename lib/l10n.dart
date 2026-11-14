@@ -40,11 +40,12 @@ class L10n {
   static bool get isEnglish => language.value == 'en';
 
   static String _resolve() => switch (choice) {
-        AppLanguage.de => 'de',
-        AppLanguage.en => 'en',
-        AppLanguage.automatic => _installerLanguage ??
-            (ui.PlatformDispatcher.instance.locale.languageCode == 'de' ? 'de' : 'en'),
-      };
+    AppLanguage.de => 'de',
+    AppLanguage.en => 'en',
+    AppLanguage.automatic =>
+      _installerLanguage ??
+          (ui.PlatformDispatcher.instance.locale.languageCode == 'de' ? 'de' : 'en'),
+  };
 
   /// The installer writes the chosen setup language into `language.ini`
   /// next to the exe.
@@ -52,8 +53,10 @@ class L10n {
     try {
       final file = File(p.join(p.dirname(Platform.resolvedExecutable), 'language.ini'));
       if (!await file.exists()) return null;
-      final match = RegExp(r'^\s*Language\s*=\s*(de|en)\s*$', multiLine: true)
-          .firstMatch(await file.readAsString());
+      final match = RegExp(
+        r'^\s*Language\s*=\s*(de|en)\s*$',
+        multiLine: true,
+      ).firstMatch(await file.readAsString());
       return match?.group(1);
     } catch (_) {
       return null;

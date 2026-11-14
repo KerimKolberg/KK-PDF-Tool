@@ -38,10 +38,14 @@ class DocumentBuilder {
     List<PdfPageFormat>? pageFormats,
     void Function(int done, int total)? onProgress,
   }) async {
-    final useOcr = OcrService.isOfflineAvailable &&
+    final useOcr =
+        OcrService.isOfflineAvailable &&
         (searchable ?? await SettingsService().getSearchablePdfEnabled());
     if (!useOcr) {
-      return BuiltDocument(pages: pages, pdfBytes: await PdfService.buildPdf(pages, pageFormats: pageFormats));
+      return BuiltDocument(
+        pages: pages,
+        pdfBytes: await PdfService.buildPdf(pages, pageFormats: pageFormats),
+      );
     }
 
     final normalized = <Uint8List>[];
@@ -60,7 +64,10 @@ class DocumentBuilder {
 
     final text = _joinText(results);
     if (results.every((r) => r == null)) {
-      return BuiltDocument(pages: normalized, pdfBytes: await PdfService.buildPdf(normalized, pageFormats: pageFormats));
+      return BuiltDocument(
+        pages: normalized,
+        pdfBytes: await PdfService.buildPdf(normalized, pageFormats: pageFormats),
+      );
     }
     Uint8List pdf;
     try {
@@ -90,10 +97,7 @@ class DocumentBuilder {
   }
 
   static String? _joinText(List<OcrResult?> results) {
-    final text = results
-        .map((r) => r?.text.trim() ?? '')
-        .where((t) => t.isNotEmpty)
-        .join('\n\n');
+    final text = results.map((r) => r?.text.trim() ?? '').where((t) => t.isNotEmpty).join('\n\n');
     return text.isEmpty ? null : text;
   }
 
@@ -101,10 +105,7 @@ class DocumentBuilder {
   /// the PDF from. Camera scans already store full-resolution pages; for
   /// imported PDFs and ID scans the stored page images are only preview
   /// renders, so those pages are re-rendered from the PDF at 200 dpi.
-  static Future<List<Uint8List>> loadEditablePages(
-    DocumentStore store,
-    ScanDocument doc,
-  ) async {
+  static Future<List<Uint8List>> loadEditablePages(DocumentStore store, ScanDocument doc) async {
     final files = await store.pageFiles(doc.id, doc.pageCount);
     final pages = [for (final file in files) await file.readAsBytes()];
     final previews = <int>[];

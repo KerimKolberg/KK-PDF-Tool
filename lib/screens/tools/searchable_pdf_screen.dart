@@ -63,13 +63,21 @@ class _SearchablePdfScreenState extends State<SearchablePdfScreen> {
         pageFormats: formats,
         onProgress: (done, total) {
           if (mounted) {
-            setState(() => _busyLabel = tr('Texterkennung ${done < total ? done + 1 : total}/$total…', 'Text recognition ${done < total ? done + 1 : total}/$total…'));
+            setState(
+              () => _busyLabel = tr(
+                'Texterkennung ${done < total ? done + 1 : total}/$total…',
+                'Text recognition ${done < total ? done + 1 : total}/$total…',
+              ),
+            );
           }
         },
       );
       final location = await _downloadsExport.export(built.pdfBytes, '${name}_durchsuchbar.pdf');
       var message = built.text == null
-          ? tr('Kein Text erkannt · gespeichert unter $location', 'No text recognized · saved to $location')
+          ? tr(
+              'Kein Text erkannt · gespeichert unter $location',
+              'No text recognized · saved to $location',
+            )
           : tr('Gespeichert unter $location', 'Saved to $location');
       if (_deleteOriginal) {
         message += await OriginalFilesCleanupService.deleteAndDescribe([_sourcePath]);
@@ -79,7 +87,8 @@ class _SearchablePdfScreenState extends State<SearchablePdfScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _busyLabel = null);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Fehlgeschlagen: $e', 'Failed: $e'))));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(tr('Fehlgeschlagen: $e', 'Failed: $e'))));
     }
   }
 
@@ -97,12 +106,14 @@ class _SearchablePdfScreenState extends State<SearchablePdfScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                tr('Erkennt den Text jeder Seite offline und legt ihn unsichtbar hinter '
-                'das Bild. Die PDF sieht gleich aus, lässt sich aber durchsuchen '
-                '(Strg+F) und Text kopieren.',
-                'Recognizes the text of every page offline and lays it invisibly behind '
-                'the image. The PDF looks the same, but can be searched '
-                '(Ctrl+F) and text can be copied.'),
+                tr(
+                  'Erkennt den Text jeder Seite offline und legt ihn unsichtbar hinter '
+                      'das Bild. Die PDF sieht gleich aus, lässt sich aber durchsuchen '
+                      '(Strg+F) und Text kopieren.',
+                  'Recognizes the text of every page offline and lays it invisibly behind '
+                      'the image. The PDF looks the same, but can be searched '
+                      '(Ctrl+F) and text can be copied.',
+                ),
                 style: TextStyle(color: Theme.of(context).colorScheme.outline),
               ),
               const SizedBox(height: 24),
@@ -113,10 +124,7 @@ class _SearchablePdfScreenState extends State<SearchablePdfScreen> {
                   label: Text(tr('PDF wählen', 'Choose PDF')),
                 )
               else ...[
-                SelectedFileTile(
-                  name: _fileName!,
-                  onChange: busy ? null : _pickPdf,
-                ),
+                SelectedFileTile(name: _fileName!, onChange: busy ? null : _pickPdf),
                 DeleteOriginalsSwitch(
                   label: tr('Originaldatei danach löschen', 'Delete original file afterwards'),
                   value: _deleteOriginal,

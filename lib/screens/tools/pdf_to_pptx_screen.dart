@@ -87,17 +87,18 @@ class _PdfToPptxScreenState extends State<PdfToPptxScreen> {
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline,
-                          color: Theme.of(context).colorScheme.primary),
+                      Icon(Icons.info_outline, color: Theme.of(context).colorScheme.primary),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          tr('Jede PDF-Seite wird als Bild auf eine eigene Folie '
-                          'gesetzt. Der Text ist danach nicht mehr bearbeitbar, '
-                          'nur das Bild verschieb- und skalierbar.',
-                          'Every PDF page is placed as a picture on its own slide. '
-                          'The text is no longer editable afterwards, '
-                          'only the picture can be moved and resized.'),
+                          tr(
+                            'Jede PDF-Seite wird als Bild auf eine eigene Folie '
+                                'gesetzt. Der Text ist danach nicht mehr bearbeitbar, '
+                                'nur das Bild verschieb- und skalierbar.',
+                            'Every PDF page is placed as a picture on its own slide. '
+                                'The text is no longer editable afterwards, '
+                                'only the picture can be moved and resized.',
+                          ),
                           style: const TextStyle(fontSize: 13),
                         ),
                       ),
@@ -113,10 +114,7 @@ class _PdfToPptxScreenState extends State<PdfToPptxScreen> {
                   label: Text(tr('PDF wählen', 'Choose PDF')),
                 )
               else ...[
-                SelectedFileTile(
-                  name: _fileName!,
-                  onChange: _busy ? null : _pickPdf,
-                ),
+                SelectedFileTile(name: _fileName!, onChange: _busy ? null : _pickPdf),
                 DeleteOriginalsSwitch(
                   label: tr('Originaldatei danach löschen', 'Delete original file afterwards'),
                   value: _deleteOriginal,
@@ -126,7 +124,11 @@ class _PdfToPptxScreenState extends State<PdfToPptxScreen> {
                 FilledButton.icon(
                   onPressed: _busy ? null : _convert,
                   icon: BusyIcon(busy: _busy, child: const Icon(Icons.slideshow_outlined)),
-                  label: Text(_busy ? tr('Wandle um…', 'Converting…') : tr('Als PPTX speichern', 'Save as PPTX')),
+                  label: Text(
+                    _busy
+                        ? tr('Wandle um…', 'Converting…')
+                        : tr('Als PPTX speichern', 'Save as PPTX'),
+                  ),
                 ),
               ],
             ],

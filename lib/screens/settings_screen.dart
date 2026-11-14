@@ -80,20 +80,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
   ) async {
     final progress = ValueNotifier<double?>(null);
     final navigator = Navigator.of(context, rootNavigator: true);
-    unawaited(showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => PopScope(
-        canPop: false,
-        child: AlertDialog(
-          title: Text(title),
-          content: ValueListenableBuilder<double?>(
-            valueListenable: progress,
-            builder: (_, value, _) => LinearProgressIndicator(value: value),
+    unawaited(
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => PopScope(
+          canPop: false,
+          child: AlertDialog(
+            title: Text(title),
+            content: ValueListenableBuilder<double?>(
+              valueListenable: progress,
+              builder: (_, value, _) => LinearProgressIndicator(value: value),
+            ),
           ),
         ),
       ),
-    ));
+    );
     try {
       await task((v) => progress.value = v);
     } finally {
@@ -131,14 +133,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (context) => AlertDialog(
         title: Text(tr('Sicherung erstellt', 'Backup created')),
         content: Text(
-          tr('${done.documents} ${done.documents == 1 ? 'Dokument' : 'Dokumente'} '
-          '(${formatFileSize(done.bytes)})\n\nGespeichert unter:\n$location\n\n'
-          'Tipp: Lege die Datei zusätzlich woanders ab (z. B. Google Drive), '
-          'damit sie auch bei Verlust des Geräts erhalten bleibt.',
-          '${done.documents} ${done.documents == 1 ? 'document' : 'documents'} '
-          '(${formatFileSize(done.bytes)})\n\nSaved to:\n$location\n\n'
-          'Tip: also keep a copy somewhere else (e.g. Google Drive), '
-          'so it survives losing the device.'),
+          tr(
+            '${done.documents} ${done.documents == 1 ? 'Dokument' : 'Dokumente'} '
+                '(${formatFileSize(done.bytes)})\n\nGespeichert unter:\n$location\n\n'
+                'Tipp: Lege die Datei zusätzlich woanders ab (z. B. Google Drive), '
+                'damit sie auch bei Verlust des Geräts erhalten bleibt.',
+            '${done.documents} ${done.documents == 1 ? 'document' : 'documents'} '
+                '(${formatFileSize(done.bytes)})\n\nSaved to:\n$location\n\n'
+                'Tip: also keep a copy somewhere else (e.g. Google Drive), '
+                'so it survives losing the device.',
+          ),
         ),
         actions: [
           TextButton.icon(
@@ -184,16 +188,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(tr('Wiederhergestellt', 'Restored')),
-        content: Text([
-          tr('${done.added} ${done.added == 1 ? 'Dokument' : 'Dokumente'} hinzugefügt', '${done.added} ${done.added == 1 ? 'document' : 'documents'} added'),
-          if (done.skipped > 0) tr('${done.skipped} waren schon vorhanden (unverändert)', '${done.skipped} already existed (unchanged)'),
-          if (done.folders > 0) tr('${done.folders} Ordner hinzugefügt', '${done.folders} folder(s) added'),
-          if (done.signatures > 0)
-            tr('${done.signatures} ${done.signatures == 1 ? 'Unterschrift' : 'Unterschriften'} hinzugefügt', '${done.signatures} ${done.signatures == 1 ? 'signature' : 'signatures'} added'),
-        ].join('\n')),
-        actions: [
-          FilledButton(onPressed: () => Navigator.pop(context), child: const Text('OK')),
-        ],
+        content: Text(
+          [
+            tr(
+              '${done.added} ${done.added == 1 ? 'Dokument' : 'Dokumente'} hinzugefügt',
+              '${done.added} ${done.added == 1 ? 'document' : 'documents'} added',
+            ),
+            if (done.skipped > 0)
+              tr(
+                '${done.skipped} waren schon vorhanden (unverändert)',
+                '${done.skipped} already existed (unchanged)',
+              ),
+            if (done.folders > 0)
+              tr('${done.folders} Ordner hinzugefügt', '${done.folders} folder(s) added'),
+            if (done.signatures > 0)
+              tr(
+                '${done.signatures} ${done.signatures == 1 ? 'Unterschrift' : 'Unterschriften'} hinzugefügt',
+                '${done.signatures} ${done.signatures == 1 ? 'signature' : 'signatures'} added',
+              ),
+          ].join('\n'),
+        ),
+        actions: [FilledButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
       ),
     );
   }
@@ -238,7 +253,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         SettingsTile(
           icon: Icons.palette_outlined,
           title: tr('Farbschema', 'Theme'),
-          subtitle: tr('Hell, dunkel oder wie im System eingestellt', 'Light, dark or as set in the system'),
+          subtitle: tr(
+            'Hell, dunkel oder wie im System eingestellt',
+            'Light, dark or as set in the system',
+          ),
           trailing: ValueListenableBuilder<ThemeMode>(
             valueListenable: SettingsService.themeMode,
             builder: (context, mode, _) => SegmentedButton<ThemeMode>(
@@ -258,12 +276,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // Always bilingual, so it can be found in either language.
           title: 'Sprache / Language',
           subtitle: AppPlatform.isWindows
-              ? tr('Automatisch: wie bei der Installation gewählt', 'Automatic: as chosen during installation')
+              ? tr(
+                  'Automatisch: wie bei der Installation gewählt',
+                  'Automatic: as chosen during installation',
+                )
               : tr('Automatisch: wie die Gerätesprache', 'Automatic: same as the device language'),
           trailing: SegmentedButton<AppLanguage>(
             showSelectedIcon: false,
             segments: [
-              ButtonSegment(value: AppLanguage.automatic, label: Text(tr('Automatisch', 'Automatic'))),
+              ButtonSegment(
+                value: AppLanguage.automatic,
+                label: Text(tr('Automatisch', 'Automatic')),
+              ),
               const ButtonSegment(value: AppLanguage.de, label: Text('Deutsch')),
               const ButtonSegment(value: AppLanguage.en, label: Text('English')),
             ],
@@ -282,7 +306,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         SettingsTile(
           icon: Icons.power_settings_new,
           title: tr('Mit Windows starten', 'Start with Windows'),
-          subtitle: tr('KK-PDF-Tool startet automatisch beim Anmelden', 'KK-PDF-Tool starts automatically when you sign in'),
+          subtitle: tr(
+            'KK-PDF-Tool startet automatisch beim Anmelden',
+            'KK-PDF-Tool starts automatically when you sign in',
+          ),
           trailing: Switch(
             value: _autostart,
             onChanged: (value) async {
@@ -361,10 +388,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
           icon: Icons.folder_outlined,
           title: tr('Speicherort', 'Storage location'),
           subtitle: AppPlatform.isAndroid
-              ? tr('Fertige PDFs landen zusätzlich in Downloads/KK-PDF-Tool',
-                  'Finished PDFs are also saved to Downloads/KK-PDF-Tool')
-              : tr('Fertige Dateien landen zusätzlich in Downloads\\KK-PDF-Tool',
-                  'Finished files are also saved to Downloads\\KK-PDF-Tool'),
+              ? tr(
+                  'Fertige PDFs landen zusätzlich in Downloads/KK-PDF-Tool',
+                  'Finished PDFs are also saved to Downloads/KK-PDF-Tool',
+                )
+              : tr(
+                  'Fertige Dateien landen zusätzlich in Downloads\\KK-PDF-Tool',
+                  'Finished files are also saved to Downloads\\KK-PDF-Tool',
+                ),
           trailing: AppPlatform.isWindows
               ? OutlinedButton.icon(
                   onPressed: _openExportFolder,
@@ -403,14 +434,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _googleSection() {
     final windows = AppPlatform.isWindows;
-    final configured = (AppPrefs.getString(SettingsService.googleDesktopClientIdKey) ?? '').isNotEmpty &&
+    final configured =
+        (AppPrefs.getString(SettingsService.googleDesktopClientIdKey) ?? '').isNotEmpty &&
         (AppPrefs.getString(SettingsService.googleDesktopClientSecretKey) ?? '').isNotEmpty;
     final saveButton = Align(
       alignment: Alignment.centerRight,
-      child: FilledButton(
-        onPressed: _saveGoogleSettings,
-        child: Text(tr('Speichern', 'Save')),
-      ),
+      child: FilledButton(onPressed: _saveGoogleSettings, child: Text(tr('Speichern', 'Save'))),
     );
     return SettingsSection(
       title: tr('Google-Verbindung', 'Google connection'),
@@ -441,8 +470,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   label: !configured
                       ? tr('Nicht eingerichtet', 'Not set up')
                       : GoogleDesktopAuth.isSignedIn
-                          ? tr('Angemeldet', 'Signed in')
-                          : tr('Nicht angemeldet', 'Not signed in'),
+                      ? tr('Angemeldet', 'Signed in')
+                      : tr('Nicht angemeldet', 'Not signed in'),
                 )
               : null,
         ),
@@ -475,7 +504,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     if (GoogleDesktopAuth.isSignedIn) ...[
-                      TextButton(onPressed: _googleSignOut, child: Text(tr('Abmelden', 'Sign out'))),
+                      TextButton(
+                        onPressed: _googleSignOut,
+                        child: Text(tr('Abmelden', 'Sign out')),
+                      ),
                       const SizedBox(width: 8),
                     ],
                     FilledButton(
@@ -494,10 +526,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: ExpansionTile(
               leading: const Icon(Icons.tune),
               title: Text(tr('Eigene Client-ID (erweitert)', 'Custom client ID (advanced)')),
-              subtitle: Text(tr(
-                'Nur nötig für ein eigenes Google-Cloud-Projekt (siehe README)',
-                'Only needed for your own Google Cloud project (see README)',
-              )),
+              subtitle: Text(
+                tr(
+                  'Nur nötig für ein eigenes Google-Cloud-Projekt (siehe README)',
+                  'Only needed for your own Google Cloud project (see README)',
+                ),
+              ),
               childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               children: [
                 TextField(
@@ -524,8 +558,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ? const Center(child: CircularProgressIndicator())
           : LayoutBuilder(
               builder: (context, constraints) => ListView(
-                padding: centeredPadding(constraints.maxWidth, maxWidth: 760, vertical: 8)
-                    .copyWith(bottom: 32),
+                padding: centeredPadding(
+                  constraints.maxWidth,
+                  maxWidth: 760,
+                  vertical: 8,
+                ).copyWith(bottom: 32),
                 children: [
                   _appearanceSection(),
                   if (AppPlatform.isWindows) _windowsSection(),

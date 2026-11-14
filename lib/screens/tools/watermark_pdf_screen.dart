@@ -26,8 +26,9 @@ class WatermarkPdfScreen extends StatefulWidget {
 
 class _WatermarkPdfScreenState extends State<WatermarkPdfScreen> {
   final _downloadsExport = DownloadsExportService();
-  final _textController =
-      TextEditingController(text: AppPrefs.getString('watermark.text') ?? tr('ENTWURF', 'DRAFT'));
+  final _textController = TextEditingController(
+    text: AppPrefs.getString('watermark.text') ?? tr('ENTWURF', 'DRAFT'),
+  );
   String? _fileName;
   String? _sourcePath;
   Uint8List? _pdfBytes;
@@ -56,13 +57,8 @@ class _WatermarkPdfScreenState extends State<WatermarkPdfScreen> {
     if (bytes == null || name == null || text.isEmpty || _busy) return;
     setState(() => _busy = true);
     try {
-      final result = await PdfToolsService.addWatermark(
-        bytes,
-        text: text,
-        opacity: _opacity,
-      );
-      final location =
-          await _downloadsExport.export(result, '${name}_wasserzeichen.pdf');
+      final result = await PdfToolsService.addWatermark(bytes, text: text, opacity: _opacity);
+      final location = await _downloadsExport.export(result, '${name}_wasserzeichen.pdf');
       var message = tr('Gespeichert unter $location', 'Saved to $location');
       if (_deleteOriginal) {
         message += await OriginalFilesCleanupService.deleteAndDescribe([_sourcePath]);
@@ -72,9 +68,8 @@ class _WatermarkPdfScreenState extends State<WatermarkPdfScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _busy = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(tr('Fehlgeschlagen: $e', 'Failed: $e'))),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(tr('Fehlgeschlagen: $e', 'Failed: $e'))));
     }
   }
 
@@ -103,10 +98,7 @@ class _WatermarkPdfScreenState extends State<WatermarkPdfScreen> {
                   label: Text(tr('PDF wählen', 'Choose PDF')),
                 )
               else ...[
-                SelectedFileTile(
-                  name: _fileName!,
-                  onChange: _busy ? null : _pickPdf,
-                ),
+                SelectedFileTile(name: _fileName!, onChange: _busy ? null : _pickPdf),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _textController,
@@ -116,7 +108,12 @@ class _WatermarkPdfScreenState extends State<WatermarkPdfScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Text(tr('Deckkraft: ${(_opacity * 100).round()}%', 'Opacity: ${(_opacity * 100).round()}%')),
+                Text(
+                  tr(
+                    'Deckkraft: ${(_opacity * 100).round()}%',
+                    'Opacity: ${(_opacity * 100).round()}%',
+                  ),
+                ),
                 Slider(
                   value: _opacity,
                   min: 0.1,
@@ -132,7 +129,11 @@ class _WatermarkPdfScreenState extends State<WatermarkPdfScreen> {
                 FilledButton.icon(
                   onPressed: _busy ? null : _apply,
                   icon: BusyIcon(busy: _busy, child: const Icon(Icons.water_drop_outlined)),
-                  label: Text(_busy ? tr('Wende an…', 'Applying…') : tr('Wasserzeichen einfügen', 'Add watermark')),
+                  label: Text(
+                    _busy
+                        ? tr('Wende an…', 'Applying…')
+                        : tr('Wasserzeichen einfügen', 'Add watermark'),
+                  ),
                 ),
               ],
             ],

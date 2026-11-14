@@ -21,11 +21,7 @@ class DocumentViewerScreen extends StatefulWidget {
   final DocumentStore store;
   final ScanDocument document;
 
-  const DocumentViewerScreen({
-    super.key,
-    required this.store,
-    required this.document,
-  });
+  const DocumentViewerScreen({super.key, required this.store, required this.document});
 
   @override
   State<DocumentViewerScreen> createState() => _DocumentViewerScreenState();
@@ -100,7 +96,12 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(tr('Dokument löschen?', 'Delete document?')),
-        content: Text(tr('"${_doc.title}" wird unwiderruflich gelöscht.', '"${_doc.title}" will be deleted permanently.')),
+        content: Text(
+          tr(
+            '"${_doc.title}" wird unwiderruflich gelöscht.',
+            '"${_doc.title}" will be deleted permanently.',
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -127,9 +128,8 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
       return await action();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(tr('Fehlgeschlagen: $e', 'Failed: $e'))),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(tr('Fehlgeschlagen: $e', 'Failed: $e'))));
       }
       return null;
     } finally {
@@ -138,7 +138,9 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
   }
 
   void _progress(String label, int done, int total) {
-    if (mounted) setState(() => _busyMessage = '$label ${done + 1 > total ? total : done + 1}/$total…');
+    if (mounted) {
+      setState(() => _busyMessage = '$label ${done + 1 > total ? total : done + 1}/$total…');
+    }
   }
 
   Future<void> _editPages() async {
@@ -147,9 +149,8 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
       () => DocumentBuilder.loadEditablePages(widget.store, _doc),
     );
     if (pages == null || !mounted) return;
-    final edited = await Navigator.of(context).push<List<Uint8List>>(
-      MaterialPageRoute(builder: (_) => EditPagesScreen(pages: pages)),
-    );
+    final edited = await Navigator.of(context)
+        .push<List<Uint8List>>(MaterialPageRoute(builder: (_) => EditPagesScreen(pages: pages)));
     if (edited == null || !mounted) return;
     await _replacePages(edited);
   }
@@ -161,7 +162,9 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
     );
     if (pages == null || !mounted) return;
     final edited = await Navigator.of(context).push<List<Uint8List>>(
-      MaterialPageRoute(builder: (_) => AnnotatePagesScreen(pages: pages, initialMode: mode)),
+      MaterialPageRoute(
+        builder: (_) => AnnotatePagesScreen(pages: pages, initialMode: mode),
+      ),
     );
     if (edited == null || !mounted) return;
     await _replacePages(edited);
@@ -171,7 +174,8 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
     final updated = await _withBusy(tr('Speichere…', 'Saving…'), () async {
       final built = await DocumentBuilder.build(
         pages,
-        onProgress: (done, total) => _progress(tr('Texterkennung', 'Text recognition'), done, total),
+        onProgress: (done, total) =>
+            _progress(tr('Texterkennung', 'Text recognition'), done, total),
       );
       final previousText = built.text == null ? await widget.store.readText(_doc.id) : null;
       return widget.store.replaceContent(
@@ -203,7 +207,8 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
           final pages = await DocumentBuilder.loadEditablePages(widget.store, _doc);
           result = await DocumentBuilder.recognizeText(
             pages,
-            onProgress: (done, total) => _progress(tr('Texterkennung', 'Text recognition'), done, total),
+            onProgress: (done, total) =>
+                _progress(tr('Texterkennung', 'Text recognition'), done, total),
           );
         } else {
           final pdf = await File(_pdfPath!).readAsBytes();
@@ -216,7 +221,9 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
     }
     if (!mounted) return;
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => TextResultScreen(title: _doc.title, text: text!)),
+      MaterialPageRoute(
+        builder: (_) => TextResultScreen(title: _doc.title, text: text!),
+      ),
     );
   }
 
@@ -228,9 +235,11 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
     setState(() => _doc = _doc.copyWith(folder: choice.folder));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(choice.folder == null
-            ? tr('Aus dem Ordner entfernt', 'Removed from folder')
-            : tr('Verschoben nach "${choice.folder}"', 'Moved to "${choice.folder}"')),
+        content: Text(
+          choice.folder == null
+              ? tr('Aus dem Ordner entfernt', 'Removed from folder')
+              : tr('Verschoben nach "${choice.folder}"', 'Moved to "${choice.folder}"'),
+        ),
       ),
     );
   }
@@ -377,31 +386,48 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
   Widget _buildHeader(bool busy) {
     final theme = Theme.of(context);
     final info = [
-      tr('${_pages.length} ${_pages.length == 1 ? 'Seite' : 'Seiten'}',
-          '${_pages.length} ${_pages.length == 1 ? 'page' : 'pages'}'),
+      tr(
+        '${_pages.length} ${_pages.length == 1 ? 'Seite' : 'Seiten'}',
+        '${_pages.length} ${_pages.length == 1 ? 'page' : 'pages'}',
+      ),
       ?_doc.folder,
     ].join(' · ');
     Widget action(IconData icon, String label, VoidCallback onPressed) => Padding(
-          padding: const EdgeInsets.only(right: 8),
-          child: ActionChip(
-            avatar: Icon(icon, size: 18),
-            label: Text(label),
-            onPressed: busy ? null : onPressed,
-          ),
-        );
+      padding: const EdgeInsets.only(right: 8),
+      child: ActionChip(
+        avatar: Icon(icon, size: 18),
+        label: Text(label),
+        onPressed: busy ? null : onPressed,
+      ),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(info, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        Text(
+          info,
+          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+        ),
         const SizedBox(height: 10),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
               action(Icons.view_agenda_outlined, tr('Seiten bearbeiten', 'Edit pages'), _editPages),
-              action(Icons.edit_note, tr('Ausfüllen & unterschreiben', 'Fill in & sign'), () => _annotate(AnnotateMode.fill)),
-              action(Icons.brush_outlined, tr('Zeichnen', 'Draw'), () => _annotate(AnnotateMode.draw)),
-              action(Icons.text_snippet_outlined, tr('Text erkennen', 'Recognize text'), _recognizeText),
+              action(
+                Icons.edit_note,
+                tr('Ausfüllen & unterschreiben', 'Fill in & sign'),
+                () => _annotate(AnnotateMode.fill),
+              ),
+              action(
+                Icons.brush_outlined,
+                tr('Zeichnen', 'Draw'),
+                () => _annotate(AnnotateMode.draw),
+              ),
+              action(
+                Icons.text_snippet_outlined,
+                tr('Text erkennen', 'Recognize text'),
+                _recognizeText,
+              ),
               action(Icons.drive_file_move_outlined, tr('Verschieben', 'Move'), _moveToFolder),
             ],
           ),
@@ -449,7 +475,11 @@ class _PageThumbnail extends StatelessWidget {
                 ),
                 child: Text(
                   '$number',
-                  style: TextStyle(color: scheme.onInverseSurface, fontSize: 12, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    color: scheme.onInverseSurface,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),

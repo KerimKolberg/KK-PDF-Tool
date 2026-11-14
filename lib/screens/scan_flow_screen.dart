@@ -24,12 +24,7 @@ class ScanFlowScreen extends StatefulWidget {
   /// Pages to start with (e.g. already captured elsewhere).
   final List<Uint8List> initialPages;
 
-  const ScanFlowScreen({
-    super.key,
-    required this.store,
-    this.folder,
-    this.initialPages = const [],
-  });
+  const ScanFlowScreen({super.key, required this.store, this.folder, this.initialPages = const []});
 
   @override
   State<ScanFlowScreen> createState() => _ScanFlowScreenState();
@@ -64,14 +59,12 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
   }
 
   Future<void> _addPage() async {
-    final raw = await Navigator.of(
-      context,
-    ).push<Uint8List>(MaterialPageRoute(builder: (_) => const CaptureScreen()));
+    final raw = await Navigator.of(context)
+        .push<Uint8List>(MaterialPageRoute(builder: (_) => const CaptureScreen()));
     if (raw == null || !mounted) return;
     final processed = await Navigator.of(context).push<Uint8List>(
       MaterialPageRoute(
-        builder: (_) =>
-            CropScreen(initialBytes: raw, initialCropEnabled: _cropEnabled),
+        builder: (_) => CropScreen(initialBytes: raw, initialCropEnabled: _cropEnabled),
       ),
     );
     if (processed == null || !mounted) return;
@@ -92,9 +85,7 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
         if (mounted) setState(() => _autoScanning = false);
         return;
       }
-      final newPages = await Future.wait(
-        paths.map((path) => File(path).readAsBytes()),
-      );
+      final newPages = await Future.wait(paths.map((path) => File(path).readAsBytes()));
       if (!mounted) return;
       setState(() {
         _pages.addAll(newPages);
@@ -104,7 +95,9 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
       if (!mounted) return;
       setState(() => _autoScanning = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(tr('Automatischer Scan fehlgeschlagen: $e', 'Automatic scan failed: $e'))),
+        SnackBar(
+          content: Text(tr('Automatischer Scan fehlgeschlagen: $e', 'Automatic scan failed: $e')),
+        ),
       );
     }
   }
@@ -115,8 +108,7 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
     if (_saving) return;
     final edited = await Navigator.of(context).push<Uint8List>(
       MaterialPageRoute(
-        builder: (_) =>
-            CropScreen(initialBytes: _pages[index], initialCropEnabled: false),
+        builder: (_) => CropScreen(initialBytes: _pages[index], initialCropEnabled: false),
       ),
     );
     if (edited == null || !mounted) return;
@@ -133,7 +125,12 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(tr('Scan verwerfen?', 'Discard scan?')),
-        content: Text(tr('${_pages.length} erfasste Seite(n) gehen verloren.', '${_pages.length} captured page(s) will be lost.')),
+        content: Text(
+          tr(
+            '${_pages.length} erfasste Seite(n) gehen verloren.',
+            '${_pages.length} captured page(s) will be lost.',
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -162,8 +159,10 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
         onProgress: (done, total) {
           if (mounted) {
             setState(
-              () => _savingLabel =
-                  tr('Text ${done < total ? done + 1 : total}/$total…', 'Text ${done < total ? done + 1 : total}/$total…'),
+              () => _savingLabel = tr(
+                'Text ${done < total ? done + 1 : total}/$total…',
+                'Text ${done < total ? done + 1 : total}/$total…',
+              ),
             );
           }
         },
@@ -187,17 +186,17 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
       }
       if (!mounted) return;
       if (location != null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(tr('Gespeichert unter $location', 'Saved to $location'))));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(tr('Gespeichert unter $location', 'Saved to $location'))),
+        );
       }
       Navigator.of(context).pop<ScanDocument>(doc);
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(tr('Speichern fehlgeschlagen: $e', 'Saving failed: $e'))));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr('Speichern fehlgeschlagen: $e', 'Saving failed: $e'))),
+      );
     }
   }
 
@@ -235,10 +234,12 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            tr('$total Dokumente gespeichert'
-            '${widget.folder != null ? ' in "${widget.folder}"' : ''}',
-            '$total documents saved'
-            '${widget.folder != null ? ' in "${widget.folder}"' : ''}'),
+            tr(
+              '$total Dokumente gespeichert'
+                  '${widget.folder != null ? ' in "${widget.folder}"' : ''}',
+              '$total documents saved'
+                  '${widget.folder != null ? ' in "${widget.folder}"' : ''}',
+            ),
           ),
         ),
       );
@@ -251,21 +252,32 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
         _savingLabel = null;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(tr('Fehler nach $saved von $total Dokumenten: $e', 'Error after $saved of $total documents: $e'))),
+        SnackBar(
+          content: Text(
+            tr(
+              'Fehler nach $saved von $total Dokumenten: $e',
+              'Error after $saved of $total documents: $e',
+            ),
+          ),
+        ),
       );
     }
   }
 
   Future<String?> _askTitle({bool batch = false}) async {
     final now = DateTime.now();
-    final defaultTitle =
-        tr('Scan ${now.day}.${now.month}.${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}', 'Scan ${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}');
+    final defaultTitle = tr(
+      'Scan ${now.day}.${now.month}.${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
+      'Scan ${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
+    );
     final controller = TextEditingController(text: defaultTitle);
     return showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-          batch ? tr('${_pages.length} Dokumente speichern', 'Save ${_pages.length} documents') : tr('Dokument speichern', 'Save document'),
+          batch
+              ? tr('${_pages.length} Dokumente speichern', 'Save ${_pages.length} documents')
+              : tr('Dokument speichern', 'Save document'),
         ),
         content: TextField(
           controller: controller,
@@ -273,7 +285,10 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
           decoration: InputDecoration(
             labelText: tr('Titel', 'Title'),
             helperText: batch
-                ? tr('Wird nummeriert: "Titel 1", "Titel 2", …', 'Numbered as "Title 1", "Title 2", …')
+                ? tr(
+                    'Wird nummeriert: "Titel 1", "Titel 2", …',
+                    'Numbered as "Title 1", "Title 2", …',
+                  )
                 : null,
           ),
         ),
@@ -313,11 +328,12 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
             children: [
               Text(tr('Neuer Scan', 'New scan')),
               Text(
-                tr('${_pages.length} ${_pages.length == 1 ? 'Seite' : 'Seiten'}',
-                    '${_pages.length} ${_pages.length == 1 ? 'page' : 'pages'}'),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                tr(
+                  '${_pages.length} ${_pages.length == 1 ? 'Seite' : 'Seiten'}',
+                  '${_pages.length} ${_pages.length == 1 ? 'page' : 'pages'}',
+                ),
+                style: Theme.of(context).textTheme.bodySmall
+                    ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ],
           ),
@@ -327,10 +343,7 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
               child: Row(
                 children: [
                   Text(tr('Zuschnitt', 'Crop'), style: const TextStyle(fontSize: 13)),
-                  Switch(
-                    value: _cropEnabled,
-                    onChanged: (v) => setState(() => _cropEnabled = v),
-                  ),
+                  Switch(value: _cropEnabled, onChanged: (v) => setState(() => _cropEnabled = v)),
                 ],
               ),
             ),
@@ -345,7 +358,10 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
                 secondary: const Icon(Icons.burst_mode_outlined),
                 title: Text(tr('Stapel-Modus', 'Batch mode')),
                 subtitle: Text(
-                  tr('Jede Seite als eigenes Dokument speichern (z. B. Belege)', 'Save each page as its own document (e.g. receipts)'),
+                  tr(
+                    'Jede Seite als eigenes Dokument speichern (z. B. Belege)',
+                    'Save each page as its own document (e.g. receipts)',
+                  ),
                 ),
                 value: _batch,
                 onChanged: _saving
@@ -378,7 +394,9 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
                   child: OutlinedButton.icon(
                     onPressed: _saving ? null : _addPage,
                     icon: const Icon(Icons.add_a_photo),
-                    label: Text(_hasAutoScan ? tr('Manuell', 'Manual') : tr('Seite hinzufügen', 'Add page')),
+                    label: Text(
+                      _hasAutoScan ? tr('Manuell', 'Manual') : tr('Seite hinzufügen', 'Add page'),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -389,14 +407,13 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
                         ? const SizedBox(
                             width: 18,
                             height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                           )
                         : const Icon(Icons.save),
                     label: Text(
-                      _saving ? (_savingLabel ?? tr('Speichere…', 'Saving…')) : tr('Speichern', 'Save'),
+                      _saving
+                          ? (_savingLabel ?? tr('Speichere…', 'Saving…'))
+                          : tr('Speichern', 'Save'),
                     ),
                   ),
                 ),
@@ -418,12 +435,13 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
                 children: [
                   Text(
                     _hasAutoScan
-                        ? tr('Automatisch scannen erkennt das Dokument\nund den Zuschnitt direkt beim Fotografieren.', 'Automatic scanning detects the document\nand the crop right while taking the photo.')
+                        ? tr(
+                            'Automatisch scannen erkennt das Dokument\nund den Zuschnitt direkt beim Fotografieren.',
+                            'Automatic scanning detects the document\nand the crop right while taking the photo.',
+                          )
                         : tr('Noch keine Seite erfasst.', 'No page captured yet.'),
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.outline,
-                    ),
+                    style: TextStyle(color: Theme.of(context).colorScheme.outline),
                   ),
                   if (_hasAutoScan) ...[
                     const SizedBox(height: 20),
@@ -433,14 +451,13 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
                           ? const SizedBox(
                               width: 18,
                               height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                             )
                           : const Icon(Icons.document_scanner),
                       label: Text(
-                        _autoScanning ? tr('Scanne…', 'Scanning…') : tr('Automatisch scannen', 'Scan automatically'),
+                        _autoScanning
+                            ? tr('Scanne…', 'Scanning…')
+                            : tr('Automatisch scannen', 'Scan automatically'),
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -470,11 +487,7 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
                   onTap: () => _editPage(i),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: Image.memory(
-                      _pages[i],
-                      fit: BoxFit.cover,
-                      gaplessPlayback: true,
-                    ),
+                    child: Image.memory(_pages[i], fit: BoxFit.cover, gaplessPlayback: true),
                   ),
                 ),
                 Positioned(
@@ -505,10 +518,7 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
                   left: 4,
                   bottom: 4,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: Colors.black54,
                       borderRadius: BorderRadius.circular(4),

@@ -16,8 +16,7 @@ import 'settings_service.dart';
 /// conversion - it does need the internet and the user's own Google account.
 class GoogleDriveConvertService {
   static const _scopes = ['https://www.googleapis.com/auth/drive.file'];
-  static const _uploadUrl =
-      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+  static const _uploadUrl = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
   static const _filesUrl = 'https://www.googleapis.com/drive/v3/files';
   static const _timeout = Duration(seconds: 60);
   static const _uploadTimeout = Duration(minutes: 5);
@@ -65,7 +64,7 @@ class GoogleDriveConvertService {
 
     final authorization =
         await account.authorizationClient.authorizationForScopes(_scopes) ??
-            await account.authorizationClient.authorizeScopes(_scopes);
+        await account.authorizationClient.authorizeScopes(_scopes);
     _accessToken = authorization.accessToken;
   }
 
@@ -96,18 +95,20 @@ class GoogleDriveConvertService {
     body.add(bytes);
     writeString('\r\n--$boundary--');
 
-    final response = await http.post(
-      Uri.parse(_uploadUrl),
-      headers: {
-        ..._authHeader,
-        'Content-Type': 'multipart/related; boundary=$boundary',
-      },
-      body: body.toBytes(),
-    ).timeout(_uploadTimeout);
+    final response = await http
+        .post(
+          Uri.parse(_uploadUrl),
+          headers: {..._authHeader, 'Content-Type': 'multipart/related; boundary=$boundary'},
+          body: body.toBytes(),
+        )
+        .timeout(_uploadTimeout);
     if (response.statusCode == 401) GoogleDesktopAuth.invalidate();
     if (response.statusCode != 200) {
       throw GoogleDriveApiException(
-        tr('Hochladen fehlgeschlagen (${response.statusCode}): ${response.body}', 'Upload failed (${response.statusCode}): ${response.body}'),
+        tr(
+          'Hochladen fehlgeschlagen (${response.statusCode}): ${response.body}',
+          'Upload failed (${response.statusCode}): ${response.body}',
+        ),
       );
     }
     return (jsonDecode(response.body) as Map<String, dynamic>)['id'] as String;
@@ -115,13 +116,18 @@ class GoogleDriveConvertService {
 
   Future<Uint8List> _exportAndDelete(String fileId, String exportMimeType) async {
     try {
-      final response = await http.get(
-        Uri.parse('$_filesUrl/$fileId/export?mimeType=${Uri.encodeComponent(exportMimeType)}'),
-        headers: _authHeader,
-      ).timeout(_timeout);
+      final response = await http
+          .get(
+            Uri.parse('$_filesUrl/$fileId/export?mimeType=${Uri.encodeComponent(exportMimeType)}'),
+            headers: _authHeader,
+          )
+          .timeout(_timeout);
       if (response.statusCode != 200) {
         throw GoogleDriveApiException(
-          tr('Export fehlgeschlagen (${response.statusCode}): ${response.body}', 'Export failed (${response.statusCode}): ${response.body}'),
+          tr(
+            'Export fehlgeschlagen (${response.statusCode}): ${response.body}',
+            'Export failed (${response.statusCode}): ${response.body}',
+          ),
         );
       }
       return response.bodyBytes;
@@ -139,8 +145,7 @@ class GoogleDriveConvertService {
     final fileId = await _uploadAndConvert(
       bytes: pptxBytes,
       fileName: fileName,
-      sourceMimeType:
-          'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      sourceMimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
       targetGoogleMimeType: 'application/vnd.google-apps.presentation',
     );
     return _exportAndDelete(fileId, 'application/pdf');
@@ -168,8 +173,7 @@ class GoogleDriveConvertService {
     final fileId = await _uploadAndConvert(
       bytes: docxBytes,
       fileName: fileName,
-      sourceMimeType:
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      sourceMimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       targetGoogleMimeType: 'application/vnd.google-apps.document',
     );
     return _exportAndDelete(fileId, 'application/pdf');
@@ -232,16 +236,20 @@ class GoogleDriveNotConfiguredException implements Exception {
   const GoogleDriveNotConfiguredException({this.windows = false});
   @override
   String toString() => windows
-      ? tr('Google-Verbindung für Windows ist noch nicht eingerichtet. Bitte in den '
-          'Einstellungen Client-ID und Client-Secret der Desktop-App hinterlegen '
-          '(siehe README).',
+      ? tr(
+          'Google-Verbindung für Windows ist noch nicht eingerichtet. Bitte in den '
+              'Einstellungen Client-ID und Client-Secret der Desktop-App hinterlegen '
+              '(siehe README).',
           'The Google connection for Windows is not set up yet. Please enter the '
-          'client ID and client secret of the desktop app in Settings '
-          '(see README).')
-      : tr('Google-Verbindung ist nicht eingerichtet. Bitte in den Einstellungen die '
-          'Google-Client-ID hinterlegen.',
+              'client ID and client secret of the desktop app in Settings '
+              '(see README).',
+        )
+      : tr(
+          'Google-Verbindung ist nicht eingerichtet. Bitte in den Einstellungen die '
+              'Google-Client-ID hinterlegen.',
           'The Google connection is not set up. Please enter the '
-          'Google client ID in Settings.');
+              'Google client ID in Settings.',
+        );
 }
 
 class GoogleDriveApiException implements Exception {

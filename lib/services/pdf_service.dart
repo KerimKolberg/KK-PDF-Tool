@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+
 import '../l10n.dart';
 
 class PdfService {
@@ -20,9 +21,7 @@ class PdfService {
         pw.Page(
           pageFormat: formatAt(pageFormats, i),
           margin: pw.EdgeInsets.zero,
-          build: (context) => pw.Center(
-            child: pw.Image(image, fit: pw.BoxFit.contain),
-          ),
+          build: (context) => pw.Center(child: pw.Image(image, fit: pw.BoxFit.contain)),
         ),
       );
     }
@@ -36,10 +35,7 @@ class PdfService {
   /// Builds a single-page PDF with the front and back of an ID card/document
   /// stacked on one A4 sheet - the layout most offices/authorities expect
   /// for a "copy of both sides" instead of two separate pages.
-  static Future<Uint8List> buildIdCardPdf(
-    Uint8List frontJpeg,
-    Uint8List backJpeg,
-  ) async {
+  static Future<Uint8List> buildIdCardPdf(Uint8List frontJpeg, Uint8List backJpeg) async {
     const margin = 28.0;
     const headerHeight = 20.0;
     const gap = 24.0;
@@ -65,9 +61,7 @@ class PdfService {
               borderRadius: pw.BorderRadius.circular(6),
             ),
             padding: const pw.EdgeInsets.all(6),
-            child: pw.Center(
-              child: pw.Image(pw.MemoryImage(jpeg), fit: pw.BoxFit.contain),
-            ),
+            child: pw.Center(child: pw.Image(pw.MemoryImage(jpeg), fit: pw.BoxFit.contain)),
           ),
         ],
       );

@@ -45,7 +45,7 @@ class BackupService {
   final SignatureService signatures;
 
   BackupService(this.store, [SignatureService? signatures])
-      : signatures = signatures ?? SignatureService();
+    : signatures = signatures ?? SignatureService();
 
   Future<BackupSummary> create({void Function(double progress)? onProgress}) async {
     final scans = await store.rootDirectory;
@@ -59,7 +59,10 @@ class BackupService {
     String two(int n) => n.toString().padLeft(2, '0');
     final zipPath = p.join(
       outDir.path,
-      tr('KK-PDF-Tool-Sicherung_${now.year}-${two(now.month)}-${two(now.day)}_${two(now.hour)}-${two(now.minute)}.zip', 'KK-PDF-Tool-Backup_${now.year}-${two(now.month)}-${two(now.day)}_${two(now.hour)}-${two(now.minute)}.zip'),
+      tr(
+        'KK-PDF-Tool-Sicherung_${now.year}-${two(now.month)}-${two(now.day)}_${two(now.hour)}-${two(now.minute)}.zip',
+        'KK-PDF-Tool-Backup_${now.year}-${two(now.month)}-${two(now.day)}_${two(now.hour)}-${two(now.minute)}.zip',
+      ),
     );
 
     final entries = <(File, String)>[];
@@ -75,15 +78,17 @@ class BackupService {
 
     final encoder = ZipFileEncoder()..create(zipPath);
     try {
-      encoder.addArchiveFile(ArchiveFile.string(
-        'manifest.json',
-        jsonEncode({
-          'app': _app,
-          'format': _format,
-          'createdAt': now.toIso8601String(),
-          'documents': docs.length,
-        }),
-      ));
+      encoder.addArchiveFile(
+        ArchiveFile.string(
+          'manifest.json',
+          jsonEncode({
+            'app': _app,
+            'format': _format,
+            'createdAt': now.toIso8601String(),
+            'documents': docs.length,
+          }),
+        ),
+      );
       for (var i = 0; i < entries.length; i++) {
         final (file, name) = entries[i];
         final input = InputFileStream(file.path);
@@ -120,26 +125,46 @@ class BackupService {
         try {
           archive = ZipDecoder().decodeStream(input);
         } catch (_) {
-          throw FormatException(tr('Die Datei ist keine gültige ZIP-Sicherung.', 'The file is not a valid ZIP backup.'));
+          throw FormatException(
+            tr('Die Datei ist keine gültige ZIP-Sicherung.', 'The file is not a valid ZIP backup.'),
+          );
         }
         final manifestEntry = archive.find('manifest.json');
         final manifestBytes = manifestEntry?.readBytes();
         if (manifestBytes == null) {
-          throw FormatException(tr('Diese Datei ist keine KK-PDF-Tool-Sicherung.', 'This file is not a KK-PDF-Tool backup.'));
+          throw FormatException(
+            tr(
+              'Diese Datei ist keine KK-PDF-Tool-Sicherung.',
+              'This file is not a KK-PDF-Tool backup.',
+            ),
+          );
         }
         final manifest = jsonDecode(utf8.decode(manifestBytes)) as Map<String, dynamic>;
         if (manifest['app'] != _app) {
-          throw FormatException(tr('Diese Datei ist keine KK-PDF-Tool-Sicherung.', 'This file is not a KK-PDF-Tool backup.'));
+          throw FormatException(
+            tr(
+              'Diese Datei ist keine KK-PDF-Tool-Sicherung.',
+              'This file is not a KK-PDF-Tool backup.',
+            ),
+          );
         }
         if ((manifest['format'] as int? ?? 0) > _format) {
           throw FormatException(
-            tr('Diese Sicherung stammt aus einer neueren App-Version - bitte zuerst die App aktualisieren.', 'This backup comes from a newer app version - please update the app first.'),
+            tr(
+              'Diese Sicherung stammt aus einer neueren App-Version - bitte zuerst die App aktualisieren.',
+              'This backup comes from a newer app version - please update the app first.',
+            ),
           );
         }
         // A backup made by this app only holds plain files. Links could
         // point outside the library, so such an archive is refused.
         if (archive.any((entry) => entry.isSymbolicLink)) {
-          throw FormatException(tr('Diese Datei ist keine KK-PDF-Tool-Sicherung.', 'This file is not a KK-PDF-Tool backup.'));
+          throw FormatException(
+            tr(
+              'Diese Datei ist keine KK-PDF-Tool-Sicherung.',
+              'This file is not a KK-PDF-Tool backup.',
+            ),
+          );
         }
         // Path traversal ("../") entries are skipped by extractArchiveToDisk.
         await extractArchiveToDisk(archive, work.path);

@@ -18,11 +18,7 @@ class CropScreen extends StatefulWidget {
   final Uint8List initialBytes;
   final bool initialCropEnabled;
 
-  const CropScreen({
-    super.key,
-    required this.initialBytes,
-    this.initialCropEnabled = true,
-  });
+  const CropScreen({super.key, required this.initialBytes, this.initialCropEnabled = true});
 
   @override
   State<CropScreen> createState() => _CropScreenState();
@@ -93,10 +89,7 @@ class _CropScreenState extends State<CropScreen> {
   Future<ui.Size> _decodeSize(Uint8List bytes) async {
     final codec = await ui.instantiateImageCodec(bytes);
     final frame = await codec.getNextFrame();
-    final size = ui.Size(
-      frame.image.width.toDouble(),
-      frame.image.height.toDouble(),
-    );
+    final size = ui.Size(frame.image.width.toDouble(), frame.image.height.toDouble());
     frame.image.dispose();
     codec.dispose();
     return size;
@@ -186,12 +179,7 @@ class _CropScreenState extends State<CropScreen> {
 
     final corners = _cropEnabled
         ? _overlayKey.currentState?.corners
-        : [
-            const Offset(0, 0),
-            Offset(_imgW, 0),
-            Offset(_imgW, _imgH),
-            Offset(0, _imgH),
-          ];
+        : [const Offset(0, 0), Offset(_imgW, 0), Offset(_imgW, _imgH), Offset(0, _imgH)];
     if (corners == null) return;
 
     setState(() => _busy = true);
@@ -221,7 +209,9 @@ class _CropScreenState extends State<CropScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text(_cropEnabled ? tr('Zuschneiden', 'Crop') : tr('Filter & Drehen', 'Filter & rotate')),
+        title: Text(
+          _cropEnabled ? tr('Zuschneiden', 'Crop') : tr('Filter & Drehen', 'Filter & rotate'),
+        ),
         actions: [
           IconButton(
             onPressed: _busy ? null : () => setState(() => _cropEnabled = !_cropEnabled),
@@ -263,7 +253,10 @@ class _CropScreenState extends State<CropScreen> {
                             avatar: const Icon(Icons.wb_shade, size: 18),
                             label: Text(tr('Schatten entfernen', 'Remove shadows')),
                             tooltip: _filter.includesShadowRemoval
-                                ? tr('Bei diesem Filter schon enthalten', 'Already included in this filter')
+                                ? tr(
+                                    'Bei diesem Filter schon enthalten',
+                                    'Already included in this filter',
+                                  )
                                 : null,
                             selected: _removeShadows || _filter.includesShadowRemoval,
                             onSelected: _busy || _filter.includesShadowRemoval
@@ -279,7 +272,9 @@ class _CropScreenState extends State<CropScreen> {
                       child: FilledButton.icon(
                         onPressed: _busy ? null : _confirm,
                         icon: BusyIcon(busy: _busy, child: const Icon(Icons.check)),
-                        label: Text(_busy ? tr('Verarbeite…', 'Processing…') : tr('Übernehmen', 'Apply')),
+                        label: Text(
+                          _busy ? tr('Verarbeite…', 'Processing…') : tr('Übernehmen', 'Apply'),
+                        ),
                       ),
                     ),
                   ],
@@ -319,7 +314,9 @@ class _CropScreenState extends State<CropScreen> {
           );
     final content = Stack(
       children: [
-        Positioned.fill(child: Padding(padding: const EdgeInsets.all(16), child: inner)),
+        Positioned.fill(
+          child: Padding(padding: const EdgeInsets.all(16), child: inner),
+        ),
         if (_previewLoading)
           const Positioned(
             top: 8,

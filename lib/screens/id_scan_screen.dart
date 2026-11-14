@@ -45,16 +45,12 @@ class _IdScanScreenState extends State<IdScanScreen> {
   }
 
   Future<void> _capture({required bool front}) async {
-    final raw = await Navigator.of(context).push<Uint8List>(
-      MaterialPageRoute(builder: (_) => const CaptureScreen()),
-    );
+    final raw = await Navigator.of(context)
+        .push<Uint8List>(MaterialPageRoute(builder: (_) => const CaptureScreen()));
     if (raw == null || !mounted) return;
     final processed = await Navigator.of(context).push<Uint8List>(
       MaterialPageRoute(
-        builder: (_) => CropScreen(
-          initialBytes: raw,
-          initialCropEnabled: _cropEnabled,
-        ),
+        builder: (_) => CropScreen(initialBytes: raw, initialCropEnabled: _cropEnabled),
       ),
     );
     if (processed == null || !mounted) return;
@@ -201,7 +197,10 @@ class _IdScanScreenState extends State<IdScanScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              tr('Vorder- und Rückseite werden zusammen auf eine PDF-Seite gesetzt.', 'Front and back are placed together on one PDF page.'),
+              tr(
+                'Vorder- und Rückseite werden zusammen auf eine PDF-Seite gesetzt.',
+                'Front and back are placed together on one PDF page.',
+              ),
               style: TextStyle(color: Theme.of(context).colorScheme.outline),
             ),
             const SizedBox(height: 20),

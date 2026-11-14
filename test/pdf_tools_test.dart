@@ -14,19 +14,24 @@ import 'support/fake_paths.dart';
 Future<Uint8List> _slides(int count, {String label = 'Slide'}) async {
   final doc = pw.Document();
   for (var i = 0; i < count; i++) {
-    doc.addPage(pw.Page(
-      pageFormat: const PdfPageFormat(960, 540),
-      build: (_) => pw.Column(children: [
-        pw.Text('$label ${i + 1}', style: const pw.TextStyle(fontSize: 40)),
-        pw.Container(width: 200, height: 100, color: PdfColors.red),
-      ]),
-    ));
+    doc.addPage(
+      pw.Page(
+        pageFormat: const PdfPageFormat(960, 540),
+        build: (_) => pw.Column(
+          children: [
+            pw.Text('$label ${i + 1}', style: const pw.TextStyle(fontSize: 40)),
+            pw.Container(width: 200, height: 100, color: PdfColors.red),
+          ],
+        ),
+      ),
+    );
   }
   return doc.save();
 }
 
-List<String> _sizes(List<PdfPageFormat> formats) =>
-    [for (final f in formats) '${f.width.round()}x${f.height.round()}'];
+List<String> _sizes(List<PdfPageFormat> formats) => [
+  for (final f in formats) '${f.width.round()}x${f.height.round()}',
+];
 
 /// These tests drive the real PDF engine. `flutter test` builds PDFium for
 /// the host machine into build/native_assets; without it they are skipped.
@@ -67,7 +72,10 @@ void main() {
       final watermarked = await PdfToolsService.addWatermark(a, text: 'DRAFT');
       expect(_sizes(await PdfToolsService.pageFormats(watermarked)), slide);
 
-      final numbered = await PdfToolsService.addPageNumbers(a, numberFormat: PageNumberFormat.slash);
+      final numbered = await PdfToolsService.addPageNumbers(
+        a,
+        numberFormat: PageNumberFormat.slash,
+      );
       expect(_sizes(await PdfToolsService.pageFormats(numbered)), slide);
 
       final compressed = await PdfToolsService.compress(a, dpi: 100, quality: 60);
@@ -89,7 +97,11 @@ void main() {
     await tester.runAsync(() async {
       final a = await _slides(1);
       final png = (await PdfToolsService.rasterPages(a, dpi: 72)).single;
-      final jpeg = (await PdfToolsService.rasterPages(a, dpi: 144, format: PageImageFormat.jpeg)).single;
+      final jpeg = (await PdfToolsService.rasterPages(
+        a,
+        dpi: 144,
+        format: PageImageFormat.jpeg,
+      )).single;
       expect(png.sublist(1, 4), 'PNG'.codeUnits);
       expect(jpeg.sublist(0, 2), [0xFF, 0xD8]);
       final decoded = img.decodeJpg(jpeg)!;

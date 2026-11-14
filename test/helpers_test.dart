@@ -45,7 +45,10 @@ void main() {
     expect(formatFileSize(3 * 1024 * 1024 ~/ 2), '1.5 MB');
     L10n.language.value = 'de';
     expect(formatFileSize(3 * 1024 * 1024 ~/ 2), '1,5 MB');
-    expect(folderOf(r'C:\Users\me\Downloads\KK-PDF-Tool\a.pdf'), r'C:\Users\me\Downloads\KK-PDF-Tool');
+    expect(
+      folderOf(r'C:\Users\me\Downloads\KK-PDF-Tool\a.pdf'),
+      r'C:\Users\me\Downloads\KK-PDF-Tool',
+    );
     expect(folderOf('Downloads/KK-PDF-Tool/a.pdf'), 'Downloads/KK-PDF-Tool');
   });
 }

@@ -6,7 +6,10 @@ import '../l10n.dart';
 /// "512 KB" / "1,4 MB" (German decimal comma; "1.4 MB" in English).
 String formatFileSize(int bytes) {
   if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(0)} KB';
-  return tr('${(bytes / (1024 * 1024)).toStringAsFixed(1).replaceAll('.', ',')} MB', '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB');
+  return tr(
+    '${(bytes / (1024 * 1024)).toStringAsFixed(1).replaceAll('.', ',')} MB',
+    '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB',
+  );
 }
 
 /// The folder part of a saved file's location (for "saved in …" messages).

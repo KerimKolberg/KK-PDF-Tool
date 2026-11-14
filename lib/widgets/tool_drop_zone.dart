@@ -53,7 +53,10 @@ class _ToolDropZoneState extends State<ToolDropZone> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            tr('Dateityp wird von diesem Werkzeug nicht unterstützt', 'This tool does not support this file type'),
+            tr(
+              'Dateityp wird von diesem Werkzeug nicht unterstützt',
+              'This tool does not support this file type',
+            ),
           ),
         ),
       );

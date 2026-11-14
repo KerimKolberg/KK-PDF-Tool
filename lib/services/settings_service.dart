@@ -17,8 +17,7 @@ class AppPrefs {
 
   static bool getBool(String key, bool fallback) => _prefs?.getBool(_k(key)) ?? fallback;
   static int getInt(String key, int fallback) => _prefs?.getInt(_k(key)) ?? fallback;
-  static double getDouble(String key, double fallback) =>
-      _prefs?.getDouble(_k(key)) ?? fallback;
+  static double getDouble(String key, double fallback) => _prefs?.getDouble(_k(key)) ?? fallback;
   static String? getString(String key) => _prefs?.getString(_k(key));
 
   static T getEnum<T extends Enum>(String key, List<T> values, T fallback) =>
@@ -30,9 +29,8 @@ class AppPrefs {
   static void setEnum(String key, Enum value) => setString(key, value.name);
 
   /// null removes the value.
-  static void setString(String key, String? value) => _write(
-        value == null ? _prefs?.remove(_k(key)) : _prefs?.setString(_k(key), value),
-      );
+  static void setString(String key, String? value) =>
+      _write(value == null ? _prefs?.remove(_k(key)) : _prefs?.setString(_k(key), value));
 
   static void _write(Future<bool>? write) {
     if (write != null) unawaited(write);

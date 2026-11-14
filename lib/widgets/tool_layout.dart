@@ -138,10 +138,7 @@ class SelectedFileTile extends StatelessWidget {
         leading: Icon(icon),
         title: Text(name, maxLines: 2, overflow: TextOverflow.ellipsis),
         subtitle: subtitle,
-        trailing: TextButton(
-          onPressed: onChange,
-          child: Text(tr('Ändern', 'Change')),
-        ),
+        trailing: TextButton(onPressed: onChange, child: Text(tr('Ändern', 'Change'))),
       ),
     );
   }

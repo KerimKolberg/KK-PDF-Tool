@@ -19,11 +19,11 @@ enum PageNumberFormat {
   String get example => format(1, 5);
 
   String format(int number, int total) => switch (this) {
-        PageNumberFormat.plain => '$number',
-        PageNumberFormat.seite => tr('Seite $number', 'Page $number'),
-        PageNumberFormat.seiteVon => tr('Seite $number von $total', 'Page $number of $total'),
-        PageNumberFormat.slash => '$number / $total',
-      };
+    PageNumberFormat.plain => '$number',
+    PageNumberFormat.seite => tr('Seite $number', 'Page $number'),
+    PageNumberFormat.seiteVon => tr('Seite $number von $total', 'Page $number of $total'),
+    PageNumberFormat.slash => '$number / $total',
+  };
 }
 
 enum PageNumberPosition {
@@ -138,10 +138,9 @@ class PdfToolsService {
         final page = all[index];
         final area = crop != null && _isSelected(cropPages, index) ? crop : null;
         images.add(await _renderPage(page, dpi, format, jpegQuality, area));
-        formats.add(PdfPageFormat(
-          page.width * (area?.width ?? 1),
-          page.height * (area?.height ?? 1),
-        ));
+        formats.add(
+          PdfPageFormat(page.width * (area?.width ?? 1), page.height * (area?.height ?? 1)),
+        );
       }
       return RenderedPdf(images, formats);
     });
@@ -167,7 +166,12 @@ class PdfToolsService {
       backgroundColor: 0xffffffff,
     );
     if (raw == null) {
-      throw StateError(tr('Seite ${page.pageNumber} konnte nicht gelesen werden', 'Could not read page ${page.pageNumber}'));
+      throw StateError(
+        tr(
+          'Seite ${page.pageNumber} konnte nicht gelesen werden',
+          'Could not read page ${page.pageNumber}',
+        ),
+      );
     }
     try {
       if (format == PageImageFormat.jpeg) return await _encodeJpeg(raw, jpegQuality);
@@ -195,15 +199,16 @@ class PdfToolsService {
   }
 
   static Future<Uint8List> _encodeJpeg(rx.PdfImage raw, int quality) => compute(
-        _bgraToJpegIsolate,
-        (pixels: raw.pixels, width: raw.width, height: raw.height, quality: quality),
-      );
+    _bgraToJpegIsolate,
+    (pixels: raw.pixels, width: raw.width, height: raw.height, quality: quality),
+  );
 
   /// The size of every page of [pdfBytes], as displayed (rotation applied).
   static Future<List<PdfPageFormat>> pageFormats(Uint8List pdfBytes) {
-    return _withDocument(pdfBytes, (doc) async => [
-          for (final page in doc.pages) PdfPageFormat(page.width, page.height),
-        ]);
+    return _withDocument(
+      pdfBytes,
+      (doc) async => [for (final page in doc.pages) PdfPageFormat(page.width, page.height)],
+    );
   }
 
   /// Total page count of [pdfBytes].
@@ -305,11 +310,11 @@ class PdfToolsService {
   }
 
   static rx.PdfPage _rotated(rx.PdfPage page, int degrees) => switch (degrees % 360) {
-        90 => page.rotatedCW90(),
-        180 => page.rotated180(),
-        270 => page.rotatedCCW90(),
-        _ => page,
-      };
+    90 => page.rotatedCW90(),
+    180 => page.rotated180(),
+    270 => page.rotatedCCW90(),
+    _ => page,
+  };
 
   /// Crops [pageIndices] (0-based; all pages when omitted) of [pdfBytes] to
   /// the rectangle described by [leftFrac]/[topFrac]/[rightFrac]/[bottomFrac]
@@ -372,8 +377,9 @@ class PdfToolsService {
 }
 
 /// Page sizes as plain numbers, to pass them into an isolate.
-List<List<double>> _formatsArg(List<PdfPageFormat> formats) =>
-    [for (final f in formats) [f.width, f.height]];
+List<List<double>> _formatsArg(List<PdfPageFormat> formats) => [
+  for (final f in formats) [f.width, f.height],
+];
 
 PdfPageFormat _formatFromArg(Map<String, dynamic> args, int index) {
   final formats = args['formats'] as List;
@@ -400,11 +406,14 @@ Future<Uint8List> _buildPageNumberedPdfIsolate(Map<String, dynamic> args) async 
   final total = images.length + startAt - 1;
 
   pw.Widget overlay(pw.Alignment alignment, String text) => pw.Positioned.fill(
-        child: pw.Padding(
-          padding: const pw.EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-          child: pw.Align(alignment: alignment, child: pw.Text(text, style: style)),
-        ),
-      );
+    child: pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+      child: pw.Align(
+        alignment: alignment,
+        child: pw.Text(text, style: style),
+      ),
+    ),
+  );
 
   final doc = pw.Document();
   for (var i = 0; i < images.length; i++) {
@@ -431,7 +440,9 @@ Future<Uint8List> _buildPageNumberedPdfIsolate(Map<String, dynamic> args) async 
 
 Uint8List _shrinkIsolate(Map<String, dynamic> args) {
   final decoded = img.decodeImage(args['bytes'] as Uint8List);
-  if (decoded == null) throw FormatException(tr('Bild konnte nicht gelesen werden', 'Could not read image'));
+  if (decoded == null) {
+    throw FormatException(tr('Bild konnte nicht gelesen werden', 'Could not read image'));
+  }
   final image = img.bakeOrientation(decoded);
   final maxSide = args['maxSide'] as int;
   final longer = image.width > image.height ? image.width : image.height;

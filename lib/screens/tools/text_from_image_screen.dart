@@ -45,12 +45,14 @@ class _TextFromImageScreenState extends State<TextFromImageScreen> {
 
   /// Android can recognise text offline on the device; Windows always uses
   /// the Google (online) engine.
-  bool _offline =
-      OcrService.isOfflineAvailable && AppPrefs.getBool('ocr.offline', true);
+  bool _offline = OcrService.isOfflineAvailable && AppPrefs.getBool('ocr.offline', true);
   bool _busy = false;
 
   Future<void> _pickFile() async {
-    final typeGroup = XTypeGroup(label: tr('Bilder', 'Images'), extensions: const ['jpg', 'jpeg', 'png', 'webp']);
+    final typeGroup = XTypeGroup(
+      label: tr('Bilder', 'Images'),
+      extensions: const ['jpg', 'jpeg', 'png', 'webp'],
+    );
     final file = await FilePickers.openOne('text_from_image', [typeGroup]);
     if (file == null) return;
     final bytes = await file.readAsBytes();
@@ -96,7 +98,9 @@ class _TextFromImageScreenState extends State<TextFromImageScreen> {
       if (!mounted) return;
       setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(tr('Texterkennung fehlgeschlagen: $e', 'Text recognition failed: $e'))),
+        SnackBar(
+          content: Text(tr('Texterkennung fehlgeschlagen: $e', 'Text recognition failed: $e')),
+        ),
       );
     }
   }
@@ -178,14 +182,18 @@ class _TextFromImageScreenState extends State<TextFromImageScreen> {
                       Expanded(
                         child: Text(
                           _offline
-                              ? tr('Läuft direkt auf dem Gerät - ohne Internet und ohne '
-                                  'Google-Konto. Für Handschrift ist "Google" oft genauer.',
+                              ? tr(
+                                  'Läuft direkt auf dem Gerät - ohne Internet und ohne '
+                                      'Google-Konto. Für Handschrift ist "Google" oft genauer.',
                                   'Runs right on the device - without internet and without a '
-                                  'Google account. For handwriting "Google" is often more accurate.')
-                              : tr('Läuft über dein Google-Konto (kostenlos) und braucht '
-                                  'Internet - gleiche Texterkennung wie bei PDF → Word.',
+                                      'Google account. For handwriting "Google" is often more accurate.',
+                                )
+                              : tr(
+                                  'Läuft über dein Google-Konto (kostenlos) und braucht '
+                                      'Internet - gleiche Texterkennung wie bei PDF → Word.',
                                   'Runs through your Google account (free) and needs '
-                                  'internet - same text recognition as PDF → Word.'),
+                                      'internet - same text recognition as PDF → Word.',
+                                ),
                           style: const TextStyle(fontSize: 13),
                         ),
                       ),
@@ -215,7 +223,11 @@ class _TextFromImageScreenState extends State<TextFromImageScreen> {
                 FilledButton.icon(
                   onPressed: _busy ? null : _extract,
                   icon: BusyIcon(busy: _busy, child: const Icon(Icons.text_snippet_outlined)),
-                  label: Text(_busy ? tr('Erkenne Text…', 'Recognizing text…') : tr('Text erkennen', 'Recognize text')),
+                  label: Text(
+                    _busy
+                        ? tr('Erkenne Text…', 'Recognizing text…')
+                        : tr('Text erkennen', 'Recognize text'),
+                  ),
                 ),
                 if (_extractedText != null) ...[
                   const SizedBox(height: 16),
@@ -229,7 +241,9 @@ class _TextFromImageScreenState extends State<TextFromImageScreen> {
                       ),
                       child: SingleChildScrollView(
                         child: SelectableText(
-                          _extractedText!.isEmpty ? tr('(kein Text erkannt)', '(no text recognized)') : _extractedText!,
+                          _extractedText!.isEmpty
+                              ? tr('(kein Text erkannt)', '(no text recognized)')
+                              : _extractedText!,
                         ),
                       ),
                     ),

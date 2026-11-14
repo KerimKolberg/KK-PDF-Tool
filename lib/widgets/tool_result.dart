@@ -8,13 +8,15 @@ void showResultBanner(ScaffoldMessengerState messenger, String message) {
   final id = ++_bannerId;
   messenger
     ..clearMaterialBanners()
-    ..showMaterialBanner(MaterialBanner(
-      leading: const Icon(Icons.check_circle_outline),
-      content: Text(message),
-      actions: [
-        TextButton(onPressed: messenger.hideCurrentMaterialBanner, child: const Text('OK')),
-      ],
-    ));
+    ..showMaterialBanner(
+      MaterialBanner(
+        leading: const Icon(Icons.check_circle_outline),
+        content: Text(message),
+        actions: [
+          TextButton(onPressed: messenger.hideCurrentMaterialBanner, child: const Text('OK')),
+        ],
+      ),
+    );
   Future<void>.delayed(const Duration(seconds: 6), () {
     if (id == _bannerId) messenger.hideCurrentMaterialBanner();
   });
@@ -24,10 +26,12 @@ void showResultBanner(ScaffoldMessengerState messenger, String message) {
 /// file) instead of leaving it, and show where the result was saved.
 void finishTool(BuildContext context, Widget tool, String message) {
   final messenger = ScaffoldMessenger.of(context);
-  Navigator.of(context).pushReplacement(PageRouteBuilder<void>(
-    pageBuilder: (_, _, _) => tool,
-    transitionDuration: Duration.zero,
-    reverseTransitionDuration: Duration.zero,
-  ));
+  Navigator.of(context).pushReplacement(
+    PageRouteBuilder<void>(
+      pageBuilder: (_, _, _) => tool,
+      transitionDuration: Duration.zero,
+      reverseTransitionDuration: Duration.zero,
+    ),
+  );
   WidgetsBinding.instance.addPostFrameCallback((_) => showResultBanner(messenger, message));
 }

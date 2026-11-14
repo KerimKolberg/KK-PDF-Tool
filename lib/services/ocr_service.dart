@@ -19,11 +19,12 @@ class OcrService {
   /// [imageBytes] should already be upright (see [normalizeOrientation]):
   /// the native side decodes raw pixels and ignores EXIF rotation.
   static Future<OcrResult> recognize(Uint8List imageBytes) async {
-    final map = await _channel.invokeMapMethod<String, dynamic>(
-      'recognize',
-      {'bytes': imageBytes},
-    );
-    if (map == null) throw FormatException(tr('Keine Antwort von der Texterkennung', 'No answer from text recognition'));
+    final map = await _channel.invokeMapMethod<String, dynamic>('recognize', {'bytes': imageBytes});
+    if (map == null) {
+      throw FormatException(
+        tr('Keine Antwort von der Texterkennung', 'No answer from text recognition'),
+      );
+    }
     return OcrResult.fromMap(map);
   }
 

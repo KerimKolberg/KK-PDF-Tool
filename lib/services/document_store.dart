@@ -101,13 +101,16 @@ class DocumentStore {
       final created = micros != null
           ? DateTime.fromMicrosecondsSinceEpoch(micros)
           : (await entity.stat()).modified;
-      docs.add(ScanDocument(
-        id: id,
-        title: 'Scan ${created.year}-${_two(created.month)}-${_two(created.day)} '
-            '${_two(created.hour)}:${_two(created.minute)}',
-        createdAt: created,
-        pageCount: pages,
-      ));
+      docs.add(
+        ScanDocument(
+          id: id,
+          title:
+              'Scan ${created.year}-${_two(created.month)}-${_two(created.day)} '
+              '${_two(created.hour)}:${_two(created.minute)}',
+          createdAt: created,
+          pageCount: pages,
+        ),
+      );
     }
     return docs;
   }
@@ -138,8 +141,7 @@ class DocumentStore {
   Future<({int added, int skipped})> importDocuments(
     Directory sourceScans,
     List<ScanDocument> docs,
-  ) =>
-      _serialized(() => _importDocuments(sourceScans, docs));
+  ) => _serialized(() => _importDocuments(sourceScans, docs));
 
   Future<({int added, int skipped})> _importDocuments(
     Directory sourceScans,
@@ -197,10 +199,7 @@ class DocumentStore {
 
   Future<List<File>> pageFiles(String id, int pageCount) async {
     final dir = await documentDir(id);
-    return List.generate(
-      pageCount,
-      (i) => File(p.join(dir.path, 'page_$i.jpg')),
-    );
+    return List.generate(pageCount, (i) => File(p.join(dir.path, 'page_$i.jpg')));
   }
 
   /// Creates a new document from processed page JPEG bytes and a
@@ -294,9 +293,7 @@ class DocumentStore {
     if (!await file.exists()) return null;
     try {
       final list = jsonDecode(await file.readAsString()) as List;
-      return [
-        for (final e in list) e == null ? null : OcrResult.fromMap(e as Map),
-      ];
+      return [for (final e in list) e == null ? null : OcrResult.fromMap(e as Map)];
     } catch (_) {
       return null;
     }
@@ -328,16 +325,13 @@ class DocumentStore {
     await file.writeAsString(text, flush: true);
   }
 
-  Future<void> rename(String id, String newTitle) => _updateIndex((all) => [
-        for (final d in all) d.id == id ? d.copyWith(title: newTitle) : d,
-      ]);
+  Future<void> rename(String id, String newTitle) =>
+      _updateIndex((all) => [for (final d in all) d.id == id ? d.copyWith(title: newTitle) : d]);
 
-  Future<void> moveToFolder(String id, String? folder) => _updateIndex((all) => [
-        for (final d in all) d.id == id ? d.copyWith(folder: folder) : d,
-      ]);
+  Future<void> moveToFolder(String id, String? folder) =>
+      _updateIndex((all) => [for (final d in all) d.id == id ? d.copyWith(folder: folder) : d]);
 
-  Future<File> get _foldersFile async =>
-      File(p.join((await _root).path, 'folders.json'));
+  Future<File> get _foldersFile async => File(p.join((await _root).path, 'folders.json'));
 
   /// All folder names: explicitly created ones plus any referenced by a
   /// document, sorted alphabetically.
@@ -361,32 +355,28 @@ class DocumentStore {
       _writeAtomically(await _foldersFile, jsonEncode(names));
 
   Future<void> addFolder(String name) => _serialized(() async {
-        final folders = await loadFolders();
-        if (!folders.contains(name)) folders.add(name);
-        await _writeFolders(folders);
-      });
+    final folders = await loadFolders();
+    if (!folders.contains(name)) folders.add(name);
+    await _writeFolders(folders);
+  });
 
   Future<void> renameFolder(String oldName, String newName) => _serialized(() async {
-        final all = await loadAll();
-        final folders = await loadFolders(docs: all)
-          ..remove(oldName);
-        if (!folders.contains(newName)) folders.add(newName);
-        await _writeFolders(folders);
-        await _writeIndex([
-          for (final d in all) d.folder == oldName ? d.copyWith(folder: newName) : d,
-        ]);
-      });
+    final all = await loadAll();
+    final folders = await loadFolders(docs: all)
+      ..remove(oldName);
+    if (!folders.contains(newName)) folders.add(newName);
+    await _writeFolders(folders);
+    await _writeIndex([for (final d in all) d.folder == oldName ? d.copyWith(folder: newName) : d]);
+  });
 
   /// Deletes the folder only; its documents stay, just without a folder.
   Future<void> deleteFolder(String name) => _serialized(() async {
-        final all = await loadAll();
-        final folders = await loadFolders(docs: all)
-          ..remove(name);
-        await _writeFolders(folders);
-        await _writeIndex([
-          for (final d in all) d.folder == name ? d.copyWith(folder: null) : d,
-        ]);
-      });
+    final all = await loadAll();
+    final folders = await loadFolders(docs: all)
+      ..remove(name);
+    await _writeFolders(folders);
+    await _writeIndex([for (final d in all) d.folder == name ? d.copyWith(folder: null) : d]);
+  });
 
   Future<void> delete(String id) async {
     await _updateIndex((all) => all..removeWhere((d) => d.id == id));

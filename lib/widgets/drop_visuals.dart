@@ -13,10 +13,7 @@ class DashedBorder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      foregroundPainter: _DashedRRectPainter(color, radius),
-      child: child,
-    );
+    return CustomPaint(foregroundPainter: _DashedRRectPainter(color, radius), child: child);
   }
 }
 
@@ -32,10 +29,9 @@ class _DashedRRectPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
     final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-        Offset.zero & size,
-        Radius.circular(radius),
-      ).deflate(0.75));
+      ..addRRect(
+        RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(radius)).deflate(0.75),
+      );
     const dash = 7.0, gap = 5.0;
     for (final ui.PathMetric metric in path.computeMetrics()) {
       for (var d = 0.0; d < metric.length; d += dash + gap) {

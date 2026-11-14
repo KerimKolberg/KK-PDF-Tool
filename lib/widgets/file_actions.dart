@@ -75,7 +75,13 @@ class _FileActionList extends StatelessWidget {
     final isPdf = names.every((n) => fileKind(n) == 'pdf');
     final isImage = names.every((n) => const {'jpg', 'jpeg', 'png', 'webp'}.contains(fileKind(n)));
 
-    Widget tile(IconData icon, String title, String subtitle, FileAction action, {bool primary = false}) {
+    Widget tile(
+      IconData icon,
+      String title,
+      String subtitle,
+      FileAction action, {
+      bool primary = false,
+    }) {
       return ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
         leading: Container(
@@ -85,7 +91,11 @@ class _FileActionList extends StatelessWidget {
             color: primary ? scheme.primary : scheme.primaryContainer,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, size: 22, color: primary ? scheme.onPrimary : scheme.onPrimaryContainer),
+          child: Icon(
+            icon,
+            size: 22,
+            color: primary ? scheme.onPrimary : scheme.onPrimaryContainer,
+          ),
         ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis),
@@ -102,7 +112,11 @@ class _FileActionList extends StatelessWidget {
           child: Row(
             children: [
               Icon(
-                isPdf ? Icons.picture_as_pdf_outlined : isImage ? Icons.image_outlined : Icons.insert_drive_file_outlined,
+                isPdf
+                    ? Icons.picture_as_pdf_outlined
+                    : isImage
+                    ? Icons.image_outlined
+                    : Icons.insert_drive_file_outlined,
                 size: 32,
                 color: scheme.primary,
               ),
@@ -138,8 +152,14 @@ class _FileActionList extends StatelessWidget {
                   Icons.library_add_outlined,
                   tr('Zur Bibliothek hinzufügen', 'Add to library'),
                   single
-                      ? tr('Als Dokument in "Meine Scans" speichern', 'Save as a document in "My scans"')
-                      : tr('Jede Datei als eigenes Dokument speichern', 'Save each file as its own document'),
+                      ? tr(
+                          'Als Dokument in "Meine Scans" speichern',
+                          'Save as a document in "My scans"',
+                        )
+                      : tr(
+                          'Jede Datei als eigenes Dokument speichern',
+                          'Save each file as its own document',
+                        ),
                   const FileAction.import(),
                   primary: true,
                 ),
@@ -154,7 +174,8 @@ class _FileActionList extends StatelessWidget {
                     ),
                   ),
                 ),
-              for (final tool in tools) tile(tool.icon, tool.title, tool.subtitle, FileAction.tool(tool)),
+              for (final tool in tools)
+                tile(tool.icon, tool.title, tool.subtitle, FileAction.tool(tool)),
             ],
           ),
         ),

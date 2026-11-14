@@ -81,7 +81,12 @@ class DocumentShareService {
             ? await SearchablePdfService.build(small, ocr)
             : await PdfService.buildPdf(small);
         if (pdf.length >= await original.length() * 0.9) {
-          return shareOriginal(note: tr('Die PDF ist schon klein - das Original wird geteilt.', 'The PDF is already small - the original is shared.'));
+          return shareOriginal(
+            note: tr(
+              'Die PDF ist schon klein - das Original wird geteilt.',
+              'The PDF is already small - the original is shared.',
+            ),
+          );
         }
         final file = File(p.join(dir.path, tr('$name (klein).pdf', '$name (small).pdf')));
         await file.writeAsBytes(pdf, flush: true);
@@ -93,7 +98,12 @@ class DocumentShareService {
         final digits = '${jpegs.length}'.length;
         final files = <XFile>[];
         for (var i = 0; i < jpegs.length; i++) {
-          final suffix = jpegs.length == 1 ? '' : tr(' - Seite ${(i + 1).toString().padLeft(digits, '0')}', ' - page ${(i + 1).toString().padLeft(digits, '0')}');
+          final suffix = jpegs.length == 1
+              ? ''
+              : tr(
+                  ' - Seite ${(i + 1).toString().padLeft(digits, '0')}',
+                  ' - page ${(i + 1).toString().padLeft(digits, '0')}',
+                );
           final file = File(p.join(dir.path, '$name$suffix.jpg'));
           await file.writeAsBytes(jpegs[i], flush: true);
           files.add(XFile(file.path, mimeType: 'image/jpeg'));

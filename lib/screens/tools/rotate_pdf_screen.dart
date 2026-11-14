@@ -45,10 +45,12 @@ class _RotatePdfScreenState extends State<RotatePdfScreen> {
     const typeGroup = XTypeGroup(label: 'PDF', extensions: ['pdf']);
     final files = await FilePickers.openMany('rotate_pdf', [typeGroup]);
     if (files.isEmpty) return;
-    final picked = await Future.wait(files.map((f) async {
-      final bytes = await f.readAsBytes();
-      return _PickedPdf(p.basenameWithoutExtension(f.name), f.path, bytes);
-    }));
+    final picked = await Future.wait(
+      files.map((f) async {
+        final bytes = await f.readAsBytes();
+        return _PickedPdf(p.basenameWithoutExtension(f.name), f.path, bytes);
+      }),
+    );
     setState(() => _pdfs.addAll(picked));
   }
 
@@ -66,15 +68,16 @@ class _RotatePdfScreenState extends State<RotatePdfScreen> {
           pageIndices: pageIndices?.toList(),
           degrees: _degrees,
         );
-        lastLocation = await _downloadsExport.export(
-          rotated,
-          '${pdf.name}_gedreht.pdf',
-        );
+        lastLocation = await _downloadsExport.export(rotated, '${pdf.name}_gedreht.pdf');
       }
-      var message =
-          tr('${_pdfs.length} Datei(en) gedreht${lastLocation != null ? ' → ${folderOf(lastLocation)}' : ''}', '${_pdfs.length} file(s) rotated${lastLocation != null ? ' → ${folderOf(lastLocation)}' : ''}');
+      var message = tr(
+        '${_pdfs.length} Datei(en) gedreht${lastLocation != null ? ' → ${folderOf(lastLocation)}' : ''}',
+        '${_pdfs.length} file(s) rotated${lastLocation != null ? ' → ${folderOf(lastLocation)}' : ''}',
+      );
       if (_deleteOriginals) {
-        message += await OriginalFilesCleanupService.deleteAndDescribe([for (final pdf in _pdfs) pdf.path]);
+        message += await OriginalFilesCleanupService.deleteAndDescribe([
+          for (final pdf in _pdfs) pdf.path,
+        ]);
       }
       if (!mounted) return;
       finishTool(context, widget, message);
@@ -104,7 +107,10 @@ class _RotatePdfScreenState extends State<RotatePdfScreen> {
                 padding: const EdgeInsets.all(24),
                 child: FilePickPanel(
                   multiple: true,
-                  hint: tr('Füge eine oder mehrere PDF-Dateien hinzu.', 'Add one or more PDF files.'),
+                  hint: tr(
+                    'Füge eine oder mehrere PDF-Dateien hinzu.',
+                    'Add one or more PDF files.',
+                  ),
                   onPressed: _addPdfs,
                   icon: const Icon(Icons.picture_as_pdf_outlined),
                   label: Text(tr('PDFs hinzufügen', 'Add PDFs')),
@@ -143,12 +149,18 @@ class _RotatePdfScreenState extends State<RotatePdfScreen> {
                           },
                   ),
                   const SizedBox(height: 16),
-                  Text(tr('Seiten (optional)', 'Pages (optional)'), style: Theme.of(context).textTheme.titleSmall),
+                  Text(
+                    tr('Seiten (optional)', 'Pages (optional)'),
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
                   const SizedBox(height: 4),
                   TextField(
                     controller: _pageSpecController,
                     decoration: InputDecoration(
-                      hintText: tr('z. B. 1-3,5 · leer lassen für alle Seiten', 'e.g. 1-3,5 · leave empty for all pages'),
+                      hintText: tr(
+                        'z. B. 1-3,5 · leer lassen für alle Seiten',
+                        'e.g. 1-3,5 · leave empty for all pages',
+                      ),
                       border: const OutlineInputBorder(),
                     ),
                   ),
@@ -179,7 +191,11 @@ class _RotatePdfScreenState extends State<RotatePdfScreen> {
                       child: FilledButton.icon(
                         onPressed: _pdfs.isEmpty || _busy ? null : _rotate,
                         icon: BusyIcon(busy: _busy, child: const Icon(Icons.rotate_right)),
-                        label: Text(_busy ? tr('Drehe…', 'Rotating…') : tr('Drehen & speichern', 'Rotate & save')),
+                        label: Text(
+                          _busy
+                              ? tr('Drehe…', 'Rotating…')
+                              : tr('Drehen & speichern', 'Rotate & save'),
+                        ),
                       ),
                     ),
                   ],

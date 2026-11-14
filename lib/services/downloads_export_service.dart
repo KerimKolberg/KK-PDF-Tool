@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+
 import '../l10n.dart';
 
 /// Exports finished files (PDFs, images) into a public, user-visible
@@ -20,17 +21,17 @@ class DownloadsExportService {
   static const _channel = MethodChannel('docscanner/downloads');
 
   /// Names Windows reserves for devices; a file can't be called that.
-  static final _reservedName = RegExp(r'^(con|prn|aux|nul|com[1-9]|lpt[1-9])$', caseSensitive: false);
+  static final _reservedName = RegExp(
+    r'^(con|prn|aux|nul|com[1-9]|lpt[1-9])$',
+    caseSensitive: false,
+  );
 
   /// Turns [name] into a file name that works on Windows and Android:
   /// no path separators or forbidden characters (titles like
   /// "Scan 3.10.2026 14:05" contain a colon), no reserved device names, and
   /// not longer than file systems allow.
   static String safeFileName(String name) {
-    var safe = name
-        .replaceAll(':', '-')
-        .replaceAll(RegExp(r'[<>"/\\|?*\x00-\x1F]'), '_')
-        .trim();
+    var safe = name.replaceAll(':', '-').replaceAll(RegExp(r'[<>"/\\|?*\x00-\x1F]'), '_').trim();
     while (safe.endsWith('.') || safe.endsWith(' ')) {
       safe = safe.substring(0, safe.length - 1);
     }

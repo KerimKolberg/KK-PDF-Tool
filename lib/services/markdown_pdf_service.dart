@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:markdown/markdown.dart' as md;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+
 import '../l10n.dart';
 
 /// Renders Markdown source straight into a styled PDF, fully offline - no
@@ -12,10 +13,25 @@ import '../l10n.dart';
 /// reliably resolving local/remote image paths is out of scope.
 class MarkdownPdfService {
   static const _blockTags = {
-    'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-    'ul', 'ol', 'li',
-    'blockquote', 'pre', 'hr',
-    'table', 'thead', 'tbody', 'tr', 'th', 'td',
+    'p',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'ul',
+    'ol',
+    'li',
+    'blockquote',
+    'pre',
+    'hr',
+    'table',
+    'thead',
+    'tbody',
+    'tr',
+    'th',
+    'td',
   };
 
   static const _baseStyle = pw.TextStyle(fontSize: 11, lineSpacing: 2);
@@ -52,12 +68,7 @@ class MarkdownPdfService {
     return widgets;
   }
 
-  static pw.Widget? _renderBlock(
-    md.Node node,
-    pw.Font mono,
-    pw.TextStyle style,
-    int depth,
-  ) {
+  static pw.Widget? _renderBlock(md.Node node, pw.Font mono, pw.TextStyle style, int depth) {
     if (node is md.Text) {
       if (node.text.trim().isEmpty) return null;
       return pw.Padding(
@@ -100,17 +111,12 @@ class MarkdownPdfService {
         );
 
       case 'blockquote':
-        final quoteStyle = style.copyWith(
-          fontStyle: pw.FontStyle.italic,
-          color: PdfColors.grey700,
-        );
+        final quoteStyle = style.copyWith(fontStyle: pw.FontStyle.italic, color: PdfColors.grey700);
         return pw.Container(
           margin: const pw.EdgeInsets.only(bottom: 8),
           padding: const pw.EdgeInsets.only(left: 12, top: 2, bottom: 2),
           decoration: const pw.BoxDecoration(
-            border: pw.Border(
-              left: pw.BorderSide(color: PdfColors.grey400, width: 3),
-            ),
+            border: pw.Border(left: pw.BorderSide(color: PdfColors.grey400, width: 3)),
           ),
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -169,16 +175,16 @@ class MarkdownPdfService {
       if (ordered) index++;
 
       final children = li.children ?? const <md.Node>[];
-      final blockChildren =
-          children.where((c) => c is md.Element && _blockTags.contains(c.tag)).toList();
-      final inlineChildren =
-          children.where((c) => !(c is md.Element && _blockTags.contains(c.tag))).toList();
+      final blockChildren = children
+          .where((c) => c is md.Element && _blockTags.contains(c.tag))
+          .toList();
+      final inlineChildren = children
+          .where((c) => !(c is md.Element && _blockTags.contains(c.tag)))
+          .toList();
 
       final content = <pw.Widget>[];
       if (inlineChildren.isNotEmpty) {
-        content.add(
-          pw.RichText(text: pw.TextSpan(children: _inline(inlineChildren, style, mono))),
-        );
+        content.add(pw.RichText(text: pw.TextSpan(children: _inline(inlineChildren, style, mono))));
       }
       content.addAll(_renderBlocks(blockChildren, mono, style, depth + 1));
 
@@ -241,11 +247,7 @@ class MarkdownPdfService {
     );
   }
 
-  static List<pw.InlineSpan> _inline(
-    List<md.Node> nodes,
-    pw.TextStyle style,
-    pw.Font mono,
-  ) {
+  static List<pw.InlineSpan> _inline(List<md.Node> nodes, pw.TextStyle style, pw.Font mono) {
     final spans = <pw.InlineSpan>[];
     for (final node in nodes) {
       if (node is md.Text) {
@@ -256,58 +258,70 @@ class MarkdownPdfService {
 
       switch (node.tag) {
         case 'strong':
-          spans.add(pw.TextSpan(
-            children: _inline(
-              node.children ?? const [],
-              style.copyWith(fontWeight: pw.FontWeight.bold),
-              mono,
+          spans.add(
+            pw.TextSpan(
+              children: _inline(
+                node.children ?? const [],
+                style.copyWith(fontWeight: pw.FontWeight.bold),
+                mono,
+              ),
             ),
-          ));
+          );
           break;
         case 'em':
-          spans.add(pw.TextSpan(
-            children: _inline(
-              node.children ?? const [],
-              style.copyWith(fontStyle: pw.FontStyle.italic),
-              mono,
+          spans.add(
+            pw.TextSpan(
+              children: _inline(
+                node.children ?? const [],
+                style.copyWith(fontStyle: pw.FontStyle.italic),
+                mono,
+              ),
             ),
-          ));
+          );
           break;
         case 'del':
-          spans.add(pw.TextSpan(
-            children: _inline(
-              node.children ?? const [],
-              style.copyWith(decoration: pw.TextDecoration.lineThrough),
-              mono,
+          spans.add(
+            pw.TextSpan(
+              children: _inline(
+                node.children ?? const [],
+                style.copyWith(decoration: pw.TextDecoration.lineThrough),
+                mono,
+              ),
             ),
-          ));
+          );
           break;
         case 'code':
-          spans.add(pw.TextSpan(
-            text: node.textContent,
-            style: style.copyWith(font: mono, fontSize: (style.fontSize ?? 11) - 0.5),
-          ));
+          spans.add(
+            pw.TextSpan(
+              text: node.textContent,
+              style: style.copyWith(font: mono, fontSize: (style.fontSize ?? 11) - 0.5),
+            ),
+          );
           break;
         case 'a':
           final href = node.attributes['href'] ?? '';
-          spans.add(pw.TextSpan(
-            children: _inline(
-              node.children ?? const [],
-              style.copyWith(color: PdfColors.blue700, decoration: pw.TextDecoration.underline),
-              mono,
+          spans.add(
+            pw.TextSpan(
+              children: _inline(
+                node.children ?? const [],
+                style.copyWith(color: PdfColors.blue700, decoration: pw.TextDecoration.underline),
+                mono,
+              ),
+              annotation: href.isEmpty ? null : pw.AnnotationUrl(href),
             ),
-            annotation: href.isEmpty ? null : pw.AnnotationUrl(href),
-          ));
+          );
           break;
         case 'br':
           spans.add(pw.TextSpan(text: '\n', style: style));
           break;
         case 'img':
           final alt = node.attributes['alt'] ?? tr('Bild', 'Image');
-          spans.add(pw.TextSpan(
-            text: '[$alt]',
-            style: style.copyWith(fontStyle: pw.FontStyle.italic, color: PdfColors.grey600),
-          ));
+          spans.add(
+            pw.TextSpan(
+              text: '[$alt]',
+              style: style.copyWith(fontStyle: pw.FontStyle.italic, color: PdfColors.grey600),
+            ),
+          );
           break;
         default:
           spans.add(pw.TextSpan(children: _inline(node.children ?? const [], style, mono)));
@@ -318,9 +332,6 @@ class MarkdownPdfService {
 
   static pw.TextStyle _headingStyle(int level) {
     const sizes = {1: 22.0, 2: 18.0, 3: 15.0, 4: 13.0, 5: 12.0, 6: 11.0};
-    return pw.TextStyle(
-      fontSize: sizes[level] ?? 11,
-      fontWeight: pw.FontWeight.bold,
-    );
+    return pw.TextStyle(fontSize: sizes[level] ?? 11, fontWeight: pw.FontWeight.bold);
   }
 }

@@ -9,8 +9,7 @@ class IncomingFile {
 
   const IncomingFile({required this.path, required this.name, this.mimeType});
 
-  bool get isPdf =>
-      mimeType == 'application/pdf' || path.toLowerCase().endsWith('.pdf');
+  bool get isPdf => mimeType == 'application/pdf' || path.toLowerCase().endsWith('.pdf');
 
   static IncomingFile? fromMap(Map<dynamic, dynamic>? map) {
     if (map == null) return null;
@@ -37,9 +36,7 @@ class IncomingFileService {
   Future<IncomingFile?> takeInitialFile() async {
     if (!Platform.isAndroid) return null;
     try {
-      final map = await _methods.invokeMethod<Map<dynamic, dynamic>>(
-        'getInitialSharedFile',
-      );
+      final map = await _methods.invokeMethod<Map<dynamic, dynamic>>('getInitialSharedFile');
       return IncomingFile.fromMap(map);
     } catch (_) {
       return null;
@@ -49,9 +46,9 @@ class IncomingFileService {
   /// Files shared into the app while it's already running.
   Stream<IncomingFile> get onFileReceived {
     if (!Platform.isAndroid) return const Stream.empty();
-    return _events.receiveBroadcastStream().map(
-          (event) => IncomingFile.fromMap(event as Map<dynamic, dynamic>?),
-        )
+    return _events
+        .receiveBroadcastStream()
+        .map((event) => IncomingFile.fromMap(event as Map<dynamic, dynamic>?))
         .where((f) => f != null)
         .cast<IncomingFile>();
   }

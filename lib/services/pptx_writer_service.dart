@@ -23,7 +23,9 @@ class PptxWriterService {
     archive.add(_textFile('docProps/core.xml', _coreXml));
     archive.add(_textFile('docProps/app.xml', _appXml(jpegOrPngImages.length)));
     archive.add(_textFile('ppt/presentation.xml', _presentationXml(jpegOrPngImages.length)));
-    archive.add(_textFile('ppt/_rels/presentation.xml.rels', _presentationRelsXml(jpegOrPngImages.length)));
+    archive.add(
+      _textFile('ppt/_rels/presentation.xml.rels', _presentationRelsXml(jpegOrPngImages.length)),
+    );
     archive.add(_textFile('ppt/theme/theme1.xml', _themeXml));
     archive.add(_textFile('ppt/slideMasters/slideMaster1.xml', _slideMasterXml));
     archive.add(_textFile('ppt/slideMasters/_rels/slideMaster1.xml.rels', _slideMasterRelsXml));
@@ -38,10 +40,7 @@ class PptxWriterService {
       final rect = _containRect(w, h);
 
       archive.add(_textFile('ppt/slides/slide${i + 1}.xml', _slideXml(rect)));
-      archive.add(_textFile(
-        'ppt/slides/_rels/slide${i + 1}.xml.rels',
-        _slideRelsXml(i + 1),
-      ));
+      archive.add(_textFile('ppt/slides/_rels/slide${i + 1}.xml.rels', _slideRelsXml(i + 1)));
       archive.add(ArchiveFile('ppt/media/image${i + 1}.png', bytes.length, bytes));
     }
 
@@ -57,17 +56,10 @@ class PptxWriterService {
   /// Position/size (in EMUs) for an image of [w]x[h] pixels centered and
   /// scaled to fit inside the slide without distorting its aspect ratio.
   static ({int x, int y, int cx, int cy}) _containRect(double w, double h) {
-    final scale = (w / h > _slideWidth / _slideHeight)
-        ? _slideWidth / w
-        : _slideHeight / h;
+    final scale = (w / h > _slideWidth / _slideHeight) ? _slideWidth / w : _slideHeight / h;
     final cx = (w * scale).round();
     final cy = (h * scale).round();
-    return (
-      x: (_slideWidth - cx) ~/ 2,
-      y: (_slideHeight - cy) ~/ 2,
-      cx: cx,
-      cy: cy,
-    );
+    return (x: (_slideWidth - cx) ~/ 2, y: (_slideHeight - cy) ~/ 2, cx: cx, cy: cy);
   }
 
   static String _contentTypesXml(int slideCount) {
@@ -105,7 +97,8 @@ $overrides
 <dc:creator>KK-PDF-Tool</dc:creator>
 </cp:coreProperties>''';
 
-  static String _appXml(int slideCount) => '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  static String _appXml(int slideCount) =>
+      '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties">
 <Application>KK-PDF-Tool</Application>
 <Slides>$slideCount</Slides>
@@ -162,7 +155,8 @@ $rels
 <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="../slideMasters/slideMaster1.xml"/>
 </Relationships>''';
 
-  static String _slideXml(({int x, int y, int cx, int cy}) rect) => '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  static String _slideXml(({int x, int y, int cx, int cy}) rect) =>
+      '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
 <p:cSld><p:spTree>
 <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
@@ -178,7 +172,8 @@ $rels
 </p:spTree></p:cSld>
 </p:sld>''';
 
-  static String _slideRelsXml(int index) => '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  static String _slideRelsXml(int index) =>
+      '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
 <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image$index.png"/>
 </Relationships>''';

@@ -47,8 +47,7 @@ class CornerCropOverlayState extends State<CornerCropOverlay> {
     super.didUpdateWidget(oldWidget);
     // A new preview of the same photo (e.g. another filter) keeps the
     // corners; only a different size (rotation) starts over.
-    if (oldWidget.imageWidth != widget.imageWidth ||
-        oldWidget.imageHeight != widget.imageHeight) {
+    if (oldWidget.imageWidth != widget.imageWidth || oldWidget.imageHeight != widget.imageHeight) {
       _corners = List.of(widget.initialCorners);
     }
   }
@@ -84,20 +83,11 @@ class CornerCropOverlayState extends State<CornerCropOverlay> {
                 ),
                 Positioned.fill(
                   child: IgnorePointer(
-                    child: CustomPaint(
-                      painter:
-                          _QuadPainter(_corners.map(toDisplay).toList()),
-                    ),
+                    child: CustomPaint(painter: _QuadPainter(_corners.map(toDisplay).toList())),
                   ),
                 ),
                 for (var i = 0; i < _corners.length; i++)
-                  _buildHandle(
-                    i,
-                    toDisplay(_corners[i]),
-                    displayW,
-                    displayH,
-                    toImage,
-                  ),
+                  _buildHandle(i, toDisplay(_corners[i]), displayW, displayH, toImage),
               ],
             ),
           ),
@@ -136,9 +126,7 @@ class CornerCropOverlayState extends State<CornerCropOverlay> {
             shape: BoxShape.circle,
             color: Colors.white,
             border: Border.all(color: Colors.blueAccent, width: 3),
-            boxShadow: const [
-              BoxShadow(color: Colors.black45, blurRadius: 4),
-            ],
+            boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 4)],
           ),
         ),
       ),
@@ -179,6 +167,5 @@ class _QuadPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _QuadPainter oldDelegate) =>
-      oldDelegate.points != points;
+  bool shouldRepaint(covariant _QuadPainter oldDelegate) => oldDelegate.points != points;
 }

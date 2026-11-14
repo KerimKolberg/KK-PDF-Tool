@@ -90,7 +90,8 @@ class SettingsTile extends StatelessWidget {
           builder: (context, constraints) {
             // Wide controls (segmented buttons, buttons) move under the text
             // on narrow screens; switches and status labels stay on the right.
-            final narrow = constraints.maxWidth < 560 && trailing is! Switch && trailing is! StatusChip;
+            final narrow =
+                constraints.maxWidth < 560 && trailing is! Switch && trailing is! StatusChip;
             final leading = icon == null
                 ? null
                 : Padding(
@@ -105,10 +106,7 @@ class SettingsTile extends StatelessWidget {
                   children: [
                     ?leading,
                     Expanded(child: text),
-                    if (trailing != null && !narrow) ...[
-                      const SizedBox(width: 16),
-                      trailing!,
-                    ],
+                    if (trailing != null && !narrow) ...[const SizedBox(width: 16), trailing!],
                   ],
                 ),
                 if (trailing != null && narrow)

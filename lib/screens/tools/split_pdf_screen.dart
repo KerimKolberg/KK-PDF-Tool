@@ -20,8 +20,8 @@ class _PageRange {
   final TextEditingController from;
   final TextEditingController to;
   _PageRange(int start, int end)
-      : from = TextEditingController(text: '$start'),
-        to = TextEditingController(text: '$end');
+    : from = TextEditingController(text: '$start'),
+      to = TextEditingController(text: '$end');
 }
 
 /// Splits a picked PDF into several new PDFs, one per user-defined
@@ -99,7 +99,10 @@ class _SplitPdfScreenState extends State<SplitPdfScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              tr('Ungültiger Seitenbereich (gültig: 1–$pageCount).', 'Invalid page range (valid: 1–$pageCount).'),
+              tr(
+                'Ungültiger Seitenbereich (gültig: 1–$pageCount).',
+                'Invalid page range (valid: 1–$pageCount).',
+              ),
             ),
           ),
         );
@@ -113,19 +116,14 @@ class _SplitPdfScreenState extends State<SplitPdfScreen> {
       String? lastLocation;
       for (var i = 0; i < parsedRanges.length; i++) {
         final (start, end) = parsedRanges[i];
-        final part = await PdfToolsService.extractRange(
-          bytes,
-          startPage: start,
-          endPage: end,
-        );
+        final part = await PdfToolsService.extractRange(bytes, startPage: start, endPage: end);
         final suffix = parsedRanges.length > 1 ? tr('_teil_${i + 1}', '_part_${i + 1}') : '_teil';
-        lastLocation = await _downloadsExport.export(
-          part,
-          '$name${suffix}_s$start-$end.pdf',
-        );
+        lastLocation = await _downloadsExport.export(part, '$name${suffix}_s$start-$end.pdf');
       }
-      var message =
-          tr('${parsedRanges.length} Datei(en) gespeichert${lastLocation != null ? ' in ${folderOf(lastLocation)}' : ''}', '${parsedRanges.length} file(s) saved${lastLocation != null ? ' in ${folderOf(lastLocation)}' : ''}');
+      var message = tr(
+        '${parsedRanges.length} Datei(en) gespeichert${lastLocation != null ? ' in ${folderOf(lastLocation)}' : ''}',
+        '${parsedRanges.length} file(s) saved${lastLocation != null ? ' in ${folderOf(lastLocation)}' : ''}',
+      );
       if (_deleteOriginal) {
         message += await OriginalFilesCleanupService.deleteAndDescribe([_sourcePath]);
       }
@@ -150,65 +148,66 @@ class _SplitPdfScreenState extends State<SplitPdfScreen> {
             ? Padding(
                 padding: const EdgeInsets.all(24),
                 child: FilePickPanel(
-                  hint: tr('Wähle eine PDF-Datei, die in mehrere Dateien aufgeteilt werden soll.', 'Choose a PDF file to split into several files.'),
+                  hint: tr(
+                    'Wähle eine PDF-Datei, die in mehrere Dateien aufgeteilt werden soll.',
+                    'Choose a PDF file to split into several files.',
+                  ),
                   onPressed: _pickPdf,
                   icon: const Icon(Icons.picture_as_pdf_outlined),
                   label: Text(tr('PDF wählen', 'Choose PDF')),
                 ),
               )
             : _counting
-                ? const Center(child: CircularProgressIndicator())
-                : ListView(
-                    padding: const EdgeInsets.all(16),
-                    children: [
-                      Text(
-                        tr('$_fileName · $_pageCount Seiten', '$_fileName · $_pageCount pages'),
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 16),
-                      for (var i = 0; i < _ranges.length; i++)
-                        Card(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Row(
-                              children: [
-                                Text(tr('Teil ${i + 1}:', 'Part ${i + 1}:')),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: TextField(
-                                    controller: _ranges[i].from,
-                                    keyboardType: TextInputType.number,
-                                    decoration:
-                                        InputDecoration(labelText: tr('von Seite', 'from page')),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: TextField(
-                                    controller: _ranges[i].to,
-                                    keyboardType: TextInputType.number,
-                                    decoration:
-                                        InputDecoration(labelText: tr('bis Seite', 'to page')),
-                                  ),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete_outline),
-                                  onPressed: _ranges.length > 1
-                                      ? () => _removeRange(i)
-                                      : null,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      OutlinedButton.icon(
-                        onPressed: _addRange,
-                        icon: const Icon(Icons.add),
-                        label: Text(tr('Weiteren Bereich hinzufügen', 'Add another range')),
-                      ),
-                    ],
+            ? const Center(child: CircularProgressIndicator())
+            : ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  Text(
+                    tr('$_fileName · $_pageCount Seiten', '$_fileName · $_pageCount pages'),
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
+                  const SizedBox(height: 16),
+                  for (var i = 0; i < _ranges.length; i++)
+                    Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
+                          children: [
+                            Text(tr('Teil ${i + 1}:', 'Part ${i + 1}:')),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextField(
+                                controller: _ranges[i].from,
+                                keyboardType: TextInputType.number,
+                                decoration: InputDecoration(
+                                  labelText: tr('von Seite', 'from page'),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextField(
+                                controller: _ranges[i].to,
+                                keyboardType: TextInputType.number,
+                                decoration: InputDecoration(labelText: tr('bis Seite', 'to page')),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline),
+                              onPressed: _ranges.length > 1 ? () => _removeRange(i) : null,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  OutlinedButton.icon(
+                    onPressed: _addRange,
+                    icon: const Icon(Icons.add),
+                    label: Text(tr('Weiteren Bereich hinzufügen', 'Add another range')),
+                  ),
+                ],
+              ),
         bottomNavigationBar: _pdfBytes == null || _counting
             ? null
             : SafeArea(
@@ -218,14 +217,21 @@ class _SplitPdfScreenState extends State<SplitPdfScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       DeleteOriginalsSwitch(
-                        label: tr('Originaldatei danach löschen', 'Delete original file afterwards'),
+                        label: tr(
+                          'Originaldatei danach löschen',
+                          'Delete original file afterwards',
+                        ),
                         value: _deleteOriginal,
                         onChanged: (v) => setState(() => _deleteOriginal = v),
                       ),
                       FilledButton.icon(
                         onPressed: _busy ? null : _split,
                         icon: BusyIcon(busy: _busy, child: const Icon(Icons.content_cut)),
-                        label: Text(_busy ? tr('Teile auf…', 'Splitting…') : tr('Aufteilen & speichern', 'Split & save')),
+                        label: Text(
+                          _busy
+                              ? tr('Teile auf…', 'Splitting…')
+                              : tr('Aufteilen & speichern', 'Split & save'),
+                        ),
                       ),
                     ],
                   ),

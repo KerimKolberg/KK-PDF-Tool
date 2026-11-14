@@ -41,9 +41,7 @@ void _paintPageWithInk(Canvas canvas, Size size, ui.Image page, List<_InkStroke>
     Paint()..filterQuality = FilterQuality.medium,
   );
   for (final stroke in strokes) {
-    final pts = [
-      for (final p in stroke.points) Offset(p.dx * size.width, p.dy * size.height),
-    ];
+    final pts = [for (final p in stroke.points) Offset(p.dx * size.width, p.dy * size.height)];
     if (pts.isEmpty) continue;
     final paint = Paint()
       ..color = stroke.color
@@ -157,11 +155,7 @@ class AnnotatePagesScreen extends StatefulWidget {
   final List<Uint8List> pages;
   final AnnotateMode initialMode;
 
-  const AnnotatePagesScreen({
-    super.key,
-    required this.pages,
-    this.initialMode = AnnotateMode.fill,
-  });
+  const AnnotatePagesScreen({super.key, required this.pages, this.initialMode = AnnotateMode.fill});
 
   @override
   State<AnnotatePagesScreen> createState() => _AnnotatePagesScreenState();
@@ -278,7 +272,11 @@ class _AnnotatePagesScreenState extends State<AnnotatePagesScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(tr('Zeichnung konnte nicht übernommen werden: $e', 'Could not apply drawing: $e'))),
+          SnackBar(
+            content: Text(
+              tr('Zeichnung konnte nicht übernommen werden: $e', 'Could not apply drawing: $e'),
+            ),
+          ),
         );
       }
     } finally {
@@ -333,10 +331,21 @@ class _AnnotatePagesScreenState extends State<AnnotatePagesScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(tr('Änderungen verwerfen?', 'Discard changes?')),
-        content: Text(tr('Text, Unterschriften und Zeichnungen gehen verloren.', 'Text, signatures and drawings will be lost.')),
+        content: Text(
+          tr(
+            'Text, Unterschriften und Zeichnungen gehen verloren.',
+            'Text, signatures and drawings will be lost.',
+          ),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(tr('Abbrechen', 'Cancel'))),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(tr('Verwerfen', 'Discard'))),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(tr('Abbrechen', 'Cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(tr('Verwerfen', 'Discard')),
+          ),
         ],
       ),
     );
@@ -383,14 +392,20 @@ class _AnnotatePagesScreenState extends State<AnnotatePagesScreen> {
     _textColor = colorIndex;
     AppPrefs.setInt('annotate.textColor', colorIndex);
     final lines = '\n'.allMatches(text).length + 1;
-    await _startPlacing(await _renderTextPng(text, _textColors[colorIndex]), heightFracOfPage: 0.022 * lines);
+    await _startPlacing(
+      await _renderTextPng(text, _textColors[colorIndex]),
+      heightFracOfPage: 0.022 * lines,
+    );
   }
 
   Future<void> _addDate() async {
     final now = DateTime.now();
     String two(int n) => n.toString().padLeft(2, '0');
     final date = '${two(now.day)}.${two(now.month)}.${now.year}';
-    await _startPlacing(await _renderTextPng(date, _textColors[_textColor]), heightFracOfPage: 0.022);
+    await _startPlacing(
+      await _renderTextPng(date, _textColors[_textColor]),
+      heightFracOfPage: 0.022,
+    );
   }
 
   Future<void> _addMark({required bool check}) async {
@@ -442,8 +457,7 @@ class _AnnotatePagesScreenState extends State<AnnotatePagesScreen> {
 
   void _startStroke(Offset local, Rect page) {
     setState(() {
-      _strokes.add(_InkStroke(marker: _marker, color: _inkColor)
-        ..points.add(_toPage(local, page)));
+      _strokes.add(_InkStroke(marker: _marker, color: _inkColor)..points.add(_toPage(local, page)));
     });
   }
 
@@ -453,9 +467,9 @@ class _AnnotatePagesScreenState extends State<AnnotatePagesScreen> {
   }
 
   Offset _toPage(Offset local, Rect page) => Offset(
-        ((local.dx - page.left) / page.width).clamp(0.0, 1.0),
-        ((local.dy - page.top) / page.height).clamp(0.0, 1.0),
-      );
+    ((local.dx - page.left) / page.width).clamp(0.0, 1.0),
+    ((local.dy - page.top) / page.height).clamp(0.0, 1.0),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -473,7 +487,9 @@ class _AnnotatePagesScreenState extends State<AnnotatePagesScreen> {
           actions: [
             IconButton(
               tooltip: tr('Rückgängig', 'Undo'),
-              onPressed: _busy || _placing || (_strokes.isEmpty && _undo.isEmpty) ? null : _undoLast,
+              onPressed: _busy || _placing || (_strokes.isEmpty && _undo.isEmpty)
+                  ? null
+                  : _undoLast,
               icon: const Icon(Icons.undo),
             ),
             TextButton.icon(
@@ -490,8 +506,15 @@ class _AnnotatePagesScreenState extends State<AnnotatePagesScreen> {
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final pageSize = Size(display.width.toDouble(), display.height.toDouble());
-                    final fitted = applyBoxFit(BoxFit.contain, pageSize, constraints.biggest).destination;
-                    final rect = Alignment.center.inscribe(fitted, Offset.zero & constraints.biggest);
+                    final fitted = applyBoxFit(
+                      BoxFit.contain,
+                      pageSize,
+                      constraints.biggest,
+                    ).destination;
+                    final rect = Alignment.center.inscribe(
+                      fitted,
+                      Offset.zero & constraints.biggest,
+                    );
                     final drawing = _mode == AnnotateMode.draw && !_busy;
                     return Stack(
                       children: [
@@ -499,7 +522,12 @@ class _AnnotatePagesScreenState extends State<AnnotatePagesScreen> {
                           rect: rect,
                           child: DecoratedBox(
                             decoration: BoxDecoration(
-                              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 6)],
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.15),
+                                  blurRadius: 6,
+                                ),
+                              ],
                             ),
                             child: CustomPaint(painter: _PagePainter(display, _strokes)),
                           ),
@@ -538,16 +566,26 @@ class _AnnotatePagesScreenState extends State<AnnotatePagesScreen> {
                   onPressed: _index > 0 && !_placing && !_busy ? () => _goTo(_index - 1) : null,
                   icon: const Icon(Icons.chevron_left),
                 ),
-                Text(tr('Seite ${_index + 1} von ${_pages.length}', 'Page ${_index + 1} of ${_pages.length}')),
+                Text(
+                  tr(
+                    'Seite ${_index + 1} von ${_pages.length}',
+                    'Page ${_index + 1} of ${_pages.length}',
+                  ),
+                ),
                 IconButton(
-                  onPressed: _index < _pages.length - 1 && !_placing && !_busy ? () => _goTo(_index + 1) : null,
+                  onPressed: _index < _pages.length - 1 && !_placing && !_busy
+                      ? () => _goTo(_index + 1)
+                      : null,
                   icon: const Icon(Icons.chevron_right),
                 ),
               ],
             ),
           if (_placing) ...[
             Text(
-              tr('Verschieben, Ecke unten rechts zum Vergrößern ziehen', 'Drag to move, drag the bottom-right corner to resize'),
+              tr(
+                'Verschieben, Ecke unten rechts zum Vergrößern ziehen',
+                'Drag to move, drag the bottom-right corner to resize',
+              ),
               style: TextStyle(fontSize: 12, color: outline),
             ),
             const SizedBox(height: 8),
@@ -572,8 +610,16 @@ class _AnnotatePagesScreenState extends State<AnnotatePagesScreen> {
           ] else ...[
             SegmentedButton<AnnotateMode>(
               segments: [
-                ButtonSegment(value: AnnotateMode.fill, icon: const Icon(Icons.edit_note), label: Text(tr('Ausfüllen', 'Fill in'))),
-                ButtonSegment(value: AnnotateMode.draw, icon: const Icon(Icons.brush_outlined), label: Text(tr('Zeichnen', 'Draw'))),
+                ButtonSegment(
+                  value: AnnotateMode.fill,
+                  icon: const Icon(Icons.edit_note),
+                  label: Text(tr('Ausfüllen', 'Fill in')),
+                ),
+                ButtonSegment(
+                  value: AnnotateMode.draw,
+                  icon: const Icon(Icons.brush_outlined),
+                  label: Text(tr('Zeichnen', 'Draw')),
+                ),
               ],
               selected: {_mode},
               onSelectionChanged: _busy ? null : (v) => _setMode(v.first),
@@ -585,11 +631,31 @@ class _AnnotatePagesScreenState extends State<AnnotatePagesScreen> {
                 runSpacing: 8,
                 alignment: WrapAlignment.center,
                 children: [
-                  ActionChip(avatar: const Icon(Icons.title, size: 18), label: const Text('Text'), onPressed: _busy ? null : _addText),
-                  ActionChip(avatar: const Icon(Icons.today_outlined, size: 18), label: Text(tr('Datum', 'Date')), onPressed: _busy ? null : _addDate),
-                  ActionChip(avatar: const Icon(Icons.check, size: 18), label: Text(tr('Haken', 'Check mark')), onPressed: _busy ? null : () => _addMark(check: true)),
-                  ActionChip(avatar: const Icon(Icons.close, size: 18), label: Text(tr('Kreuz', 'Cross')), onPressed: _busy ? null : () => _addMark(check: false)),
-                  ActionChip(avatar: const Icon(Icons.draw_outlined, size: 18), label: Text(tr('Unterschrift', 'Signature')), onPressed: _busy ? null : _addSignature),
+                  ActionChip(
+                    avatar: const Icon(Icons.title, size: 18),
+                    label: const Text('Text'),
+                    onPressed: _busy ? null : _addText,
+                  ),
+                  ActionChip(
+                    avatar: const Icon(Icons.today_outlined, size: 18),
+                    label: Text(tr('Datum', 'Date')),
+                    onPressed: _busy ? null : _addDate,
+                  ),
+                  ActionChip(
+                    avatar: const Icon(Icons.check, size: 18),
+                    label: Text(tr('Haken', 'Check mark')),
+                    onPressed: _busy ? null : () => _addMark(check: true),
+                  ),
+                  ActionChip(
+                    avatar: const Icon(Icons.close, size: 18),
+                    label: Text(tr('Kreuz', 'Cross')),
+                    onPressed: _busy ? null : () => _addMark(check: false),
+                  ),
+                  ActionChip(
+                    avatar: const Icon(Icons.draw_outlined, size: 18),
+                    label: Text(tr('Unterschrift', 'Signature')),
+                    onPressed: _busy ? null : _addSignature,
+                  ),
                 ],
               )
             else
@@ -634,7 +700,11 @@ class _AnnotatePagesScreenState extends State<AnnotatePagesScreen> {
                         radius: 15,
                         backgroundColor: (_marker ? _markerColors : _penColors)[i],
                         child: (_marker ? _markerColor : _penColor) == i
-                            ? Icon(Icons.check, size: 16, color: _marker ? Colors.black : Colors.white)
+                            ? Icon(
+                                Icons.check,
+                                size: 16,
+                                color: _marker ? Colors.black : Colors.white,
+                              )
                             : null,
                       ),
                     ),
@@ -748,7 +818,9 @@ class _TextStampDialogState extends State<_TextStampDialog> {
                     child: CircleAvatar(
                       radius: 14,
                       backgroundColor: _textColors[i],
-                      child: _color == i ? const Icon(Icons.check, size: 16, color: Colors.white) : null,
+                      child: _color == i
+                          ? const Icon(Icons.check, size: 16, color: Colors.white)
+                          : null,
                     ),
                   ),
                 ),
@@ -792,9 +864,8 @@ class _SignaturePickerSheetState extends State<_SignaturePickerSheet> {
   }
 
   Future<void> _drawNew() async {
-    final png = await Navigator.of(context).push<Uint8List>(
-      MaterialPageRoute(builder: (_) => const SignaturePadScreen()),
-    );
+    final png = await Navigator.of(context)
+        .push<Uint8List>(MaterialPageRoute(builder: (_) => const SignaturePadScreen()));
     if (png == null || !mounted) return;
     await widget.service.save(png);
     if (!mounted) return;
@@ -818,7 +889,10 @@ class _SignaturePickerSheetState extends State<_SignaturePickerSheet> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Text(tr('Unterschrift wählen', 'Choose signature'), style: Theme.of(context).textTheme.titleMedium),
+              child: Text(
+                tr('Unterschrift wählen', 'Choose signature'),
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
             ),
             ListTile(
               leading: const Icon(Icons.add),

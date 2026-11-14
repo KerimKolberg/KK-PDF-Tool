@@ -30,14 +30,14 @@ class OcrResult {
   });
 
   Map<String, dynamic> toMap() => {
-        'text': text,
-        'width': width,
-        'height': height,
-        'lines': [
-          for (final l in lines)
-            {'text': l.text, 'left': l.left, 'top': l.top, 'right': l.right, 'bottom': l.bottom},
-        ],
-      };
+    'text': text,
+    'width': width,
+    'height': height,
+    'lines': [
+      for (final l in lines)
+        {'text': l.text, 'left': l.left, 'top': l.top, 'right': l.right, 'bottom': l.bottom},
+    ],
+  };
 
   factory OcrResult.fromMap(Map<dynamic, dynamic> map) {
     double n(dynamic v) => (v as num).toDouble();

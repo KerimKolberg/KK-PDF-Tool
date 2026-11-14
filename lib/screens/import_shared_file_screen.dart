@@ -19,11 +19,7 @@ class ImportSharedFileScreen extends StatefulWidget {
   final IncomingFile file;
   final DocumentStore store;
 
-  const ImportSharedFileScreen({
-    super.key,
-    required this.file,
-    required this.store,
-  });
+  const ImportSharedFileScreen({super.key, required this.file, required this.store});
 
   @override
   State<ImportSharedFileScreen> createState() => _ImportSharedFileScreenState();
@@ -114,9 +110,7 @@ class _ImportSharedFileScreenState extends State<ImportSharedFileScreen> {
           children: [
             ListTile(
               leading: Icon(
-                widget.file.isPdf
-                    ? Icons.picture_as_pdf_outlined
-                    : Icons.image_outlined,
+                widget.file.isPdf ? Icons.picture_as_pdf_outlined : Icons.image_outlined,
               ),
               title: Text(widget.file.name),
               subtitle: Text(tr('Wird zur Bibliothek hinzugefügt', 'Will be added to the library')),
@@ -148,7 +142,9 @@ class _ImportSharedFileScreenState extends State<ImportSharedFileScreen> {
                   child: FilledButton.icon(
                     onPressed: _busy ? null : _import,
                     icon: BusyIcon(busy: _busy, child: const Icon(Icons.download_outlined)),
-                    label: Text(_busy ? tr('Importiere…', 'Importing…') : tr('Importieren', 'Import')),
+                    label: Text(
+                      _busy ? tr('Importiere…', 'Importing…') : tr('Importieren', 'Import'),
+                    ),
                   ),
                 ),
               ],

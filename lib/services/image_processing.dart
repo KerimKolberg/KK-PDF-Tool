@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:image/image.dart' as img;
+
 import '../l10n.dart';
 
 /// Enum order is persisted (remembered filter), so new values go at the end;
@@ -34,8 +35,7 @@ extension ScanFilterLabel on ScanFilter {
   }
 
   /// Filters that always even out lighting/shadows as part of their look.
-  bool get includesShadowRemoval =>
-      this == ScanFilter.document || this == ScanFilter.blackAndWhite;
+  bool get includesShadowRemoval => this == ScanFilter.document || this == ScanFilter.blackAndWhite;
 }
 
 class ImageProcessing {
@@ -55,11 +55,7 @@ class ImageProcessing {
     );
   }
 
-  static img.Image applyFilter(
-    img.Image src,
-    ScanFilter filter, {
-    bool removeShadows = false,
-  }) {
+  static img.Image applyFilter(img.Image src, ScanFilter filter, {bool removeShadows = false}) {
     switch (filter) {
       case ScanFilter.document:
         final image = normalizeBackground(_rgb(src));
@@ -108,9 +104,7 @@ class ImageProcessing {
       height: sh,
       interpolation: img.Interpolation.average,
     );
-    var bg = Float32List.fromList([
-      for (final v in small.toUint8List()) v.toDouble(),
-    ]);
+    var bg = Float32List.fromList([for (final v in small.toUint8List()) v.toDouble()]);
     // Max filter removes thin dark text from the map; a smaller min filter
     // after it undoes most of the overshoot the max causes on gradients
     // (which would leave shadowed areas slightly grey) while keeping larger

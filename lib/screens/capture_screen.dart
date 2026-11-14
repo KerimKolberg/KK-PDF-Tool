@@ -39,11 +39,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
         (c) => c.lensDirection == CameraLensDirection.back,
         orElse: () => cameras.first,
       );
-      final controller = CameraController(
-        chosen,
-        ResolutionPreset.veryHigh,
-        enableAudio: false,
-      );
+      final controller = CameraController(chosen, ResolutionPreset.veryHigh, enableAudio: false);
       await controller.initialize();
       if (!mounted) {
         await controller.dispose();
@@ -144,8 +140,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
             children: [
               IconButton(
                 onPressed: _importFromFile,
-                icon: const Icon(Icons.folder_open,
-                    color: Colors.white, size: 32),
+                icon: const Icon(Icons.folder_open, color: Colors.white, size: 32),
                 tooltip: tr('Aus Datei importieren', 'Import from file'),
               ),
               GestureDetector(

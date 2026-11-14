@@ -64,17 +64,25 @@ class GoogleDesktopAuth {
     await load();
     final refreshToken = _refreshToken;
     if (refreshToken != null) {
-      final response = await http.post(Uri.parse(_tokenUrl), body: {
-        'client_id': clientId,
-        'client_secret': clientSecret,
-        'refresh_token': refreshToken,
-        'grant_type': 'refresh_token',
-      }).timeout(_timeout);
+      final response = await http
+          .post(
+            Uri.parse(_tokenUrl),
+            body: {
+              'client_id': clientId,
+              'client_secret': clientSecret,
+              'refresh_token': refreshToken,
+              'grant_type': 'refresh_token',
+            },
+          )
+          .timeout(_timeout);
       if (response.statusCode == 200) return _store(response.body);
       if (response.statusCode != 400 && response.statusCode != 401) {
         // A server or network problem - keep the sign-in for the next try.
         throw GoogleDesktopAuthException(
-          tr('Google-Anmeldung fehlgeschlagen (${response.statusCode}): ${response.body}', 'Google sign-in failed (${response.statusCode}): ${response.body}'),
+          tr(
+            'Google-Anmeldung fehlgeschlagen (${response.statusCode}): ${response.body}',
+            'Google sign-in failed (${response.statusCode}): ${response.body}',
+          ),
         );
       }
       // Revoked or expired (Google expires them after 7 days while the
@@ -113,44 +121,60 @@ class GoogleDesktopAuth {
     try {
       final redirectUri = 'http://127.0.0.1:${server.port}';
       final verifier = _randomString(64);
-      final challenge =
-          base64Url.encode(sha256.convert(ascii.encode(verifier)).bytes).replaceAll('=', '');
+      final challenge = base64Url
+          .encode(sha256.convert(ascii.encode(verifier)).bytes)
+          .replaceAll('=', '');
       final state = _randomString(24);
 
-      final url = Uri.parse(_authUrl).replace(queryParameters: {
-        'client_id': clientId,
-        'redirect_uri': redirectUri,
-        'response_type': 'code',
-        'scope': scopes.join(' '),
-        'code_challenge': challenge,
-        'code_challenge_method': 'S256',
-        'state': state,
-        'access_type': 'offline',
-        'prompt': 'consent',
-      });
+      final url = Uri.parse(_authUrl).replace(
+        queryParameters: {
+          'client_id': clientId,
+          'redirect_uri': redirectUri,
+          'response_type': 'code',
+          'scope': scopes.join(' '),
+          'code_challenge': challenge,
+          'code_challenge_method': 'S256',
+          'state': state,
+          'access_type': 'offline',
+          'prompt': 'consent',
+        },
+      );
       if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-        throw GoogleDesktopAuthException(tr('Browser konnte nicht geöffnet werden.', 'Could not open the browser.'));
+        throw GoogleDesktopAuthException(
+          tr('Browser konnte nicht geöffnet werden.', 'Could not open the browser.'),
+        );
       }
 
       final code = await _waitForCode(server, state).timeout(
         const Duration(minutes: 5),
         onTimeout: () => throw GoogleDesktopAuthException(
-          tr('Anmeldung abgebrochen (keine Antwort von Google innerhalb von 5 Minuten).', 'Sign-in cancelled (no answer from Google within 5 minutes).'),
+          tr(
+            'Anmeldung abgebrochen (keine Antwort von Google innerhalb von 5 Minuten).',
+            'Sign-in cancelled (no answer from Google within 5 minutes).',
+          ),
         ),
       );
       _focusApp();
 
-      final response = await http.post(Uri.parse(_tokenUrl), body: {
-        'client_id': clientId,
-        'client_secret': clientSecret,
-        'code': code,
-        'code_verifier': verifier,
-        'redirect_uri': redirectUri,
-        'grant_type': 'authorization_code',
-      }).timeout(_timeout);
+      final response = await http
+          .post(
+            Uri.parse(_tokenUrl),
+            body: {
+              'client_id': clientId,
+              'client_secret': clientSecret,
+              'code': code,
+              'code_verifier': verifier,
+              'redirect_uri': redirectUri,
+              'grant_type': 'authorization_code',
+            },
+          )
+          .timeout(_timeout);
       if (response.statusCode != 200) {
         throw GoogleDesktopAuthException(
-          tr('Google-Anmeldung fehlgeschlagen (${response.statusCode}): ${response.body}', 'Google sign-in failed (${response.statusCode}): ${response.body}'),
+          tr(
+            'Google-Anmeldung fehlgeschlagen (${response.statusCode}): ${response.body}',
+            'Google sign-in failed (${response.statusCode}): ${response.body}',
+          ),
         );
       }
       return await _store(response.body);
@@ -171,21 +195,26 @@ class GoogleDesktopAuth {
       final ok = params['state'] == state && params['code'] != null;
       request.response.headers.contentType = ContentType.html;
       request.response.write(
-        tr('<!doctype html><meta charset="utf-8"><title>KK-PDF-Tool</title>'
-        '<body style="font-family:sans-serif;text-align:center;padding-top:15vh">'
-        '<h2>${ok ? 'Anmeldung abgeschlossen' : 'Anmeldung fehlgeschlagen'}</h2>'
-        '<p>Du kannst dieses Fenster schließen und zu KK-PDF-Tool zurückkehren.</p>',
-        '<!doctype html><meta charset="utf-8"><title>KK-PDF-Tool</title>'
-        '<body style="font-family:sans-serif;text-align:center;padding-top:15vh">'
-        '<h2>${ok ? 'Signed in' : 'Sign-in failed'}</h2>'
-        '<p>You can close this window and return to KK-PDF-Tool.</p>'),
+        tr(
+          '<!doctype html><meta charset="utf-8"><title>KK-PDF-Tool</title>'
+              '<body style="font-family:sans-serif;text-align:center;padding-top:15vh">'
+              '<h2>${ok ? 'Anmeldung abgeschlossen' : 'Anmeldung fehlgeschlagen'}</h2>'
+              '<p>Du kannst dieses Fenster schließen und zu KK-PDF-Tool zurückkehren.</p>',
+          '<!doctype html><meta charset="utf-8"><title>KK-PDF-Tool</title>'
+              '<body style="font-family:sans-serif;text-align:center;padding-top:15vh">'
+              '<h2>${ok ? 'Signed in' : 'Sign-in failed'}</h2>'
+              '<p>You can close this window and return to KK-PDF-Tool.</p>',
+        ),
       );
       await request.response.close();
       if (ok) return params['code']!;
       throw GoogleDesktopAuthException(
         params['error'] == 'access_denied'
             ? tr('Anmeldung bei Google abgebrochen.', 'Google sign-in cancelled.')
-            : tr('Google-Anmeldung fehlgeschlagen: ${params['error'] ?? 'ungültige Antwort'}', 'Google sign-in failed: ${params['error'] ?? 'invalid response'}'),
+            : tr(
+                'Google-Anmeldung fehlgeschlagen: ${params['error'] ?? 'ungültige Antwort'}',
+                'Google sign-in failed: ${params['error'] ?? 'invalid response'}',
+              ),
       );
     }
     throw GoogleDesktopAuthException(tr('Anmeldung abgebrochen.', 'Sign-in cancelled.'));

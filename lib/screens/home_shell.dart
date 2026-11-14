@@ -58,9 +58,13 @@ class _HomeShellState extends State<HomeShell> {
         if (isSupportedFile(f.name)) IncomingFile(path: f.path, name: f.name),
     ];
     if (files.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(tr('Dieser Dateityp wird nicht unterstützt', 'This file type is not supported')),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            tr('Dieser Dateityp wird nicht unterstützt', 'This file type is not supported'),
+          ),
+        ),
+      );
       return;
     }
     await _handleFiles(files);
@@ -80,7 +84,9 @@ class _HomeShellState extends State<HomeShell> {
     for (final file in files) {
       if (!mounted) return;
       await Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => ImportSharedFileScreen(file: file, store: _store)),
+        MaterialPageRoute(
+          builder: (_) => ImportSharedFileScreen(file: file, store: _store),
+        ),
       );
     }
   }
@@ -94,11 +100,7 @@ class _HomeShellState extends State<HomeShell> {
     final index = wide ? _index : _index.clamp(0, 1);
     Widget content = IndexedStack(
       index: index,
-      children: [
-        const LibraryScreen(),
-        const ToolsScreen(),
-        if (wide) const SettingsScreen(),
-      ],
+      children: [const LibraryScreen(), const ToolsScreen(), if (wide) const SettingsScreen()],
     );
     if (wide) {
       content = Row(
@@ -126,9 +128,7 @@ class _HomeShellState extends State<HomeShell> {
             content,
             if (_dragging)
               Positioned.fill(
-                child: DropOverlay(
-                  message: tr('Dateien hier ablegen', 'Drop files here'),
-                ),
+                child: DropOverlay(message: tr('Dateien hier ablegen', 'Drop files here')),
               ),
           ],
         ),
@@ -232,9 +232,8 @@ class SettingsButton extends StatelessWidget {
     return IconButton(
       tooltip: tr('Einstellungen', 'Settings'),
       icon: const Icon(Icons.settings_outlined),
-      onPressed: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const SettingsScreen()),
-      ),
+      onPressed: () =>
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen())),
     );
   }
 }

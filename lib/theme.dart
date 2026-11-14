@@ -7,10 +7,7 @@ const _seedColor = Color(0xFF2C5F6F);
 /// pointer-sized; on phones and tablets they keep touch-friendly sizes.
 ThemeData buildAppTheme(Brightness brightness) {
   final desktop = defaultTargetPlatform == TargetPlatform.windows;
-  final colorScheme = ColorScheme.fromSeed(
-    seedColor: _seedColor,
-    brightness: brightness,
-  );
+  final colorScheme = ColorScheme.fromSeed(seedColor: _seedColor, brightness: brightness);
   final base = ThemeData(colorScheme: colorScheme, useMaterial3: true);
   // ThemeData.textTheme carries no font sizes until Theme.of() localizes
   // it, so take the sizes from the typography here.
@@ -83,9 +80,7 @@ ThemeData buildAppTheme(Brightness brightness) {
       ),
       unselectedLabelTextStyle: textTheme.labelLarge?.copyWith(color: colorScheme.onSurfaceVariant),
     ),
-    listTileTheme: ListTileThemeData(
-      shape: RoundedRectangleBorder(borderRadius: radius),
-    ),
+    listTileTheme: ListTileThemeData(shape: RoundedRectangleBorder(borderRadius: radius)),
     tooltipTheme: const TooltipThemeData(waitDuration: Duration(milliseconds: 400)),
   );
 }

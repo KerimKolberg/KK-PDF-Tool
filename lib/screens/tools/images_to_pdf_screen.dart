@@ -56,22 +56,21 @@ class _ImagesToPdfScreenState extends State<ImagesToPdfScreen> {
 
     setState(() => _busy = true);
     try {
-      final pdfBytes = await PdfService.buildPdf(
-        [for (final image in _images) image.bytes],
-      );
+      final pdfBytes = await PdfService.buildPdf([for (final image in _images) image.bytes]);
       final location = await _downloadsExport.export(pdfBytes, '$title.pdf');
       var message = tr('PDF gespeichert unter $location', 'PDF saved to $location');
       if (_deleteOriginals) {
-        message += await OriginalFilesCleanupService.deleteAndDescribe([for (final image in _images) image.path]);
+        message += await OriginalFilesCleanupService.deleteAndDescribe([
+          for (final image in _images) image.path,
+        ]);
       }
       if (!mounted) return;
       finishTool(context, widget, message);
     } catch (e) {
       if (!mounted) return;
       setState(() => _busy = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(tr('Fehlgeschlagen: $e', 'Failed: $e'))),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(tr('Fehlgeschlagen: $e', 'Failed: $e'))));
     }
   }
 
@@ -110,7 +109,10 @@ class _ImagesToPdfScreenState extends State<ImagesToPdfScreen> {
                 padding: const EdgeInsets.all(24),
                 child: FilePickPanel(
                   multiple: true,
-                  hint: tr('Füge Bilder hinzu, die zu einer PDF zusammengefasst werden sollen.', 'Add images to combine into one PDF.'),
+                  hint: tr(
+                    'Füge Bilder hinzu, die zu einer PDF zusammengefasst werden sollen.',
+                    'Add images to combine into one PDF.',
+                  ),
                   onPressed: _addImages,
                   icon: const Icon(Icons.add_photo_alternate_outlined),
                   label: Text(tr('Bilder hinzufügen', 'Add images')),
@@ -131,8 +133,12 @@ class _ImagesToPdfScreenState extends State<ImagesToPdfScreen> {
                   child: ListTile(
                     leading: ClipRRect(
                       borderRadius: BorderRadius.circular(4),
-                      child: Image.memory(_images[i].bytes,
-                          width: 48, height: 48, fit: BoxFit.cover),
+                      child: Image.memory(
+                        _images[i].bytes,
+                        width: 48,
+                        height: 48,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                     title: Text(tr('Seite ${i + 1}', 'Page ${i + 1}')),
                     trailing: IconButton(
@@ -166,8 +172,13 @@ class _ImagesToPdfScreenState extends State<ImagesToPdfScreen> {
                     Expanded(
                       child: FilledButton.icon(
                         onPressed: _images.isEmpty || _busy ? null : _createPdf,
-                        icon: BusyIcon(busy: _busy, child: const Icon(Icons.picture_as_pdf_outlined)),
-                        label: Text(_busy ? tr('Erstelle…', 'Creating…') : tr('PDF erstellen', 'Create PDF')),
+                        icon: BusyIcon(
+                          busy: _busy,
+                          child: const Icon(Icons.picture_as_pdf_outlined),
+                        ),
+                        label: Text(
+                          _busy ? tr('Erstelle…', 'Creating…') : tr('PDF erstellen', 'Create PDF'),
+                        ),
                       ),
                     ),
                   ],

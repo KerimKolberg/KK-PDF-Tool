@@ -4,11 +4,7 @@ import '../l10n.dart';
 import '../services/document_store.dart';
 
 /// Asks for a folder name; returns the trimmed name or null if cancelled.
-Future<String?> promptFolderName(
-  BuildContext context, {
-  String? title,
-  String initial = '',
-}) async {
+Future<String?> promptFolderName(BuildContext context, {String? title, String initial = ''}) async {
   final controller = TextEditingController(text: initial);
   final name = await showDialog<String>(
     context: context,
@@ -52,7 +48,10 @@ Future<({String? folder})?> pickFolder(
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Text(tr('In Ordner verschieben', 'Move to folder'), style: Theme.of(sheetContext).textTheme.titleMedium),
+              child: Text(
+                tr('In Ordner verschieben', 'Move to folder'),
+                style: Theme.of(sheetContext).textTheme.titleMedium,
+              ),
             ),
             ListTile(
               leading: const Icon(Icons.inbox_outlined),

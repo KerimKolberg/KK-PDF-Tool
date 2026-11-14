@@ -15,18 +15,20 @@ List<int> _order(List<Uint8List> pages) => [for (final p in pages) img.decodePng
 
 Future<List<Uint8List>?> _edit(WidgetTester tester, Future<void> Function() actions) async {
   List<Uint8List>? result;
-  await tester.pumpWidget(MaterialApp(
-    home: Builder(
-      builder: (context) => TextButton(
-        onPressed: () async {
-          result = await Navigator.of(context).push<List<Uint8List>>(
-            MaterialPageRoute(builder: (_) => EditPagesScreen(pages: _pages)),
-          );
-        },
-        child: const Text('open'),
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Builder(
+        builder: (context) => TextButton(
+          onPressed: () async {
+            result = await Navigator.of(context).push<List<Uint8List>>(
+              MaterialPageRoute(builder: (_) => EditPagesScreen(pages: _pages)),
+            );
+          },
+          child: const Text('open'),
+        ),
       ),
     ),
-  ));
+  );
   await tester.tap(find.text('open'));
   await tester.pumpAndSettle();
   await actions();
@@ -60,7 +62,9 @@ void main() {
       // Now [2, 0, 1, 3, 4] with 0 and 1 still selected; deselect 0, delete 1.
       await tester.tap(find.byType(Checkbox).at(1));
       await tester.pump();
-      await tester.tap(find.descendant(of: find.byType(AppBar), matching: find.byTooltip(tr('Löschen', 'Delete'))));
+      await tester.tap(
+        find.descendant(of: find.byType(AppBar), matching: find.byTooltip(tr('Löschen', 'Delete'))),
+      );
       await tester.pumpAndSettle();
     });
     expect(_order(result!), [2, 0, 3, 4]);

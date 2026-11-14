@@ -34,6 +34,7 @@ class OriginalFilesCleanupService {
     }
     return notDeleted;
   }
+
   /// Deletes [paths] and returns the note to append to the "saved" message
   /// when some of them could not be removed (empty if all are gone).
   static Future<String> deleteAndDescribe(List<String?> paths) async {
@@ -41,7 +42,9 @@ class OriginalFilesCleanupService {
     if (notDeleted.isEmpty) return '';
     return paths.length == 1
         ? tr(' · Original konnte nicht gelöscht werden', ' · Original could not be deleted')
-        : tr(' · ${notDeleted.length} Original(e) konnten nicht gelöscht werden',
-            ' · ${notDeleted.length} original(s) could not be deleted');
+        : tr(
+            ' · ${notDeleted.length} Original(e) konnten nicht gelöscht werden',
+            ' · ${notDeleted.length} original(s) could not be deleted',
+          );
   }
 }

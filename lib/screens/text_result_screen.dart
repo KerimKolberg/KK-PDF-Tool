@@ -27,7 +27,9 @@ class TextResultScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
           ),
           child: SingleChildScrollView(
-            child: SelectableText(text.isEmpty ? tr('(kein Text erkannt)', '(no text recognized)') : text),
+            child: SelectableText(
+              text.isEmpty ? tr('(kein Text erkannt)', '(no text recognized)') : text,
+            ),
           ),
         ),
       ),
@@ -42,7 +44,9 @@ class TextResultScreen extends StatelessWidget {
                     await Clipboard.setData(ClipboardData(text: text));
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(tr('In die Zwischenablage kopiert', 'Copied to clipboard'))),
+                      SnackBar(
+                        content: Text(tr('In die Zwischenablage kopiert', 'Copied to clipboard')),
+                      ),
                     );
                   },
                   icon: const Icon(Icons.copy_outlined),
@@ -60,12 +64,16 @@ class TextResultScreen extends StatelessWidget {
                       );
                       if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(tr('Gespeichert unter $location', 'Saved to $location'))),
+                        SnackBar(
+                          content: Text(tr('Gespeichert unter $location', 'Saved to $location')),
+                        ),
                       );
                     } catch (e) {
                       if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(tr('Speichern fehlgeschlagen: $e', 'Saving failed: $e'))),
+                        SnackBar(
+                          content: Text(tr('Speichern fehlgeschlagen: $e', 'Saving failed: $e')),
+                        ),
                       );
                     }
                   },

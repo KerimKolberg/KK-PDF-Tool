@@ -21,20 +21,20 @@ enum _CompressLevel { low, medium, high }
 
 extension on _CompressLevel {
   String get label => switch (this) {
-        _CompressLevel.low => tr('Wenig (beste Qualität)', 'Low (best quality)'),
-        _CompressLevel.medium => tr('Mittel', 'Medium'),
-        _CompressLevel.high => tr('Stark (kleinste Datei)', 'Strong (smallest file)'),
-      };
+    _CompressLevel.low => tr('Wenig (beste Qualität)', 'Low (best quality)'),
+    _CompressLevel.medium => tr('Mittel', 'Medium'),
+    _CompressLevel.high => tr('Stark (kleinste Datei)', 'Strong (smallest file)'),
+  };
   double get dpi => switch (this) {
-        _CompressLevel.low => 150,
-        _CompressLevel.medium => 110,
-        _CompressLevel.high => 80,
-      };
+    _CompressLevel.low => 150,
+    _CompressLevel.medium => 110,
+    _CompressLevel.high => 80,
+  };
   int get quality => switch (this) {
-        _CompressLevel.low => 85,
-        _CompressLevel.medium => 65,
-        _CompressLevel.high => 45,
-      };
+    _CompressLevel.low => 85,
+    _CompressLevel.medium => 65,
+    _CompressLevel.high => 45,
+  };
 }
 
 /// Shrinks a PDF's file size by re-rendering every page at a lower
@@ -52,8 +52,11 @@ class _CompressPdfScreenState extends State<CompressPdfScreen> {
   String? _fileName;
   String? _sourcePath;
   Uint8List? _pdfBytes;
-  _CompressLevel _level =
-      AppPrefs.getEnum('compress.level', _CompressLevel.values, _CompressLevel.medium);
+  _CompressLevel _level = AppPrefs.getEnum(
+    'compress.level',
+    _CompressLevel.values,
+    _CompressLevel.medium,
+  );
   bool _deleteOriginal = false;
   bool _busy = false;
 
@@ -80,11 +83,13 @@ class _CompressPdfScreenState extends State<CompressPdfScreen> {
         dpi: _level.dpi,
         quality: _level.quality,
       );
-      final location =
-          await _downloadsExport.export(compressed, '${name}_komprimiert.pdf');
+      final location = await _downloadsExport.export(compressed, '${name}_komprimiert.pdf');
       final before = formatFileSize(bytes.length);
       final after = formatFileSize(compressed.length);
-      var message = tr('$before → $after · gespeichert unter $location', '$before → $after · saved to $location');
+      var message = tr(
+        '$before → $after · gespeichert unter $location',
+        '$before → $after · saved to $location',
+      );
       if (_deleteOriginal) {
         message += await OriginalFilesCleanupService.deleteAndDescribe([_sourcePath]);
       }
@@ -124,7 +129,10 @@ class _CompressPdfScreenState extends State<CompressPdfScreen> {
                   onChange: _busy ? null : _pickPdf,
                 ),
                 const SizedBox(height: 12),
-                Text(tr('Kompressionsgrad', 'Compression level'), style: Theme.of(context).textTheme.titleSmall),
+                Text(
+                  tr('Kompressionsgrad', 'Compression level'),
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
                 const SizedBox(height: 4),
                 RadioGroup<_CompressLevel>(
                   groupValue: _level,
@@ -154,7 +162,9 @@ class _CompressPdfScreenState extends State<CompressPdfScreen> {
                 FilledButton.icon(
                   onPressed: _busy ? null : _compress,
                   icon: BusyIcon(busy: _busy, child: const Icon(Icons.compress)),
-                  label: Text(_busy ? tr('Komprimiere…', 'Compressing…') : tr('Komprimieren', 'Compress')),
+                  label: Text(
+                    _busy ? tr('Komprimiere…', 'Compressing…') : tr('Komprimieren', 'Compress'),
+                  ),
                 ),
               ],
             ],
