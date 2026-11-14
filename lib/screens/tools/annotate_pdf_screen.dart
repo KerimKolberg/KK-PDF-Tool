@@ -54,9 +54,9 @@ class _AnnotatePdfScreenState extends State<AnnotatePdfScreen> {
     if (bytes == null || name == null || _busyLabel != null) return;
     setState(() => _busyLabel = tr('Seiten werden geladen…', 'Loading pages…'));
     try {
-      final rendered = await PdfToolsService.rasterPages(bytes, dpi: 170);
-      final formats = await PdfToolsService.pageFormats(bytes);
-      final pages = await PdfToolsService.toJpegs(rendered, quality: 90);
+      final rendered = await PdfToolsService.renderPdf(bytes, dpi: 170, format: PageImageFormat.jpeg);
+      final formats = rendered.formats;
+      final pages = rendered.images;
       if (!mounted) return;
       setState(() => _busyLabel = null);
 

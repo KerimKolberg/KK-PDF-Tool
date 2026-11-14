@@ -38,6 +38,26 @@ enum PageNumberPosition {
   String get label => tr(_de, _en);
 }
 
+/// How rendered pages are encoded.
+enum PageImageFormat {
+  /// Lossless; best for text, large for photos.
+  png,
+
+  /// Small, slightly lossy; best for scans and photos.
+  jpeg,
+
+  /// PNG for pages that compress well as PNG (text, line art), JPEG for
+  /// photo-like pages (scans) - keeps both sharp text and small files.
+  compact,
+}
+
+/// Rendered page images of a PDF together with each page's size.
+class RenderedPdf {
+  final List<Uint8List> images;
+  final List<PdfPageFormat> formats;
+  const RenderedPdf(this.images, this.formats);
+}
+
 /// PDF manipulation on top of PDFium (via pdfrx).
 ///
 /// Merging, splitting and rotating copy the original pages unchanged: text
@@ -79,44 +99,105 @@ class PdfToolsService {
   }
 
   /// Renders [pages] (0-based indices; all pages when omitted) of [pdfBytes]
-  /// to PNG images at [dpi].
+  /// to images at [dpi].
   static Future<List<Uint8List>> rasterPages(
     Uint8List pdfBytes, {
     List<int>? pages,
     double dpi = 150,
+    PageImageFormat format = PageImageFormat.png,
+    int jpegQuality = 90,
+  }) async {
+    final rendered = await renderPdf(
+      pdfBytes,
+      pages: pages,
+      dpi: dpi,
+      format: format,
+      jpegQuality: jpegQuality,
+    );
+    return rendered.images;
+  }
+
+  /// Like [rasterPages], but also returns each rendered page's size, and
+  /// can cut the pages in [cropPages] (all when omitted) down to [crop]
+  /// (fractions of the page, 0..1) while rendering. The PDF is opened once.
+  static Future<RenderedPdf> renderPdf(
+    Uint8List pdfBytes, {
+    List<int>? pages,
+    double dpi = 150,
+    PageImageFormat format = PageImageFormat.png,
+    int jpegQuality = 90,
+    ui.Rect? crop,
+    List<int>? cropPages,
   }) {
     return _withDocument(pdfBytes, (doc) async {
       final all = doc.pages;
       final images = <Uint8List>[];
+      final formats = <PdfPageFormat>[];
       for (final index in pages ?? [for (var i = 0; i < all.length; i++) i]) {
         if (index < 0 || index >= all.length) continue;
-        images.add(await _renderPng(all[index], dpi));
+        final page = all[index];
+        final area = crop != null && _isSelected(cropPages, index) ? crop : null;
+        images.add(await _renderPage(page, dpi, format, jpegQuality, area));
+        formats.add(PdfPageFormat(
+          page.width * (area?.width ?? 1),
+          page.height * (area?.height ?? 1),
+        ));
       }
-      return images;
+      return RenderedPdf(images, formats);
     });
   }
 
-  static Future<Uint8List> _renderPng(rx.PdfPage page, double dpi) async {
+  /// Renders one page - or just the part [crop] of it - and encodes it.
+  static Future<Uint8List> _renderPage(
+    rx.PdfPage page,
+    double dpi,
+    PageImageFormat format,
+    int jpegQuality,
+    ui.Rect? crop,
+  ) async {
+    final fullWidth = page.width * dpi / 72;
+    final fullHeight = page.height * dpi / 72;
     final raw = await page.render(
-      fullWidth: page.width * dpi / 72,
-      fullHeight: page.height * dpi / 72,
+      x: crop == null ? 0 : (crop.left * fullWidth).round(),
+      y: crop == null ? 0 : (crop.top * fullHeight).round(),
+      width: crop == null ? null : (crop.width * fullWidth).round().clamp(1, fullWidth.ceil()),
+      height: crop == null ? null : (crop.height * fullHeight).round().clamp(1, fullHeight.ceil()),
+      fullWidth: fullWidth,
+      fullHeight: fullHeight,
       backgroundColor: 0xffffffff,
     );
     if (raw == null) {
       throw StateError(tr('Seite ${page.pageNumber} konnte nicht gelesen werden', 'Could not read page ${page.pageNumber}'));
     }
     try {
-      final image = await raw.createImage();
-      try {
-        final png = await image.toByteData(format: ui.ImageByteFormat.png);
-        return png!.buffer.asUint8List();
-      } finally {
-        image.dispose();
+      if (format == PageImageFormat.jpeg) return await _encodeJpeg(raw, jpegQuality);
+      final png = await _encodePng(raw);
+      // PNG is ideal for text and line art, but several times larger than
+      // JPEG for photos and scans (more than ~2 bits per pixel).
+      if (format == PageImageFormat.compact && png.length > raw.width * raw.height / 4) {
+        final jpeg = await _encodeJpeg(raw, jpegQuality);
+        if (jpeg.length < png.length) return jpeg;
       }
+      return png;
     } finally {
       raw.dispose();
     }
   }
+
+  static Future<Uint8List> _encodePng(rx.PdfImage raw) async {
+    final image = await raw.createImage();
+    try {
+      final png = await image.toByteData(format: ui.ImageByteFormat.png);
+      return png!.buffer.asUint8List();
+    } finally {
+      image.dispose();
+    }
+  }
+
+  static Future<Uint8List> _encodeJpeg(rx.PdfImage raw, int quality) => compute(
+        _bgraToJpegIsolate,
+        (pixels: raw.pixels, width: raw.width, height: raw.height, quality: quality),
+      );
 
   /// The size of every page of [pdfBytes], as displayed (rotation applied).
   static Future<List<PdfPageFormat>> pageFormats(Uint8List pdfBytes) {
@@ -176,13 +257,13 @@ class PdfToolsService {
     required double dpi,
     required int quality,
   }) async {
-    final images = await rasterPages(pdfBytes, dpi: dpi);
-    final formats = await pageFormats(pdfBytes);
-    final jpegs = await compute(_reencodeJpegBatchIsolate, {
-      'images': images,
-      'quality': quality,
-    });
-    return PdfService.buildPdf(jpegs, pageFormats: formats);
+    final pages = await renderPdf(
+      pdfBytes,
+      dpi: dpi,
+      format: PageImageFormat.jpeg,
+      jpegQuality: quality,
+    );
+    return PdfService.buildPdf(pages.images, pageFormats: pages.formats);
   }
 
   /// Stamps [text] diagonally across every page (or just [pageIndices], if
@@ -194,10 +275,10 @@ class PdfToolsService {
     double opacity = 0.35,
     double fontSize = 56,
   }) async {
-    final images = await rasterPages(pdfBytes, dpi: 150);
+    final pages = await renderPdf(pdfBytes, format: PageImageFormat.compact);
     return compute(_buildWatermarkedPdfIsolate, {
-      'images': images,
-      'formats': _formatsArg(await pageFormats(pdfBytes)),
+      'images': pages.images,
+      'formats': _formatsArg(pages.formats),
       'text': text,
       'pageIndices': pageIndices,
       'opacity': opacity,
@@ -242,22 +323,15 @@ class PdfToolsService {
     required double rightFrac,
     required double bottomFrac,
   }) async {
-    final images = await rasterPages(pdfBytes, dpi: 150);
-    final formats = [
-      for (final (i, f) in (await pageFormats(pdfBytes)).indexed)
-        _isSelected(pageIndices, i)
-            ? PdfPageFormat(f.width * (rightFrac - leftFrac), f.height * (bottomFrac - topFrac))
-            : f,
-    ];
-    final cropped = await compute(_cropBatchIsolate, {
-      'images': images,
-      'pageIndices': pageIndices,
-      'left': leftFrac,
-      'top': topFrac,
-      'right': rightFrac,
-      'bottom': bottomFrac,
-    });
-    return PdfService.buildPdf(cropped, pageFormats: formats);
+    // Only the wanted part of each page is rendered, so nothing has to be
+    // decoded and encoded a second time.
+    final pages = await renderPdf(
+      pdfBytes,
+      format: PageImageFormat.compact,
+      crop: ui.Rect.fromLTRB(leftFrac, topFrac, rightFrac, bottomFrac),
+      cropPages: pageIndices,
+    );
+    return PdfService.buildPdf(pages.images, pageFormats: pages.formats);
   }
 
   /// Downscales each image so its longer side is at most [maxSide] and
@@ -274,18 +348,6 @@ class PdfToolsService {
     ];
   }
 
-  /// Re-encodes images (e.g. PNG page renders) as JPEGs, which are much
-  /// smaller to store and embed.
-  static Future<List<Uint8List>> toJpegs(
-    List<Uint8List> images, {
-    int quality = 90,
-  }) {
-    return compute(_reencodeJpegBatchIsolate, {
-      'images': images,
-      'quality': quality,
-    });
-  }
-
   /// Adds page numbers (when [numberFormat] is set) and an optional header
   /// (top centre) and footer (bottom left) text to every page.
   static Future<Uint8List> addPageNumbers(
@@ -296,10 +358,10 @@ class PdfToolsService {
     String header = '',
     String footer = '',
   }) async {
-    final images = await rasterPages(pdfBytes, dpi: 150);
+    final pages = await renderPdf(pdfBytes, format: PageImageFormat.compact);
     return compute(_buildPageNumberedPdfIsolate, {
-      'images': images,
-      'formats': _formatsArg(await pageFormats(pdfBytes)),
+      'images': pages.images,
+      'formats': _formatsArg(pages.formats),
       'format': numberFormat?.index,
       'position': position.index,
       'startAt': startAt,
@@ -388,49 +450,22 @@ Uint8List _buildPptxIsolate(List<Uint8List> images) {
   return PptxWriterService.buildPptx(images);
 }
 
-List<Uint8List> _reencodeJpegBatchIsolate(Map<String, dynamic> args) {
-  final images = (args['images'] as List).cast<Uint8List>();
-  final quality = args['quality'] as int;
-  return [
-    for (final bytes in images)
-      img.encodeJpg(img.decodeImage(bytes)!, quality: quality),
-  ];
+/// Encodes raw BGRA pixels (as PDFium renders them) as a JPEG.
+Uint8List _bgraToJpegIsolate(({Uint8List pixels, int width, int height, int quality}) args) {
+  final image = img.Image.fromBytes(
+    width: args.width,
+    height: args.height,
+    bytes: args.pixels.buffer,
+    bytesOffset: args.pixels.offsetInBytes,
+    numChannels: 4,
+    order: img.ChannelOrder.bgra,
+  );
+  return img.encodeJpg(image, quality: args.quality);
 }
 
 bool _isSelected(List<dynamic>? pageIndices, int index) {
   if (pageIndices == null || pageIndices.isEmpty) return true;
   return pageIndices.contains(index);
-}
-
-List<Uint8List> _cropBatchIsolate(Map<String, dynamic> args) {
-  final images = (args['images'] as List).cast<Uint8List>();
-  final pageIndices = args['pageIndices'] as List?;
-  final left = args['left'] as double;
-  final top = args['top'] as double;
-  final right = args['right'] as double;
-  final bottom = args['bottom'] as double;
-  return [
-    for (var i = 0; i < images.length; i++)
-      if (_isSelected(pageIndices, i))
-        _cropOne(images[i], left, top, right, bottom)
-      else
-        images[i],
-  ];
-}
-
-Uint8List _cropOne(
-  Uint8List bytes,
-  double left,
-  double top,
-  double right,
-  double bottom,
-) {
-  final image = img.decodeImage(bytes)!;
-  final x = (left * image.width).round().clamp(0, image.width - 1);
-  final y = (top * image.height).round().clamp(0, image.height - 1);
-  final w = ((right - left) * image.width).round().clamp(1, image.width - x);
-  final h = ((bottom - top) * image.height).round().clamp(1, image.height - y);
-  return img.encodePng(img.copyCrop(image, x: x, y: y, width: w, height: h));
 }
 
 Future<Uint8List> _buildWatermarkedPdfIsolate(Map<String, dynamic> args) async {

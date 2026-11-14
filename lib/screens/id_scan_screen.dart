@@ -76,7 +76,13 @@ class _IdScanScreenState extends State<IdScanScreen> {
     setState(() => _saving = true);
     try {
       final pdfBytes = await PdfService.buildIdCardPdf(front, back);
-      final thumbnail = await PdfToolsService.rasterPages(pdfBytes, pages: [0], dpi: 120);
+      final thumbnail = await PdfToolsService.rasterPages(
+        pdfBytes,
+        pages: [0],
+        dpi: 120,
+        format: PageImageFormat.jpeg,
+        jpegQuality: 85,
+      );
       // Recognised text is only stored for library search here; the
       // two-sides layout itself stays a plain image PDF.
       String? text;

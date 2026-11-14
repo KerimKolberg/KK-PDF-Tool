@@ -33,3 +33,18 @@ Future<Directory> _resolve() async {
   }
   return dir;
 }
+
+/// Removes leftovers of earlier runs from the temp folder: backup ZIPs can
+/// be as large as the whole library, and shared copies contain documents.
+/// Best effort - never fails.
+Future<void> deleteStaleTemporaryFiles() async {
+  try {
+    final temp = await getTemporaryDirectory();
+    for (final name in const ['backup', 'restore', 'share']) {
+      final dir = Directory(p.join(temp.path, name));
+      if (await dir.exists()) await dir.delete(recursive: true);
+    }
+  } catch (_) {
+    // Files may be in use or the folder unavailable; try again next start.
+  }
+}

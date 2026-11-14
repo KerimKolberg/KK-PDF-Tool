@@ -44,6 +44,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
   List<String> _folders = [];
   Map<String, String> _texts = {};
   Map<String, int> _sizes = {};
+
+  /// First page image of every document, resolved once per reload instead
+  /// of on every rebuild of a list row.
+  Map<String, File> _thumbnails = {};
   bool _loading = true;
   bool _searching = false;
   String _query = '';
@@ -84,6 +88,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     final folders = await _store.loadFolders(docs: docs);
     final texts = <String, String>{};
     final sizes = <String, int>{};
+    final thumbnails = <String, File>{};
     await Future.wait([
       for (final d in docs)
         () async {
@@ -91,6 +96,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           if (text != null) texts[d.id] = text;
           final pdf = File(await _store.pdfPath(d.id));
           sizes[d.id] = await pdf.exists() ? await pdf.length() : 0;
+          if (d.pageCount > 0) thumbnails[d.id] = (await _store.pageFiles(d.id, 1)).first;
         }(),
     ]);
     if (!mounted) return;
@@ -99,6 +105,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       _folders = folders;
       _texts = texts;
       _sizes = sizes;
+      _thumbnails = thumbnails;
       if (_folder != null && !folders.contains(_folder)) _openFolder(null);
       _loading = false;
     });
@@ -446,31 +453,21 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 
   Widget _thumbnail(ScanDocument doc, {required double size, int cacheWidth = 144}) {
-    return FutureBuilder<List<File>>(
-      future: _store.pageFiles(doc.id, 1),
-      builder: (context, snapshot) {
-        final files = snapshot.data;
-        if (files == null || files.isEmpty) {
-          return SizedBox(
-            width: size,
-            height: size,
-            child: const Icon(Icons.description_outlined),
-          );
-        }
-        return Image.file(
-          files.first,
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-          alignment: Alignment.topCenter,
-          cacheWidth: cacheWidth,
-          errorBuilder: (_, _, _) => SizedBox(
-            width: size,
-            height: size,
-            child: const Icon(Icons.description_outlined),
-          ),
-        );
-      },
+    final placeholder = SizedBox(
+      width: size,
+      height: size,
+      child: const Icon(Icons.description_outlined),
+    );
+    final file = _thumbnails[doc.id];
+    if (file == null) return placeholder;
+    return Image.file(
+      file,
+      width: size,
+      height: size,
+      fit: BoxFit.cover,
+      alignment: Alignment.topCenter,
+      cacheWidth: cacheWidth,
+      errorBuilder: (_, _, _) => placeholder,
     );
   }
 

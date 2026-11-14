@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'l10n.dart';
 import 'screens/home_shell.dart';
+import 'services/app_paths.dart';
 import 'services/settings_service.dart';
 import 'services/windows_desktop_service.dart';
 import 'theme.dart';
@@ -12,6 +15,7 @@ Future<void> main(List<String> args) async {
   await L10n.init();
   await SettingsService.loadThemeMode();
   await WindowsDesktopService.instance.init(args);
+  unawaited(deleteStaleTemporaryFiles());
   runApp(const DocScannerApp());
 }
 

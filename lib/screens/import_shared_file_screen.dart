@@ -63,8 +63,13 @@ class _ImportSharedFileScreenState extends State<ImportSharedFileScreen> {
 
       if (widget.file.isPdf) {
         pdfBytes = sourceBytes;
-        final pages = await PdfToolsService.rasterPages(sourceBytes, dpi: 120);
-        pageJpegs = pages;
+        // Preview images for the library; the PDF itself is kept as it is.
+        pageJpegs = await PdfToolsService.rasterPages(
+          sourceBytes,
+          dpi: 120,
+          format: PageImageFormat.jpeg,
+          jpegQuality: 85,
+        );
       } else {
         final built = await DocumentBuilder.build([sourceBytes]);
         pageJpegs = built.pages;

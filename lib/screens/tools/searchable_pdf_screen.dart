@@ -49,11 +49,15 @@ class _SearchablePdfScreenState extends State<SearchablePdfScreen> {
     if (bytes == null || name == null || _busyLabel != null) return;
     setState(() => _busyLabel = tr('Seiten werden geladen…', 'Loading pages…'));
     try {
-      final rendered = await PdfToolsService.rasterPages(bytes, dpi: 200);
-      final formats = await PdfToolsService.pageFormats(bytes);
-      final pages = await PdfToolsService.toJpegs(rendered, quality: 88);
+      final rendered = await PdfToolsService.renderPdf(
+        bytes,
+        dpi: 200,
+        format: PageImageFormat.jpeg,
+        jpegQuality: 88,
+      );
+      final formats = rendered.formats;
       final built = await DocumentBuilder.build(
-        pages,
+        rendered.images,
         searchable: true,
         pageFormats: formats,
         onProgress: (done, total) {

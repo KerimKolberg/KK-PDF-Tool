@@ -106,26 +106,28 @@ class DocumentBuilder {
     ScanDocument doc,
   ) async {
     final files = await store.pageFiles(doc.id, doc.pageCount);
-    Uint8List? pdfBytes;
-    final pages = <Uint8List>[];
-    for (var i = 0; i < files.length; i++) {
-      final bytes = await files[i].readAsBytes();
-      final width = await _pixelWidth(bytes);
-      if (width != null && width >= 1200) {
-        pages.add(bytes);
-        continue;
-      }
-      try {
-        pdfBytes ??= await File(await store.pdfPath(doc.id)).readAsBytes();
-        final raster = await PdfToolsService.rasterPages(pdfBytes, pages: [i], dpi: 200);
-        if (raster.isNotEmpty) {
-          pages.add((await PdfToolsService.toJpegs(raster, quality: 90)).first);
-          continue;
+    final pages = [for (final file in files) await file.readAsBytes()];
+    final previews = <int>[];
+    for (var i = 0; i < pages.length; i++) {
+      final width = await _pixelWidth(pages[i]);
+      if (width == null || width < 1200) previews.add(i);
+    }
+    if (previews.isEmpty) return pages;
+    try {
+      // One pass over the PDF for all pages that need a better image.
+      final rendered = await PdfToolsService.rasterPages(
+        await File(await store.pdfPath(doc.id)).readAsBytes(),
+        pages: previews,
+        dpi: 200,
+        format: PageImageFormat.jpeg,
+      );
+      if (rendered.length == previews.length) {
+        for (final (n, index) in previews.indexed) {
+          pages[index] = rendered[n];
         }
-      } catch (_) {
-        // Fall back to the stored preview image below.
       }
-      pages.add(bytes);
+    } catch (_) {
+      // Keep the stored preview images.
     }
     return pages;
   }
