@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
@@ -5,7 +6,9 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
 import '../l10n.dart';
+import '../services/app_paths.dart';
 import '../services/file_picker_service.dart';
+import '../utils/errors.dart';
 
 /// Lets the user take a photo of a document page, or import an existing
 /// image file (useful on desktop machines without a usable camera).
@@ -48,7 +51,12 @@ class _CaptureScreenState extends State<CaptureScreen> {
       setState(() => _controller = controller);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = tr('Kamera nicht verfügbar:\n$e', 'Camera not available:\n$e'));
+      setState(
+        () => _error = tr(
+          'Kamera nicht verfügbar:\n${describeError(e)}',
+          'Camera not available:\n${describeError(e)}',
+        ),
+      );
     }
   }
 
@@ -65,12 +73,22 @@ class _CaptureScreenState extends State<CaptureScreen> {
     try {
       final file = await controller.takePicture();
       final bytes = await file.readAsBytes();
+      // The camera writes every photo to a temp file; the page now lives in
+      // memory (and later in the library), so don't leave a copy behind.
+      unawaited(deleteQuietly(file.path));
       if (!mounted) return;
       Navigator.of(context).pop<Uint8List>(bytes);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(tr('Aufnahme fehlgeschlagen: $e', 'Capture failed: $e'))),
+        SnackBar(
+          content: Text(
+            tr(
+              'Aufnahme fehlgeschlagen: ${describeError(e)}',
+              'Capture failed: ${describeError(e)}',
+            ),
+          ),
+        ),
       );
       setState(() => _capturing = false);
     }

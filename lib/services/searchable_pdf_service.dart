@@ -1,6 +1,6 @@
 import 'dart:math' as math;
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
@@ -46,11 +46,19 @@ class SearchablePdfService {
     return out.toString();
   }
 
+  /// Runs in a background isolate, like [PdfService.buildPdf].
   static Future<Uint8List> build(
     List<Uint8List> pageImages,
     List<OcrResult?> ocrResults, {
     List<PdfPageFormat>? pageFormats,
-  }) async {
+  }) => compute(_buildIsolate, (images: pageImages, ocr: ocrResults, formats: pageFormats));
+
+  static Future<Uint8List> _buildIsolate(
+    ({List<Uint8List> images, List<OcrResult?> ocr, List<PdfPageFormat>? formats}) args,
+  ) {
+    final pageImages = args.images;
+    final ocrResults = args.ocr;
+    final pageFormats = args.formats;
     final doc = pw.Document();
 
     for (var i = 0; i < pageImages.length; i++) {

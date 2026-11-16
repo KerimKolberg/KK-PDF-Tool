@@ -123,6 +123,16 @@ class MainActivity : FlutterActivity() {
 
         io.execute(::deleteOldIncomingFiles)
         handleIncomingIntent(intent, isInitial = true)
+
+        // Android 7-9 only: saving into the public Downloads folder needs this
+        // permission (newer versions don't). Without it files are still saved,
+        // just into the app's own folder - see writeToDownloads.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q &&
+            checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
+            android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(arrayOf(android.Manifest.permission.WRITE_EXTERNAL_STORAGE), 1)
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -323,52 +333,71 @@ class MainActivity : FlutterActivity() {
         return cleaned.take(100) + if (extension.isEmpty()) "" else ".$extension"
     }
 
-    private fun copyFileToDownloads(fileName: String, source: File, mimeType: String?): String {
+    private fun copyFileToDownloads(fileName: String, source: File, mimeType: String?): String =
+        writeToDownloads(fileName, mimeType) { output ->
+            source.inputStream().use { input -> input.copyTo(output) }
+        }
+
+    private fun saveToDownloads(fileName: String, bytes: ByteArray): String =
+        writeToDownloads(fileName, null) { output -> output.write(bytes) }
+
+    /**
+     * Creates [fileName] in Downloads/KK-PDF-Tool and fills it via [write].
+     * An existing file is never overwritten: Android itself renames the new
+     * one ("name (1).pdf") on 10+, and below that this code does. Returns
+     * where the file really ended up, under its real name.
+     */
+    private fun writeToDownloads(
+        fileName: String,
+        mimeType: String?,
+        write: (java.io.OutputStream) -> Unit,
+    ): String {
         val subFolder = "KK-PDF-Tool"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val values = ContentValues().apply {
                 put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
                 if (mimeType != null) put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
                 put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/" + subFolder)
+                put(MediaStore.MediaColumns.IS_PENDING, 1)
             }
             val resolver = applicationContext.contentResolver
             val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
                 ?: throw IllegalStateException("MediaStore refused to create the file")
-            resolver.openOutputStream(uri)?.use { output ->
-                source.inputStream().use { input -> input.copyTo(output) }
-            } ?: throw IllegalStateException("Could not open the file")
-            return "Downloads/$subFolder/$fileName"
-        } else {
-            @Suppress("DEPRECATION")
-            val dir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), subFolder)
-            if (!dir.exists()) dir.mkdirs()
-            val target = File(dir, fileName)
-            source.copyTo(target, overwrite = true)
-            return target.absolutePath
+            try {
+                resolver.openOutputStream(uri)?.use(write)
+                    ?: throw IllegalStateException("Could not open the file")
+                // Only now is the file visible to other apps - never half written.
+                resolver.update(uri, ContentValues().apply { put(MediaStore.MediaColumns.IS_PENDING, 0) }, null, null)
+            } catch (e: Exception) {
+                resolver.delete(uri, null, null)
+                throw e
+            }
+            var savedName = fileName
+            resolver.query(uri, arrayOf(MediaStore.MediaColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+                if (cursor.moveToFirst()) cursor.getString(0)?.let { savedName = it }
+            }
+            return "Downloads/$subFolder/$savedName"
         }
-    }
 
-    private fun saveToDownloads(fileName: String, bytes: ByteArray): String {
-        val subFolder = "KK-PDF-Tool"
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val values = ContentValues().apply {
-                put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
-                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/" + subFolder)
-            }
-            val resolver = applicationContext.contentResolver
-            val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
-                ?: throw IllegalStateException("MediaStore refused to create the file")
-            resolver.openOutputStream(uri)?.use { it.write(bytes) }
-                ?: throw IllegalStateException("Could not open the file")
-            return "Downloads/$subFolder/$fileName"
-        } else {
-            @Suppress("DEPRECATION")
-            val dir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), subFolder)
-            if (!dir.exists()) dir.mkdirs()
-            val file = File(dir, fileName)
-            FileOutputStream(file).use { it.write(bytes) }
-            return file.absolutePath
+        // Android 7-9: the public Downloads folder needs the storage
+        // permission. Without it the file goes to the app's own Downloads
+        // folder (Android/data/<app>/files/Download), which needs none.
+        @Suppress("DEPRECATION")
+        val publicDir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), subFolder)
+        val canWritePublic = checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
+            android.content.pm.PackageManager.PERMISSION_GRANTED
+        val dir = if (canWritePublic) publicDir else File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), subFolder)
+        if (!dir.exists()) dir.mkdirs()
+        val base = fileName.substringBeforeLast('.', fileName)
+        val extension = if (fileName.contains('.')) "." + fileName.substringAfterLast('.') else ""
+        var target = File(dir, fileName)
+        var n = 2
+        while (target.exists()) {
+            target = File(dir, "$base ($n)$extension")
+            n++
         }
+        FileOutputStream(target).use(write)
+        return target.absolutePath
     }
 
     private companion object {

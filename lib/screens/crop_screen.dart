@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../l10n.dart';
 import '../services/image_processing.dart';
 import '../services/settings_service.dart';
+import '../utils/errors.dart';
 import '../widgets/busy_icon.dart';
 import '../widgets/corner_crop_overlay.dart';
 
@@ -65,7 +66,10 @@ class _CropScreenState extends State<CropScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = tr('Bild konnte nicht geladen werden: $e', 'Could not load image: $e');
+        _error = tr(
+          'Bild konnte nicht geladen werden: ${describeError(e)}',
+          'Could not load image: ${describeError(e)}',
+        );
         _loading = false;
       });
     }
@@ -168,7 +172,14 @@ class _CropScreenState extends State<CropScreen> {
       if (!mounted) return;
       setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(tr('Drehen fehlgeschlagen: $e', 'Rotating failed: $e'))),
+        SnackBar(
+          content: Text(
+            tr(
+              'Drehen fehlgeschlagen: ${describeError(e)}',
+              'Rotating failed: ${describeError(e)}',
+            ),
+          ),
+        ),
       );
     }
   }
@@ -199,7 +210,14 @@ class _CropScreenState extends State<CropScreen> {
       if (!mounted) return;
       setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(tr('Verarbeitung fehlgeschlagen: $e', 'Processing failed: $e'))),
+        SnackBar(
+          content: Text(
+            tr(
+              'Verarbeitung fehlgeschlagen: ${describeError(e)}',
+              'Processing failed: ${describeError(e)}',
+            ),
+          ),
+        ),
       );
     }
   }

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 
@@ -16,7 +16,7 @@ import 'settings_service.dart';
 /// conversion - it does need the internet and the user's own Google account.
 class GoogleDriveConvertService {
   static const _scopes = ['https://www.googleapis.com/auth/drive.file'];
-  static const _uploadUrl = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+  static const _uploadUrl = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable';
   static const _filesUrl = 'https://www.googleapis.com/drive/v3/files';
   static const _timeout = Duration(seconds: 60);
   static const _uploadTimeout = Duration(minutes: 5);
@@ -24,6 +24,14 @@ class GoogleDriveConvertService {
   final SettingsService _settings = SettingsService();
   GoogleSignIn? _signIn;
   bool _initialized = false;
+
+  GoogleDriveConvertService();
+
+  /// Skips the sign-in and uses [accessToken] (for tests).
+  @visibleForTesting
+  GoogleDriveConvertService.withToken(String accessToken) : _fixedToken = accessToken;
+
+  String? _fixedToken;
 
   Future<GoogleSignIn> _ensureSignIn() async {
     if (_initialized && _signIn != null) return _signIn!;
@@ -39,6 +47,10 @@ class GoogleDriveConvertService {
   }
 
   Future<void> _signInAndAuthorize() async {
+    if (_fixedToken != null) {
+      _accessToken = _fixedToken;
+      return;
+    }
     if (Platform.isWindows) {
       final clientId = AppPrefs.getString(SettingsService.googleDesktopClientIdKey);
       final secret = AppPrefs.getString(SettingsService.googleDesktopClientSecretKey);
@@ -81,37 +93,59 @@ class GoogleDriveConvertService {
     required String sourceMimeType,
     required String targetGoogleMimeType,
   }) async {
-    final boundary = 'docscanner_${DateTime.now().microsecondsSinceEpoch}';
-    final metadata = jsonEncode({'name': fileName, 'mimeType': targetGoogleMimeType});
-
-    final body = BytesBuilder();
-    void writeString(String s) => body.add(utf8.encode(s));
-
-    writeString('--$boundary\r\n');
-    writeString('Content-Type: application/json; charset=UTF-8\r\n\r\n');
-    writeString(metadata);
-    writeString('\r\n--$boundary\r\n');
-    writeString('Content-Type: $sourceMimeType\r\n\r\n');
-    body.add(bytes);
-    writeString('\r\n--$boundary--');
-
-    final response = await http
+    // A resumable upload: unlike a single multipart request (which Google
+    // limits to 5 MB) it works for files of any size, e.g. long scans.
+    final start = await http
         .post(
           Uri.parse(_uploadUrl),
-          headers: {..._authHeader, 'Content-Type': 'multipart/related; boundary=$boundary'},
-          body: body.toBytes(),
+          headers: {
+            ..._authHeader,
+            'Content-Type': 'application/json; charset=UTF-8',
+            'X-Upload-Content-Type': sourceMimeType,
+            'X-Upload-Content-Length': '${bytes.length}',
+          },
+          body: jsonEncode({'name': fileName, 'mimeType': targetGoogleMimeType}),
         )
+        .timeout(_timeout);
+    final uploadUrl = start.headers['location'];
+    if (start.statusCode != 200 || uploadUrl == null) {
+      throw _apiError(start, tr('Hochladen fehlgeschlagen', 'Upload failed'));
+    }
+    final response = await http
+        .put(Uri.parse(uploadUrl), headers: {'Content-Type': sourceMimeType}, body: bytes)
         .timeout(_uploadTimeout);
-    if (response.statusCode == 401) GoogleDesktopAuth.invalidate();
-    if (response.statusCode != 200) {
-      throw GoogleDriveApiException(
-        tr(
-          'Hochladen fehlgeschlagen (${response.statusCode}): ${response.body}',
-          'Upload failed (${response.statusCode}): ${response.body}',
-        ),
-      );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw _apiError(response, tr('Hochladen fehlgeschlagen', 'Upload failed'));
     }
     return (jsonDecode(response.body) as Map<String, dynamic>)['id'] as String;
+  }
+
+  /// A readable error for a failed Google request. Google's own reason is
+  /// kept short; common cases get a plain explanation.
+  GoogleDriveApiException _apiError(http.Response response, String what) {
+    if (response.statusCode == 401) GoogleDesktopAuth.invalidate();
+    final body = response.body;
+    final String reason;
+    if (body.contains('exportSizeLimitExceeded')) {
+      reason = tr(
+        'Das Ergebnis ist größer als Google erlaubt (10 MB). Teile die PDF vorher auf.',
+        'The result is larger than Google allows (10 MB). Split the PDF first.',
+      );
+    } else if (response.statusCode == 401 || response.statusCode == 403) {
+      reason = tr(
+        'Google hat den Zugriff abgelehnt. Bitte in den Einstellungen abmelden und neu anmelden.',
+        'Google refused access. Please sign out in Settings and sign in again.',
+      );
+    } else if (response.statusCode == 429 || response.statusCode >= 500) {
+      reason = tr(
+        'Google ist gerade nicht erreichbar. Bitte später erneut versuchen.',
+        'Google is not available right now. Please try again later.',
+      );
+    } else {
+      reason =
+          'HTTP ${response.statusCode}: ${body.length > 200 ? '${body.substring(0, 200)}…' : body}';
+    }
+    return GoogleDriveApiException('$what - $reason');
   }
 
   Future<Uint8List> _exportAndDelete(String fileId, String exportMimeType) async {
@@ -123,12 +157,7 @@ class GoogleDriveConvertService {
           )
           .timeout(_timeout);
       if (response.statusCode != 200) {
-        throw GoogleDriveApiException(
-          tr(
-            'Export fehlgeschlagen (${response.statusCode}): ${response.body}',
-            'Export failed (${response.statusCode}): ${response.body}',
-          ),
-        );
+        throw _apiError(response, tr('Umwandlung fehlgeschlagen', 'Conversion failed'));
       }
       return response.bodyBytes;
     } finally {

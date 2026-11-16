@@ -11,6 +11,7 @@ import '../services/ocr_service.dart';
 import '../services/pdf_service.dart';
 import '../services/pdf_tools_service.dart';
 import '../services/settings_service.dart';
+import '../utils/errors.dart';
 import '../widgets/busy_icon.dart';
 import 'capture_screen.dart';
 import 'crop_screen.dart';
@@ -111,7 +112,14 @@ class _IdScanScreenState extends State<IdScanScreen> {
       if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(tr('Speichern fehlgeschlagen: $e', 'Saving failed: $e'))),
+        SnackBar(
+          content: Text(
+            tr(
+              'Speichern fehlgeschlagen: ${describeError(e)}',
+              'Saving failed: ${describeError(e)}',
+            ),
+          ),
+        ),
       );
     }
   }

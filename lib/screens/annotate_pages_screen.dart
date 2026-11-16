@@ -9,6 +9,7 @@ import 'package:image/image.dart' as img;
 import '../l10n.dart';
 import '../services/settings_service.dart';
 import '../services/signature_service.dart';
+import '../utils/errors.dart';
 import 'signature_pad_screen.dart';
 
 enum AnnotateMode { fill, draw }
@@ -274,7 +275,10 @@ class _AnnotatePagesScreenState extends State<AnnotatePagesScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              tr('Zeichnung konnte nicht übernommen werden: $e', 'Could not apply drawing: $e'),
+              tr(
+                'Zeichnung konnte nicht übernommen werden: ${describeError(e)}',
+                'Could not apply drawing: ${describeError(e)}',
+              ),
             ),
           ),
         );
@@ -443,7 +447,14 @@ class _AnnotatePagesScreenState extends State<AnnotatePagesScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(tr('Einfügen fehlgeschlagen: $e', 'Insert failed: $e'))),
+          SnackBar(
+            content: Text(
+              tr(
+                'Einfügen fehlgeschlagen: ${describeError(e)}',
+                'Insert failed: ${describeError(e)}',
+              ),
+            ),
+          ),
         );
       }
     } finally {

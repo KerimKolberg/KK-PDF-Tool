@@ -8,6 +8,7 @@ import '../l10n.dart';
 import '../models/scan_document.dart';
 import '../services/document_share_service.dart';
 import '../services/document_store.dart';
+import '../utils/errors.dart';
 import '../utils/formatting.dart';
 
 /// Asks how to share [doc] (original PDF, smaller PDF or JPG images),
@@ -98,7 +99,14 @@ Future<void> showShareSheet(BuildContext context, DocumentStore store, ScanDocum
   if (!context.mounted) return;
   if (prepared == null) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(tr('Teilen fehlgeschlagen: $error', 'Sharing failed: $error'))),
+      SnackBar(
+        content: Text(
+          tr(
+            'Teilen fehlgeschlagen: ${describeError(error ?? '?')}',
+            'Sharing failed: ${describeError(error ?? '?')}',
+          ),
+        ),
+      ),
     );
     return;
   }

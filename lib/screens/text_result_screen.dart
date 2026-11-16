@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../l10n.dart';
 import '../services/downloads_export_service.dart';
+import '../utils/errors.dart';
 
 /// Shows recognised text with copy and "save as .txt" actions.
 class TextResultScreen extends StatelessWidget {
@@ -72,7 +73,12 @@ class TextResultScreen extends StatelessWidget {
                       if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text(tr('Speichern fehlgeschlagen: $e', 'Saving failed: $e')),
+                          content: Text(
+                            tr(
+                              'Speichern fehlgeschlagen: ${describeError(e)}',
+                              'Saving failed: ${describeError(e)}',
+                            ),
+                          ),
                         ),
                       );
                     }

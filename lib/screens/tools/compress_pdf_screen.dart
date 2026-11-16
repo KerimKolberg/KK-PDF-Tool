@@ -10,6 +10,7 @@ import '../../services/file_picker_service.dart';
 import '../../services/original_files_cleanup_service.dart';
 import '../../services/pdf_tools_service.dart';
 import '../../services/settings_service.dart';
+import '../../utils/errors.dart';
 import '../../utils/formatting.dart';
 import '../../widgets/busy_icon.dart';
 import '../../widgets/delete_originals_switch.dart';
@@ -99,7 +100,14 @@ class _CompressPdfScreenState extends State<CompressPdfScreen> {
       if (!mounted) return;
       setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(tr('Komprimierung fehlgeschlagen: $e', 'Compression failed: $e'))),
+        SnackBar(
+          content: Text(
+            tr(
+              'Komprimierung fehlgeschlagen: ${describeError(e)}',
+              'Compression failed: ${describeError(e)}',
+            ),
+          ),
+        ),
       );
     }
   }

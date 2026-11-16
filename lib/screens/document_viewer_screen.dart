@@ -10,6 +10,7 @@ import '../services/document_builder.dart';
 import '../services/document_store.dart';
 import '../services/google_drive_convert_service.dart';
 import '../services/ocr_service.dart';
+import '../utils/errors.dart';
 import '../utils/layout.dart';
 import '../widgets/folder_picker.dart';
 import '../widgets/share_sheet.dart';
@@ -128,8 +129,11 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
       return await action();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(tr('Fehlgeschlagen: $e', 'Failed: $e'))));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(tr('Fehlgeschlagen: ${describeError(e)}', 'Failed: ${describeError(e)}')),
+          ),
+        );
       }
       return null;
     } finally {

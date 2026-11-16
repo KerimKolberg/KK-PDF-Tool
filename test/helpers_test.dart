@@ -1,6 +1,11 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:doc_scanner/l10n.dart';
 import 'package:doc_scanner/services/downloads_export_service.dart';
+import 'package:doc_scanner/utils/errors.dart';
 import 'package:doc_scanner/utils/formatting.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -50,5 +55,25 @@ void main() {
       r'C:\Users\me\Downloads\KK-PDF-Tool',
     );
     expect(folderOf('Downloads/KK-PDF-Tool/a.pdf'), 'Downloads/KK-PDF-Tool');
+  });
+
+  group('describeError', () {
+    setUp(() => L10n.language.value = 'en');
+    tearDown(() => L10n.language.value = 'de');
+
+    test('explains common problems in plain words', () {
+      expect(describeError(const SocketException('Failed host lookup')), contains('internet'));
+      expect(describeError(TimeoutException('x')), contains('No response'));
+      expect(
+        describeError(const FileSystemException('write', 'a.pdf', OSError('No space', 28))),
+        'The storage is full.',
+      );
+      expect(
+        describeError(PlatformException(code: 'save_failed', message: 'Disk busy')),
+        'Disk busy',
+      );
+      expect(describeError(const FormatException('Not a backup')), 'Not a backup');
+      expect(describeError(Exception('Something odd')), 'Something odd');
+    });
   });
 }

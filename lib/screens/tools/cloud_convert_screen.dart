@@ -9,6 +9,7 @@ import '../../services/downloads_export_service.dart';
 import '../../services/file_picker_service.dart';
 import '../../services/google_drive_convert_service.dart';
 import '../../services/original_files_cleanup_service.dart';
+import '../../utils/errors.dart';
 import '../../widgets/busy_icon.dart';
 import '../../widgets/delete_originals_switch.dart';
 import '../../widgets/tool_drop_zone.dart';
@@ -88,12 +89,19 @@ class _CloudConvertScreenState extends State<CloudConvertScreen> {
     } on GoogleDriveNotConfiguredException catch (e) {
       if (!mounted) return;
       setState(() => _busy = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(describeError(e))));
     } catch (e) {
       if (!mounted) return;
       setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(tr('Umwandlung fehlgeschlagen: $e', 'Conversion failed: $e'))),
+        SnackBar(
+          content: Text(
+            tr(
+              'Umwandlung fehlgeschlagen: ${describeError(e)}',
+              'Conversion failed: ${describeError(e)}',
+            ),
+          ),
+        ),
       );
     }
   }

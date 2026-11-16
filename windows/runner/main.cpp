@@ -7,6 +7,22 @@
 
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
+  // Only one KK-PDF-Tool per Windows user session. A second start (e.g. the
+  // desktop icon while the app already runs in the tray) brings the running
+  // window to the front instead of opening another copy that would work on
+  // the same library files at the same time.
+  HANDLE single_instance =
+      ::CreateMutexW(nullptr, FALSE, L"Local\\KK-PDF-Tool-SingleInstance");
+  if (single_instance != nullptr && ::GetLastError() == ERROR_ALREADY_EXISTS) {
+    HWND existing = ::FindWindowW(L"FLUTTER_RUNNER_WIN32_WINDOW", L"KK-PDF-Tool");
+    if (existing != nullptr) {
+      ::ShowWindow(existing, ::IsIconic(existing) ? SW_RESTORE : SW_SHOW);
+      ::SetForegroundWindow(existing);
+    }
+    ::CloseHandle(single_instance);
+    return EXIT_SUCCESS;
+  }
+
   // Attach to console when present (e.g., 'flutter run') or create a
   // new console when running with a debugger.
   if (!::AttachConsole(ATTACH_PARENT_PROCESS) && ::IsDebuggerPresent()) {
@@ -39,5 +55,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   }
 
   ::CoUninitialize();
+  if (single_instance != nullptr) ::CloseHandle(single_instance);
   return EXIT_SUCCESS;
 }

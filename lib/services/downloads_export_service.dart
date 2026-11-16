@@ -58,9 +58,22 @@ class DownloadsExportService {
       });
       return location ?? 'Downloads/$_folderName/$fileName';
     }
-    final targetDir = await desktopTargetDir();
-    final copy = await source.copy(p.join(targetDir.path, fileName));
+    final target = await _freeFile(await desktopTargetDir(), fileName);
+    final copy = await source.copy(target.path);
     return copy.path;
+  }
+
+  /// A file in [dir] named [fileName] that doesn't exist yet: an existing
+  /// file of the same name (an earlier result, or the very file a tool was
+  /// working on) is never overwritten - the new one becomes "name (2).pdf".
+  static Future<File> _freeFile(Directory dir, String fileName) async {
+    final base = p.basenameWithoutExtension(fileName);
+    final extension = p.extension(fileName);
+    var candidate = File(p.join(dir.path, fileName));
+    for (var n = 2; await candidate.exists(); n++) {
+      candidate = File(p.join(dir.path, '$base ($n)$extension'));
+    }
+    return candidate;
   }
 
   /// Desktop: the Downloads\KK-PDF-Tool folder (created if missing).
@@ -84,8 +97,7 @@ class DownloadsExportService {
       return location ?? 'Downloads/$_folderName/$fileName';
     }
 
-    final targetDir = await desktopTargetDir();
-    final file = File(p.join(targetDir.path, fileName));
+    final file = await _freeFile(await desktopTargetDir(), fileName);
     await file.writeAsBytes(bytes, flush: true);
     return file.path;
   }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -6,10 +7,12 @@ import 'package:flutter/material.dart';
 
 import '../l10n.dart';
 import '../models/scan_document.dart';
+import '../services/app_paths.dart';
 import '../services/document_builder.dart';
 import '../services/document_store.dart';
 import '../services/downloads_export_service.dart';
 import '../services/settings_service.dart';
+import '../utils/errors.dart';
 import 'capture_screen.dart';
 import 'crop_screen.dart';
 
@@ -86,6 +89,10 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
         return;
       }
       final newPages = await Future.wait(paths.map((path) => File(path).readAsBytes()));
+      // The scanner leaves its photos in the app's cache - remove them.
+      for (final path in paths) {
+        unawaited(deleteQuietly(path));
+      }
       if (!mounted) return;
       setState(() {
         _pages.addAll(newPages);
@@ -96,7 +103,12 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
       setState(() => _autoScanning = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(tr('Automatischer Scan fehlgeschlagen: $e', 'Automatic scan failed: $e')),
+          content: Text(
+            tr(
+              'Automatischer Scan fehlgeschlagen: ${describeError(e)}',
+              'Automatic scan failed: ${describeError(e)}',
+            ),
+          ),
         ),
       );
     }
@@ -195,7 +207,14 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
       if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(tr('Speichern fehlgeschlagen: $e', 'Saving failed: $e'))),
+        SnackBar(
+          content: Text(
+            tr(
+              'Speichern fehlgeschlagen: ${describeError(e)}',
+              'Saving failed: ${describeError(e)}',
+            ),
+          ),
+        ),
       );
     }
   }
@@ -255,8 +274,8 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
         SnackBar(
           content: Text(
             tr(
-              'Fehler nach $saved von $total Dokumenten: $e',
-              'Error after $saved of $total documents: $e',
+              'Fehler nach $saved von $total Dokumenten: ${describeError(e)}',
+              'Error after $saved of $total documents: ${describeError(e)}',
             ),
           ),
         ),
@@ -314,7 +333,9 @@ class _ScanFlowScreenState extends State<ScanFlowScreen> {
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
-        if (didPop) return;
+        // Leaving while saving would report a discarded scan that is in
+        // fact being saved; wait for the save to finish instead.
+        if (didPop || _saving) return;
         final shouldPop = await _confirmDiscard();
         if (!context.mounted) return;
         if (shouldPop) {

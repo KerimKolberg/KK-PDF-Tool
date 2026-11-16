@@ -9,6 +9,7 @@ import '../services/document_builder.dart';
 import '../services/document_store.dart';
 import '../services/incoming_file_service.dart';
 import '../services/pdf_tools_service.dart';
+import '../utils/errors.dart';
 import '../widgets/busy_icon.dart';
 import 'document_viewer_screen.dart';
 
@@ -93,7 +94,10 @@ class _ImportSharedFileScreenState extends State<ImportSharedFileScreen> {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _error = tr('Import fehlgeschlagen: $e', 'Import failed: $e');
+        _error = tr(
+          'Import fehlgeschlagen: ${describeError(e)}',
+          'Import failed: ${describeError(e)}',
+        );
       });
     }
   }

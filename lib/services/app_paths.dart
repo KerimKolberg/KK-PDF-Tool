@@ -34,6 +34,17 @@ Future<Directory> _resolve() async {
   return dir;
 }
 
+/// Deletes a temporary file (e.g. a camera photo that has been read).
+/// Best effort - never fails.
+Future<void> deleteQuietly(String path) async {
+  try {
+    final file = File(path);
+    if (await file.exists()) await file.delete();
+  } catch (_) {
+    // Already gone or locked; the OS clears temp files eventually.
+  }
+}
+
 /// Removes leftovers of earlier runs from the temp folder: backup ZIPs can
 /// be as large as the whole library, and shared copies contain documents.
 /// Best effort - never fails.

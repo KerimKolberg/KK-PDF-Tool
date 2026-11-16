@@ -15,6 +15,7 @@ import '../services/file_picker_service.dart';
 import '../services/google_desktop_auth.dart';
 import '../services/settings_service.dart';
 import '../services/windows_desktop_service.dart';
+import '../utils/errors.dart';
 import '../utils/formatting.dart';
 import '../utils/layout.dart';
 import '../widgets/settings_widgets.dart';
@@ -124,7 +125,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final done = summary;
     if (done == null || error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(tr('Sicherung fehlgeschlagen: $error', 'Backup failed: $error'))),
+        SnackBar(
+          content: Text(
+            tr(
+              'Sicherung fehlgeschlagen: ${describeError(error ?? '?')}',
+              'Backup failed: ${describeError(error ?? '?')}',
+            ),
+          ),
+        ),
       );
       return;
     }
@@ -180,7 +188,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (done == null) {
       final message = error is FormatException
           ? (error as FormatException).message
-          : tr('Wiederherstellen fehlgeschlagen: $error', 'Restore failed: $error');
+          : tr(
+              'Wiederherstellen fehlgeschlagen: ${describeError(error ?? '?')}',
+              'Restore failed: ${describeError(error ?? '?')}',
+            );
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
       return;
     }

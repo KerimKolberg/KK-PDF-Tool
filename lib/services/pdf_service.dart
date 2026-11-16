@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -10,10 +10,19 @@ class PdfService {
   /// page, scaled to fit an A4 sheet - or, for pages rendered from an
   /// existing PDF, onto that page's original size from [pageFormats], so
   /// slides stay slides instead of gaining white A4 margins.
+  ///
+  /// Runs in a background isolate: decoding the images and writing the PDF
+  /// takes seconds for long documents and would otherwise freeze the UI.
   static Future<Uint8List> buildPdf(
     List<Uint8List> pageImages, {
     List<PdfPageFormat>? pageFormats,
-  }) async {
+  }) => compute(_buildPdfIsolate, (images: pageImages, formats: pageFormats));
+
+  static Future<Uint8List> _buildPdfIsolate(
+    ({List<Uint8List> images, List<PdfPageFormat>? formats}) args,
+  ) {
+    final pageImages = args.images;
+    final pageFormats = args.formats;
     final doc = pw.Document();
     for (var i = 0; i < pageImages.length; i++) {
       final image = pw.MemoryImage(pageImages[i]);
