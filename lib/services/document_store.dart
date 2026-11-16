@@ -128,8 +128,22 @@ class DocumentStore {
   static Future<void> _writeAtomically(File file, String content) async {
     final temp = File('${file.path}.tmp');
     await temp.writeAsString(content, flush: true);
-    if (await file.exists()) await file.rename('${file.path}.bak');
-    await temp.rename(file.path);
+    if (await file.exists()) await _retry(() => file.rename('${file.path}.bak'));
+    await _retry(() => temp.rename(file.path));
+  }
+
+  /// Retries a file operation a few times: on Windows, OneDrive (which often
+  /// syncs the Documents folder), virus scanners or the search indexer can
+  /// hold a file open for a moment, which makes a rename fail briefly.
+  static Future<T> _retry<T>(Future<T> Function() action) async {
+    for (var attempt = 1; ; attempt++) {
+      try {
+        return await action();
+      } on FileSystemException {
+        if (attempt >= 5) rethrow;
+        await Future<void>.delayed(Duration(milliseconds: 100 * attempt));
+      }
+    }
   }
 
   /// The library's own folder (for backups).

@@ -10,7 +10,7 @@ import 'settings_service.dart';
 /// Windows only: tray icon (click = open, right-click = menu), starting
 /// hidden in the tray, and "start with Windows" via the per-user Run key
 /// (set with the built-in reg.exe, no extra dependency or admin rights).
-class WindowsDesktopService with TrayListener {
+class WindowsDesktopService with TrayListener, WindowListener {
   WindowsDesktopService._();
   static final instance = WindowsDesktopService._();
 
@@ -59,6 +59,10 @@ class WindowsDesktopService with TrayListener {
       ),
     );
     trayManager.addListener(this);
+    // Closing the window goes through [onWindowClose], so the tray icon is
+    // removed too instead of lingering until the mouse passes over it.
+    await windowManager.setPreventClose(true);
+    windowManager.addListener(this);
     // After an update/reinstall the exe may live elsewhere; refresh the
     // autostart entry so it never points at a missing file.
     if (await isAutostartEnabled()) {
@@ -82,9 +86,16 @@ class WindowsDesktopService with TrayListener {
     if (menuItem.key == 'show') {
       _showWindow();
     } else if (menuItem.key == 'quit') {
-      trayManager.destroy();
-      windowManager.destroy();
+      _quit();
     }
+  }
+
+  @override
+  void onWindowClose() => _quit();
+
+  Future<void> _quit() async {
+    await trayManager.destroy();
+    await windowManager.destroy();
   }
 
   Future<bool> isAutostartEnabled() async {

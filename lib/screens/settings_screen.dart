@@ -105,6 +105,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  static const _lastBackupKey = 'backup.last';
+
+  /// When the last backup was made - or a warning when there is none yet:
+  /// the library only lives on this device (on Android uninstalling the app
+  /// deletes it), so a backup is the only copy elsewhere.
+  String _backupStatus() {
+    final last = DateTime.tryParse(AppPrefs.getString(_lastBackupKey) ?? '');
+    if (last == null) {
+      return AppPlatform.isAndroid
+          ? tr(
+              'Noch keine Sicherung. Wichtig: Beim Deinstallieren der App werden alle Scans gelöscht.',
+              'No backup yet. Important: uninstalling the app deletes all scans.',
+            )
+          : tr('Noch keine Sicherung.', 'No backup yet.');
+    }
+    final days = DateTime.now().difference(last).inDays;
+    final date = tr(
+      '${last.day}.${last.month}.${last.year}',
+      '${last.year}-${last.month.toString().padLeft(2, '0')}-${last.day.toString().padLeft(2, '0')}',
+    );
+    return days == 0
+        ? tr('Letzte Sicherung: heute', 'Last backup: today')
+        : tr('Letzte Sicherung: $date (vor $days Tagen)', 'Last backup: $date ($days days ago)');
+  }
+
   Future<void> _createBackup() async {
     BackupSummary? summary;
     String? location;
@@ -117,6 +142,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           p.basename(summary!.file.path),
           mimeType: 'application/zip',
         );
+        AppPrefs.setString(_lastBackupKey, DateTime.now().toIso8601String());
       } catch (e) {
         error = e;
       }
@@ -136,6 +162,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
       return;
     }
+    setState(() {}); // shows the new "last backup" date
     await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
@@ -418,10 +445,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         SettingsTile(
           icon: Icons.backup_outlined,
           title: tr('Sicherung erstellen', 'Create backup'),
-          subtitle: tr(
-            'Alle Scans, Ordner und Unterschriften als eine ZIP-Datei in Downloads/KK-PDF-Tool',
-            'All scans, folders and signatures as one ZIP file in Downloads/KK-PDF-Tool',
-          ),
+          subtitle:
+              '${tr('Alle Scans, Ordner und Unterschriften als eine ZIP-Datei in Downloads/KK-PDF-Tool', 'All scans, folders and signatures as one ZIP file in Downloads/KK-PDF-Tool')}\n${_backupStatus()}',
           trailing: OutlinedButton(
             onPressed: _createBackup,
             child: Text(tr('Erstellen', 'Create')),

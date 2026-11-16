@@ -74,7 +74,10 @@ jobs:
           DOCSCANNER_KEY_ALIAS: ${{ secrets.DOCSCANNER_KEY_ALIAS }}
           DOCSCANNER_KEY_PASSWORD: ${{ secrets.DOCSCANNER_KEY_PASSWORD }}
         run: |
+          # Phones and tablets only (32 and 64 bit ARM): leaving out the x86
+          # emulator builds makes the APK about a third smaller.
           flutter build apk --release \
+            --target-platform android-arm,android-arm64 \
             --build-number=${{ github.run_number }} \
             --dart-define=APP_VERSION="$APP_VERSION+${{ github.run_number }}"
           cp build/app/outputs/flutter-apk/app-release.apk KK-PDF-Tool.apk
